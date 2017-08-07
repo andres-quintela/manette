@@ -2,14 +2,6 @@ import argparse
 import subprocess
 import os
 
-def bool_arg(string):
-    value = string.lower()
-    if value == 'true':
-        return True
-    elif value == 'false':
-        return False
-    else:
-        raise argparse.ArgumentTypeError("Expected True or False, but got {}".format(string))
 
 def create_cmd(args, game_name):
     cmd = ("python3 test.py -f "+args.folder+game_name+"/"+
