@@ -2,10 +2,14 @@ import shutil
 import os
 import argparse
 import subprocess
+import datetime
 
 
 def main(args):
-    dest_dir = "/data1/rl/atari/logs"
+    i = datetime.datetime.now()
+    dest_dir = "/data1/rl/atari/logs/"+str(i.year)+"-"+str(i.month)+"-"+str(i.day)
+    if not os.path.exists(dest_dir):
+        os.makedirs(dest_dir)
     shutil.move(args.source_dir, dest_dir)
     print("Directory "+args.source_dir+" archived." )
 

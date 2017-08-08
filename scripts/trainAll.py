@@ -45,20 +45,34 @@ def create_cmd(args, game_name, path):
 def main(args):
     i = datetime.datetime.now()
     path = "logs/"+str(i.year)+"-"+str(i.month)+"-"+str(i.day)+"-"+args.name_exp
-    print(path)
-    print(os.getcwd())
+
     if not os.path.exists(path):
         os.makedirs(path)
     save_args(args, path)
-    subprocess.call(create_cmd(args, "pong", path), shell = True)
-    subprocess.call(create_cmd(args, "breakout", path), shell = True)
-    subprocess.call(create_cmd(args, "ms_pacman", path), shell = True)
-    subprocess.call(create_cmd(args, "space_invaders", path), shell = True)
-    subprocess.call(create_cmd(args, "montezuma_revenge", path), shell = True)
+
+    subprocess.call("export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64", shell = True)
+    device = 0
+    if('1' in args.device): device = 1
+    if('2' in args.device): device = 2
+    subprocess.call(("export CUDA_VISIBLE_DEVICES="+str(device)), shell = True)
+
+    if('po' in args.games):
+        subprocess.call(create_cmd(args, "pong", path), shell = True)
+    if('br' in args.games):
+        subprocess.call(create_cmd(args, "breakout", path), shell = True)
+    if('ms' in args.games):
+        subprocess.call(create_cmd(args, "ms_pacman", path), shell = True)
+    if('sp' in args.games):
+        subprocess.call(create_cmd(args, "space_invaders", path), shell = True)
+    if('mo' in args.games):
+        subprocess.call(create_cmd(args, "montezuma_revenge", path), shell = True)
+    if('se' in args.games):
+        subprocess.call(create_cmd(args, "seaquest", path), shell = True)
 
 def get_arg_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('-n', default= '', type=str, help='Name of the experiment', dest='name_exp')
+    parser.add_argument('-g', default= 'po', type=str, help='Name of the games to train', dest='games')
     parser.add_argument('-d', '--device', default='/gpu:0', type=str, help="Device to be used ('/cpu:0', '/gpu:0', '/gpu:1',...)", dest="device")
     parser.add_argument('-v', '--visualize', default=False, type=bool_arg, help="0: no visualization of emulator; 1: all emulators, for all actors, are visualized; 2: only 1 emulator (for one of the actors) is visualized", dest="visualize")
     parser.add_argument('--e', default=0.1, type=float, help="Epsilon for the Rmsprop and Adam optimizers", dest="e")
