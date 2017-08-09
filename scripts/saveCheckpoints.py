@@ -45,7 +45,7 @@ def main(args):
         if('sp' in args.games): save_checkpoints(args, "space_invaders")
         if('mo' in args.games): save_checkpoints(args, "montezuma_revenge")
         if('se' in args.games): save_checkpoints(args, "seaquest")
-        time.sleep(1800)
+        time.sleep(args.period)
 
 def get_arg_parser():
     parser = argparse.ArgumentParser()
@@ -54,6 +54,8 @@ def get_arg_parser():
                         dest="debugging_folder")
     parser.add_argument('-g', default= 'po', type=str,
                         help='Names of the games to train', dest='games')
+    parser.add_argument('-p', default=1800, type=int,
+                        help='Period of time btw save', dest='period')
     return parser
 
 
