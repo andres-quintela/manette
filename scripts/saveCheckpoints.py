@@ -16,13 +16,16 @@ def init_dirs(args, games):
             os.makedirs(pathGame)
 
 def save_checkpoints(args, game_name, n):
-    if os.path.exists( args.debugging_folder+"/"+game_name):
-        pathSrc = args.debugging_folder+"/"+game_name
+    if os.path.exists( args.debugging_folder+game_name):
+        pathSrc = args.debugging_folder+game_name
         pathDest = args.debugging_folder+"checkpoints_saved/"+game_name+"/"+str(n)
         if not os.path.exists(pathDest):
             os.makedirs(pathDest)
         shutil.copy((pathSrc+"/args.json"), pathDest)
-        shutil.copy((pathSrc+"/checkpoints"), pathDest)
+	if not os.path.exists(pathDest+"/checkpoints"):
+	    os.makedirs(pathDest+"/checkpoints")
+	for f in os.listdir(pathSrc+"checkpoints"):
+            shutil.copy((pathSrc+"/checkpoints/"+f), (pathDest+"/checkpoints"))
 
 def parse_games(args):
     games = []
@@ -42,7 +45,7 @@ def main(args):
     while not(os.path.exists(pathSTOP)):
         init_dirs(args, games)
         for g in games :
-            save_checkpoints(args, g)
+            save_checkpoints(args, g, n)
         time.sleep(args.period)
 
 def get_arg_parser():
