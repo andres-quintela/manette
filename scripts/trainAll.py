@@ -23,7 +23,6 @@ def save_args(args, folder, file_name='parameters.json'):
 
 def create_cmd(args, game_name, path):
     cmd = ("python3 train.py -g "+game_name+" -df "+path+"/"+game_name+
-                " -d "+str(args.device)+
                 " -v "+str(args.visualize)+
                 " --e "+str(args.e)+
                 " --alpha "+str(args.alpha)+
@@ -51,10 +50,7 @@ def main(args):
     save_args(args, path)
 
     subprocess.call("export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64", shell = True)
-    device = 0
-    if('1' in args.device): device = 1
-    if('2' in args.device): device = 2
-    subprocess.call(("export CUDA_VISIBLE_DEVICES="+str(device)), shell = True)
+    subprocess.call(("export CUDA_VISIBLE_DEVICES="+str(args.device)), shell = True)
 
     if('po' in args.games):
         subprocess.call(create_cmd(args, "pong", path), shell = True)
@@ -73,7 +69,7 @@ def get_arg_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('-n', default= '', type=str, help='Name of the experiment', dest='name_exp')
     parser.add_argument('-g', default= 'po', type=str, help='Name of the games to train', dest='games')
-    parser.add_argument('-d', '--device', default='/gpu:0', type=str, help="Device to be used ('/cpu:0', '/gpu:0', '/gpu:1',...)", dest="device")
+    parser.add_argument('-d', '--device', default=2, type=int, help="Device to be used : 0,1 or 2", dest="device")
     parser.add_argument('-v', '--visualize', default=False, type=bool_arg, help="0: no visualization of emulator; 1: all emulators, for all actors, are visualized; 2: only 1 emulator (for one of the actors) is visualized", dest="visualize")
     parser.add_argument('--e', default=0.1, type=float, help="Epsilon for the Rmsprop and Adam optimizers", dest="e")
     parser.add_argument('--alpha', default=0.99, type=float, help="Discount factor for the history/coming gradient, for the Rmsprop optimizer", dest="alpha")

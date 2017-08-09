@@ -3,20 +3,24 @@ import subprocess
 import os
 
 
-def create_cmd(args, n):
-    cmd = ("python3 test.py -f "+args.folder+game_name+"/"+
+def create_gif(args, n):
+    cmd = ("python3 test.py -f "+args.folder+"checkpoints_saved/"+game_name+"/"+n
            " -tc "+str(args.test_count)+
            " -np "+str(args.noops)+
-           " -gn "+args.game_name+str(n)
+           " -gn "+args.game_name+n
            " -gf "+args.folder+"training_gifs/"+args.game_name
            " -d "+args.device)
     return cmd
 
 def main(args):
     pathDest = args.folder+"training_gifs/"+args.game_name
+    pathSrc = args.folder+"checkpoints_saved/"+args.game_name
     if not os.path.exists(pathDest):
         os.makedirs(pathDest)
-    subprocess.call(create_cmd(args, 1), shell = True)
+    dirs_list = os.listdir(pathSrc)
+    for d in dirs_list :
+        subprocess.call(create_gif(args, d), shell = True)
+        print("###finished gif "+d)
 
 def get_arg_parser():
     parser = argparse.ArgumentParser()
