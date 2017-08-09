@@ -22,9 +22,9 @@ def save_checkpoints(args, game_name, n):
         if not os.path.exists(pathDest):
             os.makedirs(pathDest)
         shutil.copy((pathSrc+"/args.json"), pathDest)
-	if not os.path.exists(pathDest+"/checkpoints"):
-	    os.makedirs(pathDest+"/checkpoints")
-	for f in os.listdir(pathSrc+"checkpoints"):
+        if not os.path.exists(pathDest+"/checkpoints"):
+            os.makedirs(pathDest+"/checkpoints")
+        for f in os.listdir(pathSrc+"/checkpoints"):
             shutil.copy((pathSrc+"/checkpoints/"+f), (pathDest+"/checkpoints"))
 
 def parse_games(args):
