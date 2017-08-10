@@ -44,9 +44,11 @@ def main(args):
     n = 0
     while not(os.path.exists(pathSTOP)):
         init_dirs(args, games)
+        print(n)
         for g in games :
             save_checkpoints(args, g, n)
         time.sleep(args.period)
+        n += 1
 
 def get_arg_parser():
     parser = argparse.ArgumentParser()

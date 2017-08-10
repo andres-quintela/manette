@@ -3,7 +3,7 @@ import subprocess
 
 
 def create_cmd(args, game_name):
-    cmd = ("python3 test.py -f "+args.folder+"/"+game_name+"/"+
+    cmd = ("python3 test.py -f "+args.folder+game_name+"/"+
            " -tc "+str(args.test_count)+
            " -np "+str(args.noops)+
            " -d "+args.device)

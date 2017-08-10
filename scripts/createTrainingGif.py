@@ -14,12 +14,12 @@ def create_gif(args, n, game):
 
 def parse_games(args):
     game = ""
-    if('po' in args.games): game = "pong"
-    if('br' in args.games): game = "breakout"
-    if('ms' in args.games): game = "ms_pacman"
-    if('sp' in args.games): game = "space_invaders"
-    if('mo' in args.games): game = "montezuma_revenge"
-    if('se' in args.games): game = "seaquest"
+    if('po' in args.game_name): game = "pong"
+    if('br' in args.game_name): game = "breakout"
+    if('ms' in args.game_name): game = "ms_pacman"
+    if('sp' in args.game_name): game = "space_invaders"
+    if('mo' in args.game_name): game = "montezuma_revenge"
+    if('se' in args.game_name): game = "seaquest"
     return game
 
 def main(args):
