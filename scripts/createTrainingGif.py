@@ -3,23 +3,34 @@ import subprocess
 import os
 
 
-def create_gif(args, n):
-    cmd = ("python3 test.py -f "+args.folder+"checkpoints_saved/"+game_name+"/"+n+
+def create_gif(args, n, game):
+    cmd = ("python3 test.py -f "+args.folder+"checkpoints_saved/"+game+"/"+n+
            " -tc "+str(args.test_count)+
            " -np "+str(args.noops)+
-           " -gn "+args.game_name+n+
-           " -gf "+args.folder+"training_gifs/"+args.game_name+
+           " -gn "+game+n+
+           " -gf "+args.folder+"training_gifs/"+game+
            " -d "+args.device)
     return cmd
 
+def parse_games(args):
+    game = ""
+    if('po' in args.games): game = "pong"
+    if('br' in args.games): game = "breakout"
+    if('ms' in args.games): game = "ms_pacman"
+    if('sp' in args.games): game = "space_invaders"
+    if('mo' in args.games): game = "montezuma_revenge"
+    if('se' in args.games): game = "seaquest"
+    return game
+
 def main(args):
-    pathDest = args.folder+"training_gifs/"+args.game_name
-    pathSrc = args.folder+"checkpoints_saved/"+args.game_name
+    game = parse_games(args)
+    pathDest = args.folder+"training_gifs/"+game
+    pathSrc = args.folder+"checkpoints_saved/"+game
     if not os.path.exists(pathDest):
         os.makedirs(pathDest)
     dirs_list = os.listdir(pathSrc)
     for d in dirs_list :
-        subprocess.call(create_gif(args, d), shell = True)
+        subprocess.call(create_gif(args, d, game), shell = True)
         print("###finished gif "+d)
 
 def get_arg_parser():
