@@ -4,11 +4,11 @@ import os
 
 
 def create_gif(args, n):
-    cmd = ("python3 test.py -f "+args.folder+"checkpoints_saved/"+game_name+"/"+n
+    cmd = ("python3 test.py -f "+args.folder+"checkpoints_saved/"+game_name+"/"+n+
            " -tc "+str(args.test_count)+
            " -np "+str(args.noops)+
-           " -gn "+args.game_name+n
-           " -gf "+args.folder+"training_gifs/"+args.game_name
+           " -gn "+args.game_name+n+
+           " -gf "+args.folder+"training_gifs/"+args.game_name+
            " -d "+args.device)
     return cmd
 
