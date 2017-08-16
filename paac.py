@@ -100,7 +100,6 @@ class PAACLearner(ActorLearner):
         while self.global_step < self.max_global_steps:
 
             loop_start_time = time.time()
-            rewards_for_all_env = self.emulator_counts * [0]
 
             max_local_steps = self.max_local_steps
             for t in range(max_local_steps):
@@ -135,7 +134,6 @@ class PAACLearner(ActorLearner):
                         ])
                         self.summary_writer.add_summary(episode_summary, self.global_step)
                         self.summary_writer.flush()
-                        rewards_for_all_env[e] = total_episode_rewards[e]
                         total_episode_rewards[e] = 0
                         emulator_steps[e] = 0
                         actions_sum[e] = np.zeros(self.num_actions)
@@ -173,10 +171,10 @@ class PAACLearner(ActorLearner):
                 tf.Summary.Value(tag='parameters/lr', simple_value=lr)
             ])
             rewards_summary = tf.Summary(value=[
-                tf.Summary.Value(tag='rewards_env/mean', simple_value=np.mean(rewards_for_all_env)),
-                tf.Summary.Value(tag='rewards_env/min', simple_value=min(rewards_for_all_env)),
-                tf.Summary.Value(tag='rewards_env/max', simple_value=max(rewards_for_all_env)),
-                tf.Summary.Value(tag='rewards_env/std', simple_value=np.std(rewards_for_all_env))
+                tf.Summary.Value(tag='rewards_env/mean', simple_value=np.mean(total_rewards[-50:])),
+                tf.Summary.Value(tag='rewards_env/min', simple_value=min(total_rewards[-50:])),
+                tf.Summary.Value(tag='rewards_env/max', simple_value=max(total_rewards[-50:])),
+                tf.Summary.Value(tag='rewards_env/std', simple_value=np.std(total_rewards[-50:]))
             ])
             self.summary_writer.add_summary(step_summary, self.global_step)
             self.summary_writer.add_summary(rewards_summary, self.global_step)
