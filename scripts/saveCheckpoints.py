@@ -27,6 +27,17 @@ def save_checkpoints(args, game_name, n):
         for f in os.listdir(pathSrc+"/checkpoints"):
             shutil.copy((pathSrc+"/checkpoints/"+f), (pathDest+"/checkpoints"))
 
+def training_finished(args, game_name):
+    path = args.debugging_folder+game_name+"/checkpoints"
+    finished = False
+    if os.path.exists(path):
+        for f in os.listdir(path):
+            if len(f) >= 9 and (f[1:10] == str(args.max_steps)) :
+                finished = True
+                break
+    return finished
+
+
 def parse_games(args):
     games = []
     if('po' in args.games): games.append("pong")
@@ -39,14 +50,19 @@ def parse_games(args):
 
 def main(args):
     games = parse_games(args)
+    games_finished = []
     init_dirs(args, games)
     pathSTOP = args.debugging_folder+"checkpoints_saved/STOP"
     n = 0
-    while not(os.path.exists(pathSTOP)):
+    while not(os.path.exists(pathSTOP) or games == []):
         init_dirs(args, games)
-        print(n)
         for g in games :
             save_checkpoints(args, g, n)
+            if training_finished(args, g) :
+                games_finished.append(g)
+        for g in games_finished :
+            games.remove(g)
+        games_finished = []
         time.sleep(args.period)
         n += 1
 
@@ -59,6 +75,8 @@ def get_arg_parser():
                         help='Names of the games to train', dest='games')
     parser.add_argument('-p', default=1800, type=int,
                         help='Period of time btw save', dest='period')
+    parser.add_argument('-m', default=80000000, type=int,
+                        help='max number of training steps', dest='max_steps')
     return parser
 
 
