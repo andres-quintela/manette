@@ -4,6 +4,7 @@ from multiprocessing.sharedctypes import RawArray
 from ctypes import c_uint, c_float
 from actor_learner import *
 import logging
+from logger_utils import variable_summaries
 
 from emulator_runner import EmulatorRunner
 from runners import Runners
@@ -165,6 +166,10 @@ class PAACLearner(ActorLearner):
                 feed_dict=feed_dict)
 
             self.summary_writer.add_summary(summaries, self.global_step)
+            step_summary = tf.Summary(value=[
+                tf.Summary.Value(tag='parameters/lr', simple_value=lr)
+            ])
+            self.summary_writer.add_summary(step_summary, self.global_step)
             self.summary_writer.flush()
 
             counter += 1
