@@ -4,6 +4,7 @@ from multiprocessing.sharedctypes import RawArray
 from ctypes import c_uint, c_float
 from actor_learner import *
 import logging
+from logger_utils import variable_summaries
 
 from emulator_runner import EmulatorRunner
 from runners import Runners
@@ -137,6 +138,7 @@ class PAACLearner(ActorLearner):
                         emulator_steps[e] = 0
                         actions_sum[e] = np.zeros(self.num_actions)
 
+
             nest_state_value = self.session.run(
                 self.network.output_layer_v,
                 feed_dict={self.network.input_ph: shared_states})
@@ -165,6 +167,20 @@ class PAACLearner(ActorLearner):
                 feed_dict=feed_dict)
 
             self.summary_writer.add_summary(summaries, self.global_step)
+            step_summary = tf.Summary(value=[
+                tf.Summary.Value(tag='parameters/lr', simple_value=lr)
+            ])
+            self.summary_writer.add_summary(step_summary, self.global_step)
+
+            if len(total_rewards) > 50 and self.global_step % 500 == 0 :
+                rewards_summary = tf.Summary(value=[
+                    tf.Summary.Value(tag='rewards_env/mean', simple_value=np.mean(total_rewards[-50:])),
+                    tf.Summary.Value(tag='rewards_env/min', simple_value=min(total_rewards[-50:])),
+                    tf.Summary.Value(tag='rewards_env/max', simple_value=max(total_rewards[-50:])),
+                    tf.Summary.Value(tag='rewards_env/std', simple_value=np.std(total_rewards[-50:]))
+                ])
+                self.summary_writer.add_summary(rewards_summary, self.global_step)
+
             self.summary_writer.flush()
 
             counter += 1
