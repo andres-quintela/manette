@@ -142,11 +142,16 @@ class NIPSNetwork(Network):
 
         with tf.device(self.device):
             with tf.name_scope(self.name):
-                _, _, conv1 = conv2d('conv1', self.input, 16, 8, 4, 4)
+                w_conv1, b_conv1, conv1 = conv2d('conv1', self.input, 16, 8, 4, 4)
 
-                _, _, conv2 = conv2d('conv2', conv1, 32, 4, 16, 2)
+                w_conv2, b_conv2, conv2 = conv2d('conv2', conv1, 32, 4, 16, 2)
 
-                _, _, fc3 = fc('fc3', flatten(conv2), 256, activation="relu")
+                w_fc3, b_fc3, fc3 = fc('fc3', flatten(conv2), 256, activation="relu")
+
+                tf.summary.histogram("w_conv1", w_conv1)
+                tf.summary.histogram("w_conv2", w_conv2)
+                tf.summary.histogram("b_conv1", b_conv1)
+                tf.summary.histogram("b_conv2", b_conv2)
 
                 self.output = fc3
 
