@@ -57,7 +57,7 @@ if __name__ == '__main__':
         for i, environment in enumerate(environments):
             environment.on_new_frame = get_save_frame(os.path.join(args.gif_folder, args.gif_name + str(i)))
 
-    config = tf.ConfigProto()
+    config = tf.ConfigProto(allow_soft_placement = True)
     if 'gpu' in args.device:
         config.gpu_options.allow_growth = True
 
@@ -86,5 +86,3 @@ if __name__ == '__main__':
         print('Min: {0:.2f}'.format(np.min(rewards)))
         print('Max: {0:.2f}'.format(np.max(rewards)))
         print('Std: {0:.2f}'.format(np.std(rewards)))
-
-
