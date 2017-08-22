@@ -19,8 +19,7 @@ Le script testAll.py permet de lancer le test de plusieurs jeux d'affilée, une 
 * ``` -f ``` : Folder. Nom du dossier oú sont stockés les informations de debuggage de tous les jeux. Exemple : ```2017-8-10-test/```
 * ``` -g ``` : Noms des jeux à tester. Utiliser les deux premières lettres de chaque jeux. Exemple : ```-g pobrsp``` pour tester pong, breakout et space invaders.
 * ``` -tc ``` : Nombre de tests à effectuer pour chaque jeu. Par défaut 1.
-
-TEST TEST
+s
 
 ## Generate gifs
 Le script genGifs.py permet de générer des gifs des jeux apès leur entrainement. Les options classiques de la commande sont les suivantes :
