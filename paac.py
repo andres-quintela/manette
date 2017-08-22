@@ -180,7 +180,7 @@ class PAACLearner(ActorLearner):
                     tf.Summary.Value(tag='rewards_env/min', simple_value=min(total_rewards[-50:])),
                     tf.Summary.Value(tag='rewards_env/max', simple_value=max(total_rewards[-50:])),
                     tf.Summary.Value(tag='rewards_env/std', simple_value=std),
-                    tf.Summary.Value(tag='rewards_env/std_over_mean', simple_value=max(2, np.absolute(std/mean)))
+                    tf.Summary.Value(tag='rewards_env/std_over_mean', simple_value=min(2, np.absolute(std/mean)))
                 ])
                 self.summary_writer.add_summary(rewards_summary, self.global_step)
 
