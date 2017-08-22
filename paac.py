@@ -173,12 +173,14 @@ class PAACLearner(ActorLearner):
             self.summary_writer.add_summary(step_summary, self.global_step)
 
             if len(total_rewards) > 50 and self.global_step % 500 == 0 :
+                mean = np.mean(total_rewards[-50:])
+                std = np.std(total_rewards[-50:])
                 rewards_summary = tf.Summary(value=[
-                    tf.Summary.Value(tag='rewards_env/mean', simple_value=np.mean(total_rewards[-50:])),
+                    tf.Summary.Value(tag='rewards_env/mean', simple_value=mean),
                     tf.Summary.Value(tag='rewards_env/min', simple_value=min(total_rewards[-50:])),
                     tf.Summary.Value(tag='rewards_env/max', simple_value=max(total_rewards[-50:])),
-                    tf.Summary.Value(tag='rewards_env/std', simple_value=np.std(total_rewards[-50:])),
-                    tf.Summary.Value(tag='rewards_env/std_over_mean', simple_value=np.std(total_rewards[-50:])/np.mean(total_rewards[-50:]))
+                    tf.Summary.Value(tag='rewards_env/std', simple_value=std),
+                    tf.Summary.Value(tag='rewards_env/std_over_mean', simple_value=max(2, np.absolute(std/mean)))
                 ])
                 self.summary_writer.add_summary(rewards_summary, self.global_step)
 
