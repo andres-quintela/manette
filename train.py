@@ -6,6 +6,7 @@ import os
 import copy
 
 import environment_creator
+from exploration_policy import ExplorationPolicy
 from paac import PAACLearner
 from policy_v_network import NaturePolicyVNetwork, NIPSPolicyVNetwork
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -25,8 +26,9 @@ def main(args):
     logging.debug('Configuration: {}'.format(args))
 
     network_creator, env_creator = get_network_and_environment_creator(args)
+    explo_policy = ExplorationPolicy({"e_greedy":0.1})
 
-    learner = PAACLearner(network_creator, env_creator, args)
+    learner = PAACLearner(network_creator, env_creator, explo_policy, args)
 
     setup_kill_signal_handler(learner)
 
