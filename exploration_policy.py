@@ -64,11 +64,11 @@ class ExplorationPolicy:
         action_indexes = [int(np.nonzero(np.random.multinomial(1, p))[0]) for p in probs]
         return action_indexes
 
-    def compute_entropy_term(self):
-        if !(self.compute_entropy):
-            return tf.constant(0)
-        else :
-            pass
+#    def compute_entropy_term(self):
+ #       if !(self.compute_entropy):
+  #          return tf.constant(0)
+   #     else :
+    #        pass
 
     def dropout_forward(self):
         pass

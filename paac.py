@@ -173,10 +173,10 @@ class PAACLearner(ActorLearner):
                 tf.Summary.Value(tag='parameters/lr', simple_value=lr)
             ])
             self.summary_writer.add_summary(step_summary, self.global_step)
-            epsilon_summary = tf.Summary(value=[
-                tf.Summary.Value(tag='parameters/epsilon', simple_value=explo_policy.epsilon)
-            ])
-            self.summary_writer.add_summary(epsilon_summary, self.global_step)
+#            epsilon_summary = tf.Summary(value=[
+ #               tf.Summary.Value(tag='parameters/epsilon', simple_value=explo_policy.epsilon)
+  #          ])
+   #         self.summary_writer.add_summary(epsilon_summary, self.global_step)
 
             if len(total_rewards) > 50 and self.global_step % 500 == 0 :
                 mean = np.mean(total_rewards[-50:])
