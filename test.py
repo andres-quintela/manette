@@ -7,6 +7,7 @@ import time
 import tensorflow as tf
 import random
 from paac import PAACLearner
+from exploration_policy import ExplorationPolicy
 
 
 def get_save_frame(name):
