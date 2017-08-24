@@ -5,8 +5,8 @@ class ExplorationPolicy:
     def __init__(self, policies_list):
         self.policies_list = policies_list
         self.choice_policy = policies_list[0]
-        self.choice_param = int(policies_list[1])
-        self.softmax_temp = int(policies_list[2])
+        self.choice_param = float(policies_list[1])
+        self.softmax_temp = float(policies_list[2])
 
     def choose_next_actions(self, network, num_actions, states, session):
         network_output_v, network_output_pi = session.run(
