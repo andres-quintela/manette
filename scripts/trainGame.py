@@ -5,9 +5,10 @@ import json
 import subprocess
 
 def create_cmd(args, game, path, v):
-    cmd = ("python3 train.py -g "+game+" -df "+path+"/"+args.param+v+
+    cmd = ("python3 train.py -g "+game+" -df "+path+"/"+v+
                 " -"+args.param+" "+v+
-                " --max_global_steps "+str(args.max_global_steps))
+                " --max_global_steps "+str(args.max_global_steps)+
+                " -lra "+str(srgs.lr_annealing_steps))
     return cmd
 
 def parse_games(args):
@@ -39,6 +40,7 @@ def get_arg_parser():
     parser.add_argument('-p', default= 'lr', type=str, help='Name of the parameter to change', dest='param')
     parser.add_argument('-val', default='1', type=str, help='Values of the parameter', dest='values')
     parser.add_argument('--max_global_steps', default=80000000, type=int, help="Max. number of training steps", dest="max_global_steps")
+    parser.add_argument('-lra', '--lr_annealing_steps', default=80000000, type=int, help="Nr. of global steps during which the learning rate will be linearly annealed towards zero", dest="lr_annealing_steps")
     return parser
 
 if __name__ == '__main__':
