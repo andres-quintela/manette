@@ -6,6 +6,7 @@ import os
 import copy
 
 import environment_creator
+from exploration_policy import ExplorationPolicy
 from paac import PAACLearner
 from policy_v_network import NaturePolicyVNetwork, NIPSPolicyVNetwork
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -24,9 +25,11 @@ def bool_arg(string):
 def main(args):
     logging.debug('Configuration: {}'.format(args))
 
-    network_creator, env_creator = get_network_and_environment_creator(args)
+    explo_policy = ExplorationPolicy(args.explo_policy.split("_"))
 
-    learner = PAACLearner(network_creator, env_creator, args)
+    network_creator, env_creator = get_network_and_environment_creator(args, explo_policy)
+
+    learner = PAACLearner(network_creator, env_creator, explo_policy, args)
 
     setup_kill_signal_handler(learner)
 
@@ -49,7 +52,7 @@ def setup_kill_signal_handler(learner):
     signal.signal(signal.SIGINT, signal_handler)
 
 
-def get_network_and_environment_creator(args, random_seed=3):
+def get_network_and_environment_creator(args, explo_policy, random_seed=3):
     env_creator = environment_creator.EnvironmentCreator(args)
     num_actions = env_creator.num_actions
     args.num_actions = num_actions
@@ -59,7 +62,8 @@ def get_network_and_environment_creator(args, random_seed=3):
                     'entropy_regularisation_strength': args.entropy_regularisation_strength,
                     'device': args.device,
                     'clip_norm': args.clip_norm,
-                    'clip_norm_type': args.clip_norm_type}
+                    'clip_norm_type': args.clip_norm_type,
+                    'softmax_temp' : explo_policy.softmax_temp}
     if args.arch == 'NIPS':
         network = NIPSPolicyVNetwork
     else:
@@ -73,10 +77,10 @@ def get_network_and_environment_creator(args, random_seed=3):
 
     return network_creator, env_creator
 
-
 def get_arg_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('-g', default='pong', help='Name of game', dest='game')
+    parser.add_argument('-explo', default='multi_0_1', type=str, help="Exploration policy to be used", dest="explo_policy")
     parser.add_argument('-d', '--device', default='/gpu:0', type=str, help="Device to be used ('/cpu:0', '/gpu:0', '/gpu:1',...)", dest="device")
     parser.add_argument('--rom_path', default='./atari_roms', help='Directory where the game roms are located (needed for ALE environment)', dest="rom_path")
     parser.add_argument('-v', '--visualize', default=False, type=bool_arg, help="0: no visualization of emulator; 1: all emulators, for all actors, are visualized; 2: only 1 emulator (for one of the actors) is visualized", dest="visualize")

@@ -81,11 +81,12 @@ def fc_bias_variable(shape, input_channels, name, init= "torch"):
     return tf.Variable(initial, name=name, dtype='float32')
 
 
-def softmax(name, _input, output_dim):
+def softmax(name, _input, output_dim, temp):
+    softmax_temp = tf.constant(temp, dtype=tf.float32)
     input_dim = _input.get_shape().as_list()[1]
     w = fc_weight_variable([input_dim, output_dim], name + '_weights')
     b = fc_bias_variable([output_dim], input_dim, name + '_biases')
-    out = tf.nn.softmax(tf.add(tf.matmul(_input, w), b), name= name + '_policy')
+    out = tf.nn.softmax(tf.div(tf.add(tf.matmul(_input, w), b), softmax_temp), name= name + '_policy')
     return w, b, out
 
 
@@ -142,11 +143,16 @@ class NIPSNetwork(Network):
 
         with tf.device(self.device):
             with tf.name_scope(self.name):
-                _, _, conv1 = conv2d('conv1', self.input, 16, 8, 4, 4)
+                w_conv1, b_conv1, conv1 = conv2d('conv1', self.input, 16, 8, 4, 4)
 
-                _, _, conv2 = conv2d('conv2', conv1, 32, 4, 16, 2)
+                w_conv2, b_conv2, conv2 = conv2d('conv2', conv1, 32, 4, 16, 2)
 
-                _, _, fc3 = fc('fc3', flatten(conv2), 256, activation="relu")
+                w_fc3, b_fc3, fc3 = fc('fc3', flatten(conv2), 256, activation="relu")
+
+                tf.summary.histogram("w_conv1", w_conv1)
+                tf.summary.histogram("w_conv2", w_conv2)
+                tf.summary.histogram("b_conv1", b_conv1)
+                tf.summary.histogram("b_conv2", b_conv2)
 
                 self.output = fc3
 
