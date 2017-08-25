@@ -10,9 +10,13 @@ class ExplorationPolicy:
         self.epsilon = float(policies_list[1])
         self.softmax_temp = float(policies_list[2])
         self.global_step = 0
+        self.log_file = "log_file_action.txt"
         #self.annealed = self.bool_arg(policies_list[3])
         self.annealing_steps = 80000000
         #self.compute_entropy = self.bool_arg(policies_list[4])
+        log_file = open(self.log_file , "w")
+        log_file.write("Log file action")
+        log_file.close()
 
     def bool_arg(string):
         value = string.lower()
@@ -47,11 +51,20 @@ class ExplorationPolicy:
         """Sample an action from an action probability distribution output by
         the policy network using a greedy policy"""
         action_indexes = []
+        log_file = open(self.log_file , "a")
+        env = 0
         for p in probs :
+            s = "env "+str(env)+" : "+str(p)+" len p = "+str(len(p))+", argmax = "+str(np.argmax(p))+", choice = "
+            env += 1
             if np.random.rand(1)[0] < self.epsilon :
-                action_indexes.append(np.random.randint(0,len(p)))
+                i = np.random.randint(0,len(p))
+                action_indexes.append(i)
+                s += str(i)+".\n"
             else :
                 action_indexes.append(np.argmax(p))
+                s += str(np.argmax(p))+".\n"
+            log_file.write(s)
+        log_file.close()
         return action_indexes
 
     def multinomial_choose(self, probs):
