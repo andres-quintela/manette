@@ -10,9 +10,11 @@ CHECKPOINT_INTERVAL = 1000000
 
 class ActorLearner(Process):
 
-    def __init__(self, network_creator, environment_creator, args):
+    def __init__(self, network_creator, environment_creator, explo_policy, args):
 
         super(ActorLearner, self).__init__()
+
+        self.explo_policy = explo_policy
 
         self.global_step = 0
 

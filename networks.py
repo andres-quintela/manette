@@ -81,11 +81,12 @@ def fc_bias_variable(shape, input_channels, name, init= "torch"):
     return tf.Variable(initial, name=name, dtype='float32')
 
 
-def softmax(name, _input, output_dim):
+def softmax(name, _input, output_dim, temp):
+    softmax_temp = tf.constant(temp, dtype=tf.float32)
     input_dim = _input.get_shape().as_list()[1]
     w = fc_weight_variable([input_dim, output_dim], name + '_weights')
     b = fc_bias_variable([output_dim], input_dim, name + '_biases')
-    out = tf.nn.softmax(tf.add(tf.matmul(_input, w), b), name= name + '_policy')
+    out = tf.nn.softmax(tf.div(tf.add(tf.matmul(_input, w), b), softmax_temp), name= name + '_policy')
     return w, b, out
 
 
