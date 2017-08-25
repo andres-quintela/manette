@@ -8,7 +8,7 @@ def create_cmd(args, game, path, v):
     cmd = ("python3 train.py -g "+game+" -df "+path+"/"+v+
                 " -"+args.param+" "+v+
                 " --max_global_steps "+str(args.max_global_steps)+
-                " -lra "+str(srgs.lr_annealing_steps))
+                " -lra "+str(args.lr_annealing_steps))
     return cmd
 
 def parse_games(args):
