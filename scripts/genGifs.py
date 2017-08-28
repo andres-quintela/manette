@@ -3,13 +3,12 @@ import subprocess
 import os
 
 
-def create_cmd_all_final(args, f):
-    cmd = ("python3 test.py -f "+args.folder+f+"/"+
+def create_cmd(args, f, path):
+    cmd = ("python3 test.py -f "+path+
            " -tc "+str(args.test_count)+
            " -np "+str(args.noops)+
-           " -gn "+f+
-           " -gf "+args.folder+"gifs/"
-           " -d "+args.device)
+           " -gn "+f+str(args.checkpoint)+
+           " -gf "+args.folder+"gifs/")
     return cmd
 
 def main(args):
@@ -19,11 +18,17 @@ def main(args):
     if args.game_folder == '' :
         for f in os.listdir(args.folder):
             if args.checkpoint == 0 :
-                subprocess.call(create_cmd_all_final(args, f), shell = True)
-            
-
-
-
+                pathSrc = args.folder+f+"/"
+            else :
+                pathSrc = args.folder+"checkpoints_saved/"+str(args.checkpoint)+"/"
+            subprocess.call(create_cmd(args, f, pathSrc), shell = True)
+    else :
+        f = args.game_folder
+        if args.checkpoint == 0 :
+            pathSrc = args.folder+f+"/"
+        else :
+            pathSrc = args.folder+"checkpoints_saved/"+str(args.checkpoint)+"/"
+        subprocess.call(create_cmd(args, f, pathSrc), shell = True)
 
 def get_arg_parser():
     parser = argparse.ArgumentParser()
@@ -32,7 +37,6 @@ def get_arg_parser():
     parser.add_argument('-tc', '--test_count', default='1', type=int, help="The amount of tests to run on the given network", dest="test_count")
     parser.add_argument('-cp', '--checkpoint', default='0', type=int, help="The checkpoint from which to run the test", dest="checkpoint")
     parser.add_argument('-np', '--noops', default=30, type=int, help="Maximum amount of no-ops to use", dest="noops")
-    parser.add_argument('-d', '--device', default='/gpu:0', type=str, help="Device to be used ('/cpu:0', '/gpu:0', '/gpu:1',...)", dest="device")
     return parser
 
 
