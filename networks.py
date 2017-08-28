@@ -156,6 +156,20 @@ class NIPSNetwork(Network):
 
                 self.output = fc3
 
+class BayesianNetwork(NIPSNetwork):
+    def __init__(self, conf):
+        super(BayesianNetwork, self).__init__(conf)
+
+        with tf.device(self.device):
+            with tf.name_scope(self.name):
+
+                dropout = tf.nn.dropout(self.output, conf["keep_percentage"])
+
+                w_fc4, b_fc4, fc4 = fc('fc4', dropout, 256, activation="relu")
+
+                self.output = fc4
+
+
 
 class NatureNetwork(Network):
 
