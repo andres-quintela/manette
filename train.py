@@ -8,7 +8,7 @@ import copy
 import environment_creator
 from exploration_policy import ExplorationPolicy
 from paac import PAACLearner
-from policy_v_network import NaturePolicyVNetwork, NIPSPolicyVNetwork
+from policy_v_network import NaturePolicyVNetwork, NIPSPolicyVNetwork, BayesianPolicyVNetwork
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 
@@ -25,7 +25,8 @@ def bool_arg(string):
 def main(args):
     logging.debug('Configuration: {}'.format(args))
 
-    explo_policy = ExplorationPolicy(args.explo_policy.split("_"))
+    explo_policy = ExplorationPolicy(args.egreedy, args.epsilon, args.softmax_temp,
+                                     args.use_dropout, args.keep_percentage, args.annealed)
 
     network_creator, env_creator = get_network_and_environment_creator(args, explo_policy)
 
@@ -63,11 +64,16 @@ def get_network_and_environment_creator(args, explo_policy, random_seed=3):
                     'device': args.device,
                     'clip_norm': args.clip_norm,
                     'clip_norm_type': args.clip_norm_type,
-                    'softmax_temp' : explo_policy.softmax_temp}
-    if args.arch == 'NIPS':
-        network = NIPSPolicyVNetwork
-    else:
-        network = NaturePolicyVNetwork
+                    'softmax_temp' : explo_policy.softmax_temp,
+                    'keep_percentage' : explo_policy.keep_percentage}
+
+    if explo_policy.use_dropout :
+        network = BayesianPolicyVNetwork
+    else :
+        if args.arch == 'NIPS':
+            network = NIPSPolicyVNetwork
+        else:
+            network = NaturePolicyVNetwork
 
     def network_creator(name='local_learning'):
         nonlocal network_conf
@@ -80,7 +86,6 @@ def get_network_and_environment_creator(args, explo_policy, random_seed=3):
 def get_arg_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('-g', default='pong', help='Name of game', dest='game')
-    parser.add_argument('-explo', default='multi_0_1', type=str, help="Exploration policy to be used", dest="explo_policy")
     parser.add_argument('-d', '--device', default='/gpu:0', type=str, help="Device to be used ('/cpu:0', '/gpu:0', '/gpu:1',...)", dest="device")
     parser.add_argument('--rom_path', default='./atari_roms', help='Directory where the game roms are located (needed for ALE environment)', dest="rom_path")
     parser.add_argument('-v', '--visualize', default=False, type=bool_arg, help="0: no visualization of emulator; 1: all emulators, for all actors, are visualized; 2: only 1 emulator (for one of the actors) is visualized", dest="visualize")
@@ -100,6 +105,16 @@ def get_arg_parser():
     parser.add_argument('-ew', '--emulator_workers', default=8, type=int, help="The amount of emulator workers per agent. Default is 8.", dest="emulator_workers")
     parser.add_argument('-df', '--debugging_folder', default='logs/', type=str, help="Folder where to save the debugging information.", dest="debugging_folder")
     parser.add_argument('-rs', '--random_start', default=True, type=bool_arg, help="Whether or not to start with 30 noops for each env. Default True", dest="random_start")
+
+    parser.add_argument('-explo', default='multi_0_1', type=str, help="Exploration policy to be used", dest="explo_policy")
+    parser.add_argument('--egreedy', default=False, type=bool_arg, help="True if e-greedy policy is used to  choose actions", dest="egreedy")
+    parser.add_argument('--epsilon', default=0.05, type=float, help="Epsilon for the egreedy policy", dest='epsilon')
+    parser.add_argument('--softmax_temp', default=1.0, type=float, help="Softmax temperature for the Boltzmann action policy", dest='softmax_temp' )
+    parser.add_argument('--use_dropout', default=False, type=bool_arg, help="True if dropout is used to choose actions", dest="use_dropout")
+    parser.add_argument('--annealed', default=False, type=bool_arg, help="True if the parameters for explo_policy are annealed toward zero", dest="annealed")
+    parser.add_argument('--keep_percentage', default=0.9, type=float, help="keep percentage when dropout is used", dest='keep_percentage' )
+
+
     return parser
 
 
