@@ -169,6 +169,26 @@ class BayesianNetwork(NIPSNetwork):
 
                 self.output = fc4
 
+class PpwwyyxxNetwork(Network):
+    def __init__(self, conf):
+        super(PpwwyyxxNetwork, self).__init__(conf)
+
+        with tf.device(self.device):
+            with tf.name_scope(self.name):
+
+#conv2d(name, _input, filters, size, channels, stride, padding = 'VALID', init = "torch")
+
+                _, _, conv1 = conv2d('conv1', self.input, 32, 5, 32, 4)
+
+                _, _, conv2 = conv2d('conv2', conv1, 64, 5, 32, 2)
+
+                _, _, conv3 = conv2d('conv3', conv2, 64, 4, 64, 1)
+
+                _, _, conv4 = conv2d('conv4', conv3, 64, 3, 64, 1)
+
+                _, _, fc5 = fc('fc5', flatten(conv4), 512, activation="relu")
+
+                self.output = fc5
 
 
 class NatureNetwork(Network):
