@@ -6,7 +6,6 @@ import subprocess
 
 def create_cmd(data, path):
     cmd = ("python3 train.py -g "+data["game"]+" -df "+path+"/"+
-                " -v "+str(data["visualize"])+
                 " --e "+str(data["e"])+
                 " --alpha "+str(data["alpha"])+
                 " -lr "+str(data["initial_lr"])+
