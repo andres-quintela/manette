@@ -109,7 +109,6 @@ def get_arg_parser():
     parser.add_argument('-df', '--debugging_folder', default='logs/', type=str, help="Folder where to save the debugging information.", dest="debugging_folder")
     parser.add_argument('-rs', '--random_start', default=True, type=bool_arg, help="Whether or not to start with 30 noops for each env. Default True", dest="random_start")
 
-    parser.add_argument('-explo', default='multi_0_1', type=str, help="Exploration policy to be used", dest="explo_policy")
     parser.add_argument('--egreedy', default=False, type=bool_arg, help="True if e-greedy policy is used to  choose actions", dest="egreedy")
     parser.add_argument('--epsilon', default=0.05, type=float, help="Epsilon for the egreedy policy", dest='epsilon')
     parser.add_argument('--softmax_temp', default=1.0, type=float, help="Softmax temperature for the Boltzmann action policy", dest='softmax_temp' )
