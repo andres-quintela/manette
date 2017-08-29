@@ -34,12 +34,17 @@ class AtariEmulator(BaseEnvironment):
 
         # Processed historcal frames that will be fed in to the network
         # (i.e., four 84x84 images)
-        self.observation_pool = ObservationPool(np.zeros((IMG_SIZE_X, IMG_SIZE_Y, NR_IMAGES), dtype=np.uint8))
+        self.play_in_colours = args.play_in_colours
+        self.observation_pool = ObservationPool(np.zeros((IMG_SIZE_X, IMG_SIZE_Y, NR_IMAGES), dtype=np.uint8), self.play_in_colours)
         self.rgb_screen = np.zeros((self.screen_height, self.screen_width, 3), dtype=np.uint8)
         self.gray_screen = np.zeros((self.screen_height, self.screen_width,1), dtype=np.uint8)
         self.frame_pool = FramePool(np.empty((2, self.screen_height,self.screen_width), dtype=np.uint8),
                                     self.__process_frame_pool)
-        self.play_in_colours = args.play_in_colours
+
+        if self.play_in_colours :
+            self.frame_pool = FramePool(np.empty((2, self.screen_height,self.screen_width, 3), dtype=np.uint8),
+                                        self.__process_frame_pool)
+            self.observation_pool = ObservationPool(np.zeros((IMG_SIZE_X, IMG_SIZE_Y, 3, NR_IMAGES), dtype=np.uint8), self.play_in_colours)
 
     def get_legal_actions(self):
         return self.legal_actions
@@ -76,6 +81,8 @@ class AtariEmulator(BaseEnvironment):
 
         img = np.amax(frame_pool, axis=0)
         img = imresize(img, (84, 84), interp='nearest')
+        if self.play_in_colours :
+            img = imresize(img, (84, 84, 3), interp='nearest')
         img = img.astype(np.uint8)
         return img
 

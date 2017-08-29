@@ -57,20 +57,27 @@ class FramePool(object):
 
 class ObservationPool(object):
 
-    def __init__(self, observation_pool):
+    def __init__(self, observation_pool, play_in_colours):
+        self.play_in_colours = play_in_colours
         self.observation_pool = observation_pool
         self.pool_size = observation_pool.shape[-1]
         self.permutation = [self.__shift(list(range(self.pool_size)), i) for i in range(self.pool_size)]
         self.current_observation_index = 0
 
     def new_observation(self, observation):
-        self.observation_pool[:, :, self.current_observation_index] = observation
+        if self.play_in_colours :
+            self.observation_pool[:, :, :, self.current_observation_index] = observation
+        else :
+            self.observation_pool[:, :, self.current_observation_index] = observation
         self.current_observation_index = (self.current_observation_index + 1) % self.pool_size
 
     def get_pooled_observations(self):
-        return np.copy(self.observation_pool[:, :, self.permutation[self.current_observation_index]])
+        if self.play_in_colours :
+            return np.copy(self.observation_pool[:, :, :, self.permutation[self.current_observation_index]])
+        else :
+            return np.copy(self.observation_pool[:, :, self.permutation[self.current_observation_index]])
+
 
     def __shift(self, seq, n):
         n = n % len(seq)
         return seq[n:]+seq[:n]
-

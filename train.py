@@ -8,7 +8,7 @@ import copy
 import environment_creator
 from exploration_policy import ExplorationPolicy
 from paac import PAACLearner
-from policy_v_network import NaturePolicyVNetwork, NIPSPolicyVNetwork, BayesianPolicyVNetwork
+from policy_v_network import NaturePolicyVNetwork, NIPSPolicyVNetwork, BayesianPolicyVNetwork, PpwwyyxxPolicyVNetwork
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 
@@ -66,11 +66,12 @@ def get_network_and_environment_creator(args, explo_policy, random_seed=3):
                     'clip_norm': args.clip_norm,
                     'clip_norm_type': args.clip_norm_type,
                     'softmax_temp' : explo_policy.softmax_temp,
-                    'keep_percentage' : explo_policy.keep_percentage}
+                    'keep_percentage' : explo_policy.keep_percentage,
+                    'play_in_colours' : explo_policy.play_in_colours}
 
     if explo_policy.pwyx_net :
         network = PpwwyyxxPolicyVNetwork
-    if explo_policy.use_dropout :
+    elif explo_policy.use_dropout :
         network = BayesianPolicyVNetwork
     else :
         if args.arch == 'NIPS':
