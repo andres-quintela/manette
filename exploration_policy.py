@@ -14,6 +14,8 @@ class ExplorationPolicy:
         self.global_step = 0
         self.annealed = annealed
         self.annealing_steps = 80000000
+        self.pwyx_net = False
+        self.play_in_colours = False
 
     def get_epsilon(self):
         if self.global_step <= self.annealing_steps:

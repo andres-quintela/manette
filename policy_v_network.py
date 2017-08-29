@@ -63,5 +63,8 @@ class NIPSPolicyVNetwork(PolicyVNetwork, NIPSNetwork):
 class BayesianPolicyVNetwork(PolicyVNetwork, BayesianNetwork):
     pass
 
+class PpwwyyxxPolicyVNetwork(PolicyVNetwork, PpwwyyxxNetwork):
+    pass
+
 class NaturePolicyVNetwork(PolicyVNetwork, NatureNetwork):
     pass

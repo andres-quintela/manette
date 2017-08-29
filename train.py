@@ -67,6 +67,8 @@ def get_network_and_environment_creator(args, explo_policy, random_seed=3):
                     'softmax_temp' : explo_policy.softmax_temp,
                     'keep_percentage' : explo_policy.keep_percentage}
 
+    if explo_policy.pwyx_net :
+        network = PpwwyyxxPolicyVNetwork
     if explo_policy.use_dropout :
         network = BayesianPolicyVNetwork
     else :
