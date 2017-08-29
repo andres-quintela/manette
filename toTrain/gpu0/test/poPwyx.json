@@ -19,7 +19,7 @@
   "egreedy": false,
   "epsilon": 0.05,
   "softmax_temp": 1.0,
-  "use_dropout": false,
+  "use_dropout": true,
   "annealed": false,
   "keep_percentage": 0.9,
   "pwyx_net": false,
