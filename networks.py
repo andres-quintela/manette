@@ -2,103 +2,110 @@ import tensorflow as tf
 import logging
 import numpy as np
 
+class Operations():
+    def __init__(self, conf):
+        self.play_in_colours = conf['play_in_colours']
+        if self.play_in_colours :
+            self.depth = 3
+        else :
+            self.depth = 1
 
-def flatten(_input):
-    shape = _input.get_shape().as_list()
-    dim = shape[1]*shape[2]*shape[3]
-    return tf.reshape(_input, [-1,dim], name='_flattened')
-
-
-def conv2d(name, _input, filters, size, channels, stride, padding = 'VALID', init = "torch"):
-    w = conv_weight_variable([size,size,channels,filters],
-                             name + '_weights', init = init)
-    b = conv_bias_variable([filters], size, size, channels,
-                           name + '_biases', init = init)
-    conv = tf.nn.conv2d(_input, w, strides=[1, stride, stride, 1],
-                        padding=padding, name=name + '_convs')
-    out = tf.nn.relu(tf.add(conv, b),
-                     name='' + name + '_activations')
-    return w, b, out
+    def flatten(self, _input):
+        shape = _input.get_shape().as_list()
+        dim = shape[1]*shape[2]*shape[3]*shape[4]
+        return tf.reshape(_input, [-1,dim], name='_flattened')
 
 
-def conv_weight_variable(shape, name, init = "torch"):
-    if init == "glorot_uniform":
-        receptive_field_size = np.prod(shape[:2])
-        fan_in = shape[-2] * receptive_field_size
-        fan_out = shape[-1] * receptive_field_size
-        d = np.sqrt(6. / (fan_in + fan_out))
-    else:
-        w = shape[0]
-        h = shape[1]
-        input_channels = shape[2]
-        d = 1.0 / np.sqrt(input_channels * w * h)
-
-    initial = tf.random_uniform(shape, minval=-d, maxval=d)
-    return tf.Variable(initial, name=name, dtype='float32')
+    def conv2d(self, name, _input, filters, size, channels, stride, padding = 'VALID', init = "torch"):
+        w = conv_weight_variable([size,size,self.depth, channels,filters],
+                                 name + '_weights', init = init)
+        b = conv_bias_variable([filters], size, size, channels,
+                               name + '_biases', init = init)
+        conv = tf.nn.conv2d(_input, w, strides=[1, stride, stride, 1],
+                            padding=padding, name=name + '_convs')
+        out = tf.nn.relu(tf.add(conv, b),
+                         name='' + name + '_activations')
+        return w, b, out
 
 
-def conv_bias_variable(shape, w, h, input_channels, name, init= "torch"):
-    if init == "glorot_uniform":
-        initial = tf.zeros(shape)
-    else:
-        d = 1.0 / np.sqrt(input_channels * w * h)
+    def conv_weight_variable(self, shape, name, init = "torch"):
+        if init == "glorot_uniform":
+            receptive_field_size = np.prod(shape[:2])
+            fan_in = shape[-2] * receptive_field_size
+            fan_out = shape[-1] * receptive_field_size
+            d = np.sqrt(6. / (fan_in + fan_out))
+        else:
+            w = shape[0]
+            h = shape[1]
+            input_channels = shape[3]
+            d = 1.0 / np.sqrt(input_channels * w * h)
+
         initial = tf.random_uniform(shape, minval=-d, maxval=d)
-    return tf.Variable(initial, name=name, dtype='float32')
+        return tf.Variable(initial, name=name, dtype='float32')
 
 
-def fc(name, _input, output_dim, activation = "relu", init = "torch"):
-    input_dim = _input.get_shape().as_list()[1]
-    w = fc_weight_variable([input_dim, output_dim],
-                           name + '_weights', init = init)
-    b = fc_bias_variable([output_dim], input_dim,
-                         '' + name + '_biases', init = init)
-    out = tf.add(tf.matmul(_input, w), b, name= name + '_out')
-
-    if activation == "relu":
-        out = tf.nn.relu(out, name='' + name + '_relu')
-
-    return w, b, out
+    def conv_bias_variable(shape, w, h, input_channels, name, init= "torch"):
+        if init == "glorot_uniform":
+            initial = tf.zeros(shape)
+        else:
+            d = 1.0 / np.sqrt(input_channels * w * h)
+            initial = tf.random_uniform(shape, minval=-d, maxval=d)
+        return tf.Variable(initial, name=name, dtype='float32')
 
 
-def fc_weight_variable(shape, name, init="torch"):
-    if init == "glorot_uniform":
-        fan_in = shape[0]
-        fan_out = shape[1]
-        d = np.sqrt(6. / (fan_in + fan_out))
-    else:
-        input_channels = shape[0]
-        d = 1.0 / np.sqrt(input_channels)
-    initial = tf.random_uniform(shape, minval=-d, maxval=d)
-    return tf.Variable(initial, name=name, dtype='float32')
+    def fc(name, _input, output_dim, activation = "relu", init = "torch"):
+        input_dim = _input.get_shape().as_list()[1]
+        w = fc_weight_variable([input_dim, output_dim],
+                               name + '_weights', init = init)
+        b = fc_bias_variable([output_dim], input_dim,
+                             '' + name + '_biases', init = init)
+        out = tf.add(tf.matmul(_input, w), b, name= name + '_out')
+
+        if activation == "relu":
+            out = tf.nn.relu(out, name='' + name + '_relu')
+
+        return w, b, out
 
 
-def fc_bias_variable(shape, input_channels, name, init= "torch"):
-    if init=="glorot_uniform":
-        initial = tf.zeros(shape, dtype='float32')
-    else:
-        d = 1.0 / np.sqrt(input_channels)
+    def fc_weight_variable(shape, name, init="torch"):
+        if init == "glorot_uniform":
+            fan_in = shape[0]
+            fan_out = shape[1]
+            d = np.sqrt(6. / (fan_in + fan_out))
+        else:
+            input_channels = shape[0]
+            d = 1.0 / np.sqrt(input_channels)
         initial = tf.random_uniform(shape, minval=-d, maxval=d)
-    return tf.Variable(initial, name=name, dtype='float32')
+        return tf.Variable(initial, name=name, dtype='float32')
 
 
-def softmax(name, _input, output_dim, temp):
-    softmax_temp = tf.constant(temp, dtype=tf.float32)
-    input_dim = _input.get_shape().as_list()[1]
-    w = fc_weight_variable([input_dim, output_dim], name + '_weights')
-    b = fc_bias_variable([output_dim], input_dim, name + '_biases')
-    out = tf.nn.softmax(tf.div(tf.add(tf.matmul(_input, w), b), softmax_temp), name= name + '_policy')
-    return w, b, out
+    def fc_bias_variable(shape, input_channels, name, init= "torch"):
+        if init=="glorot_uniform":
+            initial = tf.zeros(shape, dtype='float32')
+        else:
+            d = 1.0 / np.sqrt(input_channels)
+            initial = tf.random_uniform(shape, minval=-d, maxval=d)
+        return tf.Variable(initial, name=name, dtype='float32')
 
 
-def log_softmax( name, _input, output_dim):
-    input_dim = _input.get_shape().as_list()[1]
-    w = fc_weight_variable([input_dim, output_dim], name + '_weights')
-    b = fc_bias_variable([output_dim], input_dim, name + '_biases')
-    out = tf.nn.log_softmax(tf.add(tf.matmul(_input, w), b), name= name + '_policy')
-    return w, b, out
+    def softmax(name, _input, output_dim, temp):
+        softmax_temp = tf.constant(temp, dtype=tf.float32)
+        input_dim = _input.get_shape().as_list()[1]
+        w = fc_weight_variable([input_dim, output_dim], name + '_weights')
+        b = fc_bias_variable([output_dim], input_dim, name + '_biases')
+        out = tf.nn.softmax(tf.div(tf.add(tf.matmul(_input, w), b), softmax_temp), name= name + '_policy')
+        return w, b, out
 
-def max_pooling(name, _input, stride=None, padding='VALID'):
-    return tf.nn.max_pool(_input, padding = padding, name=name)
+
+    def log_softmax( name, _input, output_dim):
+        input_dim = _input.get_shape().as_list()[1]
+        w = fc_weight_variable([input_dim, output_dim], name + '_weights')
+        b = fc_bias_variable([output_dim], input_dim, name + '_biases')
+        out = tf.nn.log_softmax(tf.add(tf.matmul(_input, w), b), name= name + '_policy')
+        return w, b, out
+
+    def max_pooling(name, _input, stride=None, padding='VALID'):
+        return tf.nn.max_pool(_input, padding = padding, name=name)
 
 
 class Network(object):
