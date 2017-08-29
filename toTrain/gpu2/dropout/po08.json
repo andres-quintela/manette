@@ -21,7 +21,5 @@
   "softmax_temp": 1.0,
   "use_dropout": true,
   "annealed": false,
-  "keep_percentage": 0.9,
-  "pwyx_net": false,
-  "play_in_colours": false
+  "keep_percentage": 0.8
 }
