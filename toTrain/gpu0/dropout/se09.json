@@ -1,5 +1,5 @@
 {
-  "game": "pong",
+  "game": "seaquest",
   "initial_lr": 0.0224,
   "lr_annealing_steps": 80000000,
   "max_global_steps": 30000000,
