@@ -3,8 +3,8 @@ import tensorflow as tf
 
 class ExplorationPolicy:
 
-    def __init__(self, egreedy, epsilon, softmax_temp,
-                 use_dropout, keep_percentage, annealed):
+    def __init__(self, egreedy, epsilon, softmax_temp, use_dropout,
+                 keep_percentage, annealed, pwyx_net, play_in_colours):
         self.egreedy_policy = egreedy
         self.initial_epsilon = epsilon
         self.epsilon = epsilon
@@ -14,8 +14,8 @@ class ExplorationPolicy:
         self.global_step = 0
         self.annealed = annealed
         self.annealing_steps = 80000000
-        self.pwyx_net = False
-        self.play_in_colours = False
+        self.pwyx_net = pwyx_net
+        self.play_in_colours = play_in_colours
 
     def get_epsilon(self):
         if self.global_step <= self.annealing_steps:

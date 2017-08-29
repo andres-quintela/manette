@@ -26,7 +26,8 @@ def main(args):
     logging.debug('Configuration: {}'.format(args))
 
     explo_policy = ExplorationPolicy(args.egreedy, args.epsilon, args.softmax_temp,
-                                     args.use_dropout, args.keep_percentage, args.annealed)
+                                     args.use_dropout, args.keep_percentage, args.annealed,
+                                     args.pwyx_net, args.play_in_colours)
 
     network_creator, env_creator = get_network_and_environment_creator(args, explo_policy)
 
@@ -115,6 +116,8 @@ def get_arg_parser():
     parser.add_argument('--use_dropout', default=False, type=bool_arg, help="True if dropout is used to choose actions", dest="use_dropout")
     parser.add_argument('--annealed', default=False, type=bool_arg, help="True if the parameters for explo_policy are annealed toward zero", dest="annealed")
     parser.add_argument('--keep_percentage', default=0.9, type=float, help="keep percentage when dropout is used", dest='keep_percentage' )
+    parser.add_argument('--pwyx_net', default=False, type=bool_arg, help="True if the ppwwyyxx network is used", dest="pwyx_net")
+    parser.add_argument('--play_in_colours', default=False, type=bool_arg, help="True if RGB images are given to the agent", dest="play_in_colours")
 
 
     return parser
