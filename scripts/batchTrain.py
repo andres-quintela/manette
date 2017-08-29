@@ -20,7 +20,8 @@ def create_cmd(data, path):
                 " --single_life_episodes "+str(data["single_life_episodes"])+
                 " -ec "+str(data["emulator_counts"])+
                 " -ew "+str(data["emulator_workers"])+
-                " -rs "+str(data["random_start"]))
+                " -rs "+str(data["random_start"])+
+                )
     return cmd
 
 def create_chpt_cmd(args, path):
