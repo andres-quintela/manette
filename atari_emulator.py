@@ -3,6 +3,7 @@ from ale_python_interface import ALEInterface
 from scipy.misc import imresize
 import random
 from environment import BaseEnvironment, FramePool,ObservationPool
+import logging
 
 IMG_SIZE_X = 84
 IMG_SIZE_Y = 84
@@ -44,7 +45,10 @@ class AtariEmulator(BaseEnvironment):
         #                            self.__process_frame_pool)
         self.frame_pool = FramePool(np.empty((2, self.screen_height,self.screen_width, self.depth), dtype=np.uint8),
                                         self.__process_frame_pool)
-        self.observation_pool = ObservationPool(np.zeros((IMG_SIZE_X, IMG_SIZE_Y, self.depth * NR_IMAGES), dtype=np.uint8), self.play_in_colours)
+        self.observation_pool = ObservationPool(np.zeros((IMG_SIZE_X, IMG_SIZE_Y, self.depth, NR_IMAGES), dtype=np.uint8), self.play_in_colours)
+
+        logging.info("SHAPE observation pool = "+str(np.zeros((IMG_SIZE_X, IMG_SIZE_Y, self.depth, NR_IMAGES), dtype=np.uint8).shape))
+
 
     def get_legal_actions(self):
         return self.legal_actions
