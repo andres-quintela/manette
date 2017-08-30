@@ -65,18 +65,11 @@ class ObservationPool(object):
         self.current_observation_index = 0
 
     def new_observation(self, observation):
-        if self.play_in_colours :
-            self.observation_pool[:, :, :, self.current_observation_index] = observation
-        else :
-            self.observation_pool[:, :, self.current_observation_index] = observation
+        self.observation_pool[:, :, self.current_observation_index] = observation
         self.current_observation_index = (self.current_observation_index + 1) % self.pool_size
 
     def get_pooled_observations(self):
-        if self.play_in_colours :
-            return np.copy(self.observation_pool[:, :, :, self.permutation[self.current_observation_index]])
-        else :
-            return np.copy(self.observation_pool[:, :, self.permutation[self.current_observation_index]])
-
+        return np.copy(self.observation_pool[:, :, self.permutation[self.current_observation_index]])
 
     def __shift(self, seq, n):
         n = n % len(seq)

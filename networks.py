@@ -5,21 +5,20 @@ import numpy as np
 class Operations():
     def __init__(self, conf):
         self.play_in_colours = conf['play_in_colours']
+        self.depth = 1
         if self.play_in_colours :
             self.depth = 3
-        else :
-            self.depth = 1
 
     def flatten(self, _input):
         shape = _input.get_shape().as_list()
-        dim = shape[1]*shape[2]*shape[3]*shape[4]
+        dim = shape[1]*shape[2]*shape[3]
         return tf.reshape(_input, [-1,dim], name='_flattened')
 
 
     def conv2d(self, name, _input, filters, size, channels, stride, padding = 'VALID', init = "torch"):
-        w = conv_weight_variable([size,size,self.depth, channels,filters],
+        w = self.conv_weight_variable([size,size, channels,filters],
                                  name + '_weights', init = init)
-        b = conv_bias_variable([filters], size, size, channels,
+        b = self.conv_bias_variable([filters], size, size, channels,
                                name + '_biases', init = init)
         conv = tf.nn.conv2d(_input, w, strides=[1, stride, stride, 1],
                             padding=padding, name=name + '_convs')
@@ -44,7 +43,7 @@ class Operations():
         return tf.Variable(initial, name=name, dtype='float32')
 
 
-    def conv_bias_variable(shape, w, h, input_channels, name, init= "torch"):
+    def conv_bias_variable(self, shape, w, h, input_channels, name, init= "torch"):
         if init == "glorot_uniform":
             initial = tf.zeros(shape)
         else:
@@ -53,11 +52,11 @@ class Operations():
         return tf.Variable(initial, name=name, dtype='float32')
 
 
-    def fc(name, _input, output_dim, activation = "relu", init = "torch"):
+    def fc(self, name, _input, output_dim, activation = "relu", init = "torch"):
         input_dim = _input.get_shape().as_list()[1]
-        w = fc_weight_variable([input_dim, output_dim],
+        w = self.fc_weight_variable([input_dim, output_dim],
                                name + '_weights', init = init)
-        b = fc_bias_variable([output_dim], input_dim,
+        b = self.fc_bias_variable([output_dim], input_dim,
                              '' + name + '_biases', init = init)
         out = tf.add(tf.matmul(_input, w), b, name= name + '_out')
 
@@ -67,7 +66,7 @@ class Operations():
         return w, b, out
 
 
-    def fc_weight_variable(shape, name, init="torch"):
+    def fc_weight_variable(self, shape, name, init="torch"):
         if init == "glorot_uniform":
             fan_in = shape[0]
             fan_out = shape[1]
@@ -79,7 +78,7 @@ class Operations():
         return tf.Variable(initial, name=name, dtype='float32')
 
 
-    def fc_bias_variable(shape, input_channels, name, init= "torch"):
+    def fc_bias_variable(self, shape, input_channels, name, init= "torch"):
         if init=="glorot_uniform":
             initial = tf.zeros(shape, dtype='float32')
         else:
@@ -88,24 +87,25 @@ class Operations():
         return tf.Variable(initial, name=name, dtype='float32')
 
 
-    def softmax(name, _input, output_dim, temp):
+    def softmax(self, name, _input, output_dim, temp):
         softmax_temp = tf.constant(temp, dtype=tf.float32)
         input_dim = _input.get_shape().as_list()[1]
-        w = fc_weight_variable([input_dim, output_dim], name + '_weights')
-        b = fc_bias_variable([output_dim], input_dim, name + '_biases')
+        w = self.fc_weight_variable([input_dim, output_dim], name + '_weights')
+        b = self.fc_bias_variable([output_dim], input_dim, name + '_biases')
         out = tf.nn.softmax(tf.div(tf.add(tf.matmul(_input, w), b), softmax_temp), name= name + '_policy')
         return w, b, out
 
 
-    def log_softmax( name, _input, output_dim):
+    def log_softmax(self, name, _input, output_dim):
         input_dim = _input.get_shape().as_list()[1]
-        w = fc_weight_variable([input_dim, output_dim], name + '_weights')
-        b = fc_bias_variable([output_dim], input_dim, name + '_biases')
+        w = self.fc_weight_variable([input_dim, output_dim], name + '_weights')
+        b = self.fc_bias_variable([output_dim], input_dim, name + '_biases')
         out = tf.nn.log_softmax(tf.add(tf.matmul(_input, w), b), name= name + '_policy')
         return w, b, out
 
-    def max_pooling(name, _input, stride=None, padding='VALID'):
-        return tf.nn.max_pool(_input, padding = padding, name=name)
+    def max_pooling(self, name, _input, stride=None, padding='VALID'):
+        shape = [1,2,2,1]
+        return tf.nn.max_pool(_input, shape, strides=shape, padding = padding, name=name)
 
 
 class Network(object):
@@ -118,14 +118,16 @@ class Network(object):
         self.clip_norm_type = conf['clip_norm_type']
         self.device = conf['device']
         self.play_in_colours = conf['play_in_colours']
+        self.depth = 1
+        if self.play_in_colours :
+            self.depth = 3
+        self.op = Operations(conf)
 
         with tf.device(self.device):
             with tf.name_scope(self.name):
                 self.loss_scaling = 5.0
-                if self.play_in_colours :
-                    self.input_ph = tf.placeholder(tf.uint8, [None, 84, 84, 3, 4], name='input')
-                else :
-                    self.input_ph = tf.placeholder(tf.uint8, [None, 84, 84, 4], name='input')
+
+                self.input_ph = tf.placeholder(tf.uint8, [None, 84, 84, self.depth* 4], name='input')
                 self.selected_action_ph = tf.placeholder("float32", [None, self.num_actions], name="selected_action")
                 self.input = tf.scalar_mul(1.0/255.0, tf.cast(self.input_ph, tf.float32))
 
@@ -189,21 +191,18 @@ class PpwwyyxxNetwork(Network):
 
         with tf.device(self.device):
             with tf.name_scope(self.name):
-                #self.input_ph = tf.placeholder(tf.uint8, [None, 84, 84, 12], name='input')
-                self.input = tf.scalar_mul(1.0/255.0, tf.cast(self.input_ph, tf.float32))
-
 
 #conv2d(name, _input, filters, size, channels, stride, padding = 'VALID', init = "torch")
 
-                _, _, conv1 = conv2d('conv1', self.input, 32, 5, 4, 1, padding = 'SAME')
-                mp_conv1 = max_pooling('mp_conv1', conv1)
-                _, _, conv2 = conv2d('conv2', mp_conv1, 32, 5, 32, 1, padding = 'SAME')
-                mp_conv2 = max_pooling('mp_conv2', conv2)
-                _, _, conv3 = conv2d('conv3', mp_conv2, 64, 4, 32, 1, padding = 'SAME')
-                mp_conv3 = max_pooling('mp_conv3', conv3)
-                _, _, conv4 = conv2d('conv4', mp_conv3, 64, 3, 64, 1, padding = 'SAME')
+                _, _, conv1 = self.op.conv2d('conv1', self.input, 32, 5, 12, 1, padding = 'SAME')
+                mp_conv1 = self.op.max_pooling('mp_conv1', conv1)
+                _, _, conv2 = self.op.conv2d('conv2', mp_conv1, 32, 5, 32, 1, padding = 'SAME')
+                mp_conv2 = self.op.max_pooling('mp_conv2', conv2)
+                _, _, conv3 = self.op.conv2d('conv3', mp_conv2, 64, 4, 32, 1, padding = 'SAME')
+                mp_conv3 = self.op.max_pooling('mp_conv3', conv3)
+                _, _, conv4 = self.op.conv2d('conv4', mp_conv3, 64, 3, 64, 1, padding = 'SAME')
 
-                _, _, fc5 = fc('fc5', flatten(conv4), 512, activation="relu")
+                _, _, fc5 = self.op.fc('fc5', self.op.flatten(conv4), 512, activation="relu")
 
                 self.output = fc5
 
