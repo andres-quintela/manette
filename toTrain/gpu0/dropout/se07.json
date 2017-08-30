@@ -1,5 +1,5 @@
 {
-  "game": "pong",
+  "game": "seaquest",
   "initial_lr": 0.0224,
   "lr_annealing_steps": 80000000,
   "max_global_steps": 30000000,
@@ -21,7 +21,13 @@
   "softmax_temp": 1.0,
   "use_dropout": false,
   "annealed": false,
+<<<<<<< HEAD:toTrain/gpu0/dropout/po09.json
   "keep_percentage": 0.9,
   "pwyx_net": true,
   "play_in_colours": true
+=======
+  "keep_percentage": 0.7,
+  "pwyx_net": false,
+  "play_in_colours": false
+>>>>>>> ExplorationPolicy:toTrain/gpu0/dropout/se07.json
 }

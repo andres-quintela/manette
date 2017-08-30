@@ -169,7 +169,7 @@ class BayesianNetwork(NIPSNetwork):
 
         with tf.device(self.device):
             with tf.name_scope(self.name):
-
+                logging.info('Using bayesion Network')
                 dropout = tf.nn.dropout(self.output, conf["keep_percentage"])
 
                 w_fc4, b_fc4, fc4 = fc('fc4', dropout, 256, activation="relu")
