@@ -18,16 +18,16 @@ def main(args):
     if args.game_folder == '' :
         for f in os.listdir(args.folder):
             if args.checkpoint == 0 :
-                pathSrc = args.folder+f+"/"
+                pathSrc = args.folder+f
             else :
-                pathSrc = args.folder+"checkpoints_saved/"+str(args.checkpoint)+"/"
+                pathSrc = args.folder+f+"checkpoints_saved/"+str(args.checkpoint)+"/"
             subprocess.call(create_cmd(args, f, pathSrc), shell = True)
     else :
         f = args.game_folder
         if args.checkpoint == 0 :
-            pathSrc = args.folder+f+"/"
+            pathSrc = args.folder+f
         else :
-            pathSrc = args.folder+"checkpoints_saved/"+str(args.checkpoint)+"/"
+            pathSrc = args.folder+f+"checkpoints_saved/"+str(args.checkpoint)+"/"
         subprocess.call(create_cmd(args, f, pathSrc), shell = True)
 
 def get_arg_parser():
