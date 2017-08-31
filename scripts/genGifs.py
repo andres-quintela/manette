@@ -7,7 +7,7 @@ def create_cmd(args, f, path):
     cmd = ("python3 test.py -f "+path+
            " -tc "+str(args.test_count)+
            " -np "+str(args.noops)+
-           " -gn "+f+str(args.checkpoint)+
+           " -gn "+f[:-1]+str(args.checkpoint)+
            " -gf "+args.folder+"gifs/")
     return cmd
 
