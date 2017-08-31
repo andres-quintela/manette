@@ -1,4 +1,5 @@
 import numpy as np
+import logging
 
 
 class BaseEnvironment(object):
@@ -70,7 +71,10 @@ class ObservationPool(object):
 
     def get_pooled_observations(self):
         #NEED TO CHANGE SOMETHING HERE !!!
-        return np.copy(self.observation_pool[:, :, :, self.permutation[self.current_observation_index]])
+        test = np.copy(self.observation_pool[:, :, :, self.permutation[self.current_observation_index]])
+        res = np.reshape(test, (84, 84, 12))
+        #return np.copy(self.observation_pool[:, :, :, self.permutation[self.current_observation_index]])
+        return res
 
     def __shift(self, seq, n):
         n = n % len(seq)

@@ -47,8 +47,6 @@ class AtariEmulator(BaseEnvironment):
                                         self.__process_frame_pool)
         self.observation_pool = ObservationPool(np.zeros((IMG_SIZE_X, IMG_SIZE_Y, self.depth, NR_IMAGES), dtype=np.uint8), self.play_in_colours)
 
-        logging.info("SHAPE observation pool = "+str(np.zeros((IMG_SIZE_X, IMG_SIZE_Y, self.depth, NR_IMAGES), dtype=np.uint8).shape))
-
 
     def get_legal_actions(self):
         return self.legal_actions
