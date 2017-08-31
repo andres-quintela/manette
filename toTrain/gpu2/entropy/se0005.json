@@ -6,7 +6,7 @@
   "max_local_steps": 5,
   "gamma": 0.99,
   "alpha": 0.99,
-  "entropy_regularisation_strength": 0.02,
+  "entropy_regularisation_strength": 0.005,
   "arch": "NIPS",
   "emulator_workers": 8,
   "emulator_counts": 32,
@@ -19,9 +19,9 @@
   "egreedy": false,
   "epsilon": 0.05,
   "softmax_temp": 1.0,
-  "use_dropout": true,
+  "use_dropout": false,
   "annealed": false,
-  "keep_percentage": 0.6,
+  "keep_percentage": 0.8,
   "pwyx_net": false,
   "play_in_colours": false
-  }
+}
