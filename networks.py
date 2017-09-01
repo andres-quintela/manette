@@ -194,7 +194,7 @@ class PpwwyyxxNetwork(Network):
 
 #conv2d(name, _input, filters, size, channels, stride, padding = 'VALID', init = "torch")
 
-                _, _, conv1 = self.op.conv2d('conv1', self.input, 32, 5, 12, 1, padding = 'SAME')
+                _, _, conv1 = self.op.conv2d('conv1', self.input, 32, 5, self.depth * 4, 1, padding = 'SAME')
                 mp_conv1 = self.op.max_pooling('mp_conv1', conv1)
                 _, _, conv2 = self.op.conv2d('conv2', mp_conv1, 32, 5, 32, 1, padding = 'SAME')
                 mp_conv2 = self.op.max_pooling('mp_conv2', conv2)

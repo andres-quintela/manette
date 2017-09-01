@@ -60,6 +60,8 @@ class ObservationPool(object):
 
     def __init__(self, observation_pool, play_in_colours):
         self.play_in_colours = play_in_colours
+        self.depth = 1
+        if self.play_in_colours : self.depth = 3
         self.observation_pool = observation_pool
         self.pool_size = observation_pool.shape[-1]
         self.permutation = [self.__shift(list(range(self.pool_size)), i) for i in range(self.pool_size)]
@@ -72,7 +74,7 @@ class ObservationPool(object):
     def get_pooled_observations(self):
         #NEED TO CHANGE SOMETHING HERE !!!
         test = np.copy(self.observation_pool[:, :, :, self.permutation[self.current_observation_index]])
-        res = np.reshape(test, (84, 84, 12))
+        res = np.reshape(test, (84, 84, self.depth * 4))
         #return np.copy(self.observation_pool[:, :, :, self.permutation[self.current_observation_index]])
         return res
 
