@@ -99,7 +99,6 @@ class PAACLearner(ActorLearner):
 
         while self.global_step < self.max_global_steps:
 
-            logging.info("global step : "+str(self.global_step))
             loop_start_time = time.time()
 
             max_local_steps = self.max_local_steps
