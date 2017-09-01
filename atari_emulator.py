@@ -111,7 +111,6 @@ class AtariEmulator(BaseEnvironment):
 
     def next(self, action):
         """ Get the next state, reward, and game over signal """
-        logging.info("fonction next")
         reward = self.__action_repeat(np.argmax(action))
         self.observation_pool.new_observation(self.frame_pool.get_processed_frame())
         terminal = self.__is_terminal()
