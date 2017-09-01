@@ -99,12 +99,10 @@ class PAACLearner(ActorLearner):
 
         while self.global_step < self.max_global_steps:
 
-            logging.info("global step : "+str(self.global_step))
             loop_start_time = time.time()
 
             max_local_steps = self.max_local_steps
             for t in range(max_local_steps):
-                logging.info("local step : "+str(t))
                 #next_actions, readouts_v_t, readouts_pi_t = self.__choose_next_actions(shared_states)
                 next_actions, readouts_v_t, readouts_pi_t = self.explo_policy.choose_next_actions(self.network,
                                                                  self.num_actions, shared_states, self.session)

@@ -82,8 +82,12 @@ class AtariEmulator(BaseEnvironment):
         """ Preprocess frame pool """
 
         img = np.amax(frame_pool, axis=0)
+        if not self.play_in_colours :
+            img = np.reshape(img, (210, 160))
         img = imresize(img, (84, 84), interp='nearest')
         img = img.astype(np.uint8)
+        if not self.play_in_colours :
+            img = np.reshape(img, (84, 84, 1))
         return img
 
     def __action_repeat(self, a, times=ACTION_REPEAT):
@@ -96,7 +100,11 @@ class AtariEmulator(BaseEnvironment):
             reward += self.ale.act(self.legal_actions[a])
             imgs = self.__get_screen_image()
             for frame in imgs :
-                self.frame_pool.new_frame(frame)
+                if self.play_in_colours :
+                    self.frame_pool.new_frame(frame)
+                else :
+                    f = np.reshape(frame , (210, 160, 1))
+                    self.frame_pool.new_frame(f)
         return reward
 
     def get_initial_state(self):

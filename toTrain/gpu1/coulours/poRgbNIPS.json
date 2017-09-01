@@ -19,9 +19,9 @@
   "egreedy": false,
   "epsilon": 0.05,
   "softmax_temp": 1.0,
-  "use_dropout": true,
+  "use_dropout": false,
   "annealed": false,
-  "keep_percentage": 0.95,
+  "keep_percentage": 0.9,
   "pwyx_net": false,
-  "play_in_colours": false
-  }
+  "play_in_colours": true
+}
