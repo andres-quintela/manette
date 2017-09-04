@@ -67,7 +67,8 @@ def get_network_and_environment_creator(args, explo_policy, random_seed=3):
                     'clip_norm_type': args.clip_norm_type,
                     'softmax_temp' : explo_policy.softmax_temp,
                     'keep_percentage' : explo_policy.keep_percentage,
-                    'play_in_colours' : explo_policy.play_in_colours}
+                    'play_in_colours' : explo_policy.play_in_colours,
+                    'entropy_ann_steps' : args.entropy_ann_steps}
 
     if explo_policy.pwyx_net :
         network = PpwwyyxxPolicyVNetwork
@@ -118,7 +119,7 @@ def get_arg_parser():
     parser.add_argument('--keep_percentage', default=0.9, type=float, help="keep percentage when dropout is used", dest='keep_percentage' )
     parser.add_argument('--pwyx_net', default=False, type=bool_arg, help="True if the ppwwyyxx network is used", dest="pwyx_net")
     parser.add_argument('--play_in_colours', default=False, type=bool_arg, help="True if RGB images are given to the agent", dest="play_in_colours")
-
+    parser.add_argument('--entropy_ann_steps', default=0, type=int, help="If different drom 0, the entropy_regularisation_strength will be annealed toward 0 with this nb of steps", dest="entropy_ann_steps")
 
     return parser
 

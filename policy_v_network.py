@@ -11,6 +11,8 @@ class PolicyVNetwork(Network):
         super(PolicyVNetwork, self).__init__(conf)
 
         self.entropy_regularisation_strength = conf['entropy_regularisation_strength']
+        self.entropy_annealing_steps = conf['entropy_ann_steps']
+        self.entropy = conf['entropy_regularisation_strength']
         self.softmax_temp = conf['softmax_temp']
 
         with tf.device(conf['device']):
@@ -56,6 +58,12 @@ class PolicyVNetwork(Network):
                 # Loss scaling is used because the learning rate was initially runed tuned to be used with
                 # max_local_steps = 5 and summing over timesteps, which is now replaced with the mean.
                 self.loss = tf.scalar_mul(self.loss_scaling, self.actor_objective_mean + self.critic_loss_mean)
+
+    def get_entropy(self):
+        if self.global_step <= self.entropy_annealing_steps:
+            return self.initial_lr - (self.global_step * self.initial_lr / self.lr_annealing_steps)
+        else:
+            return 0.0
 
 class NIPSPolicyVNetwork(PolicyVNetwork, NIPSNetwork):
     pass
