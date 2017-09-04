@@ -30,7 +30,8 @@ def create_cmd(data, path):
                 " --keep_percentage "+str(data["keep_percentage"])+
                 " --pwyx_net "+str(data["pwyx_net"])+
                 " --play_in_colours "+str(data["play_in_colours"])+
-                " --entropy_ann_steps "+str(data["entropy_ann_steps"]))
+                " --entropy_ann_steps "+str(data["entropy_ann_steps"])+
+                " --random_actions "+str(data["random_actions"]))
     return cmd
 
 def create_chpt_cmd(args, path):

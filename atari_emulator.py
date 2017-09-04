@@ -31,6 +31,8 @@ class AtariEmulator(BaseEnvironment):
         self.random_start = args.random_start
         self.single_life_episodes = args.single_life_episodes
         self.call_on_new_frame = args.visualize
+        self.random_actions = args.random_actions
+        self.global_step = 0
 
         # Processed historcal frames that will be fed in to the network
         # (i.e., four 84x84 images)
@@ -71,7 +73,12 @@ class AtariEmulator(BaseEnvironment):
         """ Restart game """
         self.ale.reset_game()
         self.lives = self.ale.lives()
-        if self.random_start:
+        if self.random_actions > self.global_step :
+            wait = random.randint(0, MAX_START_WAIT)
+            for _ in range(wait):
+                random_action = random.randint(0, len(self.legal_actions)-1)
+                self.ale.act(self.legal_actions[random_action])
+        elif self.random_start:
             wait = random.randint(0, MAX_START_WAIT)
             for _ in range(wait):
                 self.ale.act(self.legal_actions[0])
@@ -115,6 +122,7 @@ class AtariEmulator(BaseEnvironment):
         terminal = self.__is_terminal()
         self.lives = self.ale.lives()
         observation = self.observation_pool.get_pooled_observations()
+        self.global_step += 1
         return observation, reward, terminal
 
     def __is_terminal(self):
