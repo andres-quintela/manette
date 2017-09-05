@@ -76,7 +76,8 @@ class AtariEmulator(BaseEnvironment):
         self.ale.reset_game()
         self.lives = self.ale.lives()
         if self.random_actions > self.global_step :
-            wait = random.randint(0, MAX_START_WAIT)
+            logging.info("random")
+            wait = random.randint(0, 60)
             for _ in range(wait):
                 random_action = random.randint(0, len(self.legal_actions)-1)
                 self.ale.act(self.legal_actions[random_action])
