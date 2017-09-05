@@ -7,6 +7,7 @@ import time
 import tensorflow as tf
 import random
 from paac import PAACLearner
+from exploration_policy import ExplorationPolicy
 
 
 def get_save_frame(name):
@@ -47,7 +48,8 @@ if __name__ == '__main__':
     rng = np.random.RandomState(int(time.time()))
     args.random_seed = rng.randint(1000)
 
-    network_creator, env_creator = get_network_and_environment_creator(args)
+    explo_policy = ExplorationPolicy(["multi", "0", "1"])
+    network_creator, env_creator = get_network_and_environment_creator(args, explo_policy)
     network = network_creator()
     saver = tf.train.Saver()
 

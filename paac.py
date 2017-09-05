@@ -12,8 +12,8 @@ import numpy as np
 
 
 class PAACLearner(ActorLearner):
-    def __init__(self, network_creator, environment_creator, args):
-        super(PAACLearner, self).__init__(network_creator, environment_creator, args)
+    def __init__(self, network_creator, environment_creator, explo_policy, args):
+        super(PAACLearner, self).__init__(network_creator, environment_creator, explo_policy, args)
         self.workers = args.emulator_workers
 
     @staticmethod
@@ -103,7 +103,9 @@ class PAACLearner(ActorLearner):
 
             max_local_steps = self.max_local_steps
             for t in range(max_local_steps):
-                next_actions, readouts_v_t, readouts_pi_t = self.__choose_next_actions(shared_states)
+                #next_actions, readouts_v_t, readouts_pi_t = self.__choose_next_actions(shared_states)
+                next_actions, readouts_v_t, readouts_pi_t = self.explo_policy.choose_next_actions(self.network,
+                                                                 self.num_actions, shared_states, self.session)
                 actions_sum += next_actions
                 for z in range(next_actions.shape[0]):
                     shared_actions[z] = next_actions[z]
@@ -171,6 +173,10 @@ class PAACLearner(ActorLearner):
                 tf.Summary.Value(tag='parameters/lr', simple_value=lr)
             ])
             self.summary_writer.add_summary(step_summary, self.global_step)
+#            epsilon_summary = tf.Summary(value=[
+ #               tf.Summary.Value(tag='parameters/epsilon', simple_value=explo_policy.epsilon)
+  #          ])
+   #         self.summary_writer.add_summary(epsilon_summary, self.global_step)
 
             if len(total_rewards) > 50 and self.global_step % 500 == 0 :
                 mean = np.mean(total_rewards[-50:])

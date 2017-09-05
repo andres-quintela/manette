@@ -11,6 +11,7 @@ class PolicyVNetwork(Network):
         super(PolicyVNetwork, self).__init__(conf)
 
         self.entropy_regularisation_strength = conf['entropy_regularisation_strength']
+        self.softmax_temp = conf['softmax_temp']
 
         with tf.device(conf['device']):
             with tf.name_scope(self.name):
@@ -21,7 +22,7 @@ class PolicyVNetwork(Network):
 
                 # Final actor layer
                 layer_name = 'actor_output'
-                _, _, self.output_layer_pi = softmax(layer_name, self.output, self.num_actions)
+                _, _, self.output_layer_pi = softmax(layer_name, self.output, self.num_actions, self.softmax_temp)
                 # Final critic layer
                 _, _, self.output_layer_v = fc('critic_output', self.output, 1, activation="linear")
 
@@ -59,6 +60,8 @@ class PolicyVNetwork(Network):
 class NIPSPolicyVNetwork(PolicyVNetwork, NIPSNetwork):
     pass
 
+class BayesianPolicyVNetwork(PolicyVNetwork, BayesianNetwork):
+    pass
 
 class NaturePolicyVNetwork(PolicyVNetwork, NatureNetwork):
     pass

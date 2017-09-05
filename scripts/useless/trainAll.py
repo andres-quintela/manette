@@ -23,6 +23,7 @@ def save_args(args, folder, file_name='parameters.json'):
 
 def create_cmd(args, game_name, path):
     cmd = ("python3 train.py -g "+game_name+" -df "+path+"/"+game_name+
+                " -explo "+args.explo_policy+
                 " -v "+str(args.visualize)+
                 " --e "+str(args.e)+
                 " --alpha "+str(args.alpha)+
@@ -68,6 +69,7 @@ def main(args):
 def get_arg_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('-n', default= '', type=str, help='Name of the experiment', dest='name_exp')
+    parser.add_argument('-explo', default='multi_0_1', type=str, help="Exploration policy to be used", dest="explo_policy")
     parser.add_argument('-g', default= 'po', type=str, help='Name of the games to train', dest='games')
     parser.add_argument('-d', '--device', default=2, type=int, help="Device to be used : 0,1 or 2", dest="device")
     parser.add_argument('-v', '--visualize', default=False, type=bool_arg, help="0: no visualization of emulator; 1: all emulators, for all actors, are visualized; 2: only 1 emulator (for one of the actors) is visualized", dest="visualize")
