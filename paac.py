@@ -103,9 +103,7 @@ class PAACLearner(ActorLearner):
 
             max_local_steps = self.max_local_steps
             for t in range(max_local_steps):
-                #next_actions, readouts_v_t, readouts_pi_t = self.__choose_next_actions(shared_states)
-                next_actions, readouts_v_t, readouts_pi_t = self.explo_policy.choose_next_actions(self.network,
-                                                                 self.num_actions, shared_states, self.session)
+                next_actions, readouts_v_t, readouts_pi_t = self.__choose_next_actions(shared_states)
                 actions_sum += next_actions
                 for z in range(next_actions.shape[0]):
                     shared_actions[z] = next_actions[z]
@@ -132,7 +130,8 @@ class PAACLearner(ActorLearner):
                         total_rewards.append(total_episode_rewards[e])
                         episode_summary = tf.Summary(value=[
                             tf.Summary.Value(tag='rl/reward', simple_value=total_episode_rewards[e]),
-                            tf.Summary.Value(tag='rl/episode_length', simple_value=emulator_steps[e]),
+                            tf.Summary.Value(tag='rl/episode_length', simple_value=emulator_steps[e])
+                            #tf.Summary.Value(tag='rl/loss', simple_value=self.network.loss)
                         ])
                         self.summary_writer.add_summary(episode_summary, self.global_step)
                         self.summary_writer.flush()
@@ -173,10 +172,6 @@ class PAACLearner(ActorLearner):
                 tf.Summary.Value(tag='parameters/lr', simple_value=lr)
             ])
             self.summary_writer.add_summary(step_summary, self.global_step)
-#            epsilon_summary = tf.Summary(value=[
- #               tf.Summary.Value(tag='parameters/epsilon', simple_value=explo_policy.epsilon)
-  #          ])
-   #         self.summary_writer.add_summary(epsilon_summary, self.global_step)
 
             if len(total_rewards) > 50 and self.global_step % 500 == 0 :
                 mean = np.mean(total_rewards[-50:])
