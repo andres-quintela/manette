@@ -1,7 +1,6 @@
 import numpy as np
 import logging
 
-
 class BaseEnvironment(object):
     def get_initial_state(self):
         """
@@ -72,10 +71,8 @@ class ObservationPool(object):
         self.current_observation_index = (self.current_observation_index + 1) % self.pool_size
 
     def get_pooled_observations(self):
-        #NEED TO CHANGE SOMETHING HERE !!!
         test = np.copy(self.observation_pool[:, :, :, self.permutation[self.current_observation_index]])
         res = np.reshape(test, (84, 84, self.depth * 4))
-        #return np.copy(self.observation_pool[:, :, :, self.permutation[self.current_observation_index]])
         return res
 
     def __shift(self, seq, n):

@@ -1,9 +1,10 @@
 import numpy as np
 from ale_python_interface import ALEInterface
-from scipy.misc import imresize
+from scipy.misc import imresize, imsave
 import random
 from environment import BaseEnvironment, FramePool,ObservationPool
 import logging
+import sys
 
 IMG_SIZE_X = 84
 IMG_SIZE_Y = 84
@@ -66,8 +67,8 @@ class AtariEmulator(BaseEnvironment):
             self.ale.getScreenRGB(self.rgb_screen)
             self.on_new_frame(self.rgb_screen)
         if self.play_in_colours :
-            return [np.squeeze(self.rgb_screen[i]) for i in range(self.depth)]
-        return [np.squeeze(self.gray_screen)]
+            return self.rgb_screen
+        return self.gray_screen
 
     def on_new_frame(self, frame):
         pass
@@ -87,7 +88,6 @@ class AtariEmulator(BaseEnvironment):
 
     def __process_frame_pool(self, frame_pool):
         """ Preprocess frame pool """
-
         img = np.amax(frame_pool, axis=0)
         if not self.play_in_colours :
             img = np.reshape(img, (210, 160))
@@ -105,13 +105,8 @@ class AtariEmulator(BaseEnvironment):
         # Only need to add the last FRAMES_IN_POOL frames to the frame pool
         for i in range(FRAMES_IN_POOL):
             reward += self.ale.act(self.legal_actions[a])
-            imgs = self.__get_screen_image()
-            for frame in imgs :
-                if self.play_in_colours :
-                    self.frame_pool.new_frame(frame)
-                else :
-                    f = np.reshape(frame , (210, 160, 1))
-                    self.frame_pool.new_frame(f)
+            img = self.__get_screen_image()
+            self.frame_pool.new_frame(img)
         return reward
 
     def get_initial_state(self):
