@@ -103,7 +103,8 @@ class PAACLearner(ActorLearner):
 
             max_local_steps = self.max_local_steps
             for t in range(max_local_steps):
-                next_actions, readouts_v_t, readouts_pi_t = self.__choose_next_actions(shared_states)
+                #next_actions, readouts_v_t, readouts_pi_t = self.__choose_next_actions(shared_states)
+                next_actions, readouts_v_t, readouts_pi_t = self.explo_policy.choose_next_actions(self.network, self.num_actions, shared_states, self.session)
                 actions_sum += next_actions
                 for z in range(next_actions.shape[0]):
                     shared_actions[z] = next_actions[z]

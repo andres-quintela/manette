@@ -1,21 +1,25 @@
 import numpy as np
 import tensorflow as tf
+import logging
 
 class ExplorationPolicy:
 
-    def __init__(self, egreedy, epsilon, softmax_temp, use_dropout,
-                 keep_percentage, annealed, pwyx_net, play_in_colours):
-        self.egreedy_policy = egreedy
-        self.initial_epsilon = epsilon
-        self.epsilon = epsilon
-        self.softmax_temp = softmax_temp
-        self.use_dropout = use_dropout
-        self.keep_percentage = keep_percentage
+    def __init__(self, args):
+        self.egreedy_policy = args.egreedy
+        self.initial_epsilon = args.epsilon
+        self.epsilon = args.epsilon
+        self.softmax_temp = args.softmax_temp
+        self.use_dropout = args.use_dropout
+        self.keep_percentage = args.keep_percentage
         self.global_step = 0
-        self.annealed = annealed
+        self.annealed = args.annealed
         self.annealing_steps = 80000000
-        self.pwyx_net = pwyx_net
-        self.play_in_colours = play_in_colours
+        self.pwyx_net = args.pwyx_net
+        self.play_in_colours = args.play_in_colours
+        self.oxygen_greedy = args.oxygen_greedy
+        self.proba_oxygen = args.proba_oxygen
+        self.nb_up_actions = args.nb_up_actions
+        self.compteur_up_actions = 0
 
     def get_epsilon(self):
         if self.global_step <= self.annealing_steps:
@@ -29,7 +33,9 @@ class ExplorationPolicy:
              network.output_layer_pi],
             feed_dict={network.input_ph: states})
 
-        if self.egreedy_policy :
+        if self.oxygen_greedy :
+            action_indices = self.oxygen_greedy_choose(network_output_pi)
+        elif self.egreedy_policy :
             action_indices = self.e_greedy_choose(network_output_pi)
         else :
             action_indices = self.multinomial_choose(network_output_pi)
@@ -51,6 +57,14 @@ class ExplorationPolicy:
             else :
                 action_indexes.append(np.argmax(p))
         return action_indexes
+
+    def oxygen_greedy_choose(self, probs):
+        if self.compteur_up_actions == 0 and np.random.rand(1)[0] > self.proba_oxygen :
+            return self.multinomial_choose(probs)
+        else :
+            action_indexes = [2]*len(probs)
+            self.compteur_up_actions = (self.compteur_up_actions + 1) % self.nb_up_actions
+            return action_indexes
 
     def multinomial_choose(self, probs):
         """Sample an action from an action probability distribution output by
