@@ -32,7 +32,7 @@ def main(args):
 
 def get_arg_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-gf', default= '', type=str, help='Name of the games folder to generate. Default : all folder are generated.', dest='game_folder')
+    parser.add_argument('-gf', default= '', type=str, help='Name of the game folder to generate. Default : all folder are generated.', dest='game_folder')
     parser.add_argument('-f', '--folder', type=str, help="Folder where is saved the logs of all games.", dest="folder", required=True)
     parser.add_argument('-tc', '--test_count', default='1', type=int, help="The amount of tests to run on the given network", dest="test_count")
     parser.add_argument('-cp', '--checkpoint', default='0', type=int, help="The checkpoint from which to run the test", dest="checkpoint")
