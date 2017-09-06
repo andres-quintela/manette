@@ -74,7 +74,7 @@ These models can be used as starting points for training on the same game, other
 This codebase was designed to be easily modified to new environments and new neural network architectures.
 
 ## Adapting to a new environment
-The codebase currently contains a single environment, namely ```atari_emulator.py```. To train on a new environment, simply 
+The codebase currently contains a single environment, namely ```atari_emulator.py```. To train on a new environment, simply
 create a new class that inherits from ```BaseEnvironment``` and modify ```environment_creator.py``` to create an instance of your new environment.
 
 ## Adapting to new neural network architectures
@@ -109,5 +109,3 @@ Some changes have been made:
 * Gradient clipping default value changed from 40.0 to 3.0.
 * Entropy regularization constant default changed from 0.01 to 0.02.
 * Using OpenAI Gym results in an increase in training time of 33%. This is because converting the image from RGB to Grayscale in python is slow.
-
-

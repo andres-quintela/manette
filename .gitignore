@@ -6,3 +6,6 @@ gifs/
 nohupLogs/
 *.py#
 *.#
+*.save
+*.swp
+*.out

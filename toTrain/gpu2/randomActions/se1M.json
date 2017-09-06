@@ -19,7 +19,11 @@
   "egreedy": false,
   "epsilon": 0.05,
   "softmax_temp": 1.0,
-  "use_dropout": true,
+  "use_dropout": false,
   "annealed": false,
-  "keep_percentage": 0.8
+  "keep_percentage": 0.8,
+  "pwyx_net": false,
+  "play_in_colours": false,
+  "entropy_ann_steps": 0,
+  "random_actions": 1000000
 }

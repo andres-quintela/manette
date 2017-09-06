@@ -87,6 +87,7 @@ class ActorLearner(Process):
         variable_summaries(self.flat_raw_gradients, 'raw_gradients')
         variable_summaries(self.flat_clipped_gradients, 'clipped_gradients')
         tf.summary.scalar('global_norm', global_norm)
+        tf.summary.scalar('loss', self.network.loss)
 
     def save_vars(self, force=False):
         if force or self.global_step - self.last_saving_step >= CHECKPOINT_INTERVAL:
