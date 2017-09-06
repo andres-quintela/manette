@@ -20,7 +20,19 @@ def create_cmd(data, path):
                 " --single_life_episodes "+str(data["single_life_episodes"])+
                 " -ec "+str(data["emulator_counts"])+
                 " -ew "+str(data["emulator_workers"])+
-                " -rs "+str(data["random_start"]))
+                " -rs "+str(data["random_start"])+
+
+                " --egreedy "+str(data["egreedy"])+
+                " --epsilon "+str(data["epsilon"])+
+                " --softmax_temp "+str(data["softmax_temp"])+
+                " --use_dropout "+str(data["use_dropout"])+
+                " --annealed "+str(data["annealed"])+
+                " --keep_percentage "+str(data["keep_percentage"])+
+                " --pwyx_net "+str(data["pwyx_net"])+
+                " --play_in_colours "+str(data["play_in_colours"])+
+                " --entropy_ann_steps "+str(data["entropy_ann_steps"])+
+                " --random_actions "+str(data["random_actions"])+
+                " --nb_actions "+str(data["nb_actions"]))
     return cmd
 
 def create_chpt_cmd(args, path):
