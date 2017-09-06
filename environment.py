@@ -1,5 +1,6 @@
 import numpy as np
 import logging
+from scipy.misc import imsave
 
 class BaseEnvironment(object):
     def get_initial_state(self):
@@ -65,6 +66,7 @@ class ObservationPool(object):
         self.pool_size = observation_pool.shape[-1]
         self.permutation = [self.__shift(list(range(self.pool_size)), i) for i in range(self.pool_size)]
         self.current_observation_index = 0
+        self.c = 0
 
     def new_observation(self, observation):
         self.observation_pool[:, :, :, self.current_observation_index] = observation
@@ -73,6 +75,8 @@ class ObservationPool(object):
     def get_pooled_observations(self):
         test = np.copy(self.observation_pool[:, :, :, self.permutation[self.current_observation_index]])
         res = np.reshape(test, (84, 84, self.depth * 4))
+        imsave("imgs/frame"+str(self.c)+".jpg", test[:,:,:,0])
+        self.c +=1
         return res
 
     def __shift(self, seq, n):
