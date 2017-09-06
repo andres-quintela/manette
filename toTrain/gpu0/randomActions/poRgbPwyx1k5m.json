@@ -23,5 +23,8 @@
   "annealed": false,
   "keep_percentage": 0.9,
   "pwyx_net": true,
-  "play_in_colours": false
+  "play_in_colours": true,
+  "entropy_ann_steps": 0,
+  "random_actions": 5000000,
+  "nb_actions": 1000
 }

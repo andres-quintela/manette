@@ -33,6 +33,7 @@ class AtariEmulator(BaseEnvironment):
         self.single_life_episodes = args.single_life_episodes
         self.call_on_new_frame = args.visualize
         self.random_actions = args.random_actions
+        self.nb_actions = args.nb_actions
         self.global_step = 0
 
         # Processed historcal frames that will be fed in to the network
@@ -76,8 +77,7 @@ class AtariEmulator(BaseEnvironment):
         self.ale.reset_game()
         self.lives = self.ale.lives()
         if self.random_actions > self.global_step :
-            wait = random.randint(0, 100)
-            for _ in range(100):
+            for _ in range(self.nb_actions):
                 random_action = random.randint(0, len(self.legal_actions)-1)
                 self.ale.act(self.legal_actions[random_action])
         elif self.random_start:

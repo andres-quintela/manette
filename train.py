@@ -121,6 +121,7 @@ def get_arg_parser():
     parser.add_argument('--play_in_colours', default=False, type=bool_arg, help="True if RGB images are given to the agent", dest="play_in_colours")
     parser.add_argument('--entropy_ann_steps', default=0, type=int, help="If different drom 0, the entropy_regularisation_strength will be annealed toward 0 with this nb of steps", dest="entropy_ann_steps")
     parser.add_argument('--random_actions', default=0, type=int, help="Number of global steps where we add random actions at the begining of each environment", dest="random_actions")
+    parser.add_argument('--nb_actions', default=0, type=int, help="Number of random_actions to do at the beginning", dest="nb_actions")
 
     return parser
 

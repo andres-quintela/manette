@@ -31,7 +31,8 @@ def create_cmd(data, path):
                 " --pwyx_net "+str(data["pwyx_net"])+
                 " --play_in_colours "+str(data["play_in_colours"])+
                 " --entropy_ann_steps "+str(data["entropy_ann_steps"])+
-                " --random_actions "+str(data["random_actions"]))
+                " --random_actions "+str(data["random_actions"])+
+                " --nb_actions "+str(data["nb_actions"]))
     return cmd
 
 def create_chpt_cmd(args, path):
