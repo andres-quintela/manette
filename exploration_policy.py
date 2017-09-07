@@ -59,6 +59,7 @@ class ExplorationPolicy:
         return action_indexes
 
     def oxygen_greedy_choose(self, probs):
+        probs = probs - np.finfo(np.float32).epsneg
         if self.compteur_up_actions == 0 and np.random.rand(1)[0] > self.proba_oxygen :
             return self.multinomial_choose(probs)
         else :
