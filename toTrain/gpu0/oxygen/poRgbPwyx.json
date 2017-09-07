@@ -26,5 +26,8 @@
   "play_in_colours": true,
   "entropy_ann_steps": 0,
   "random_actions": 0,
-  "nb_actions": 0
+  "nb_actions": 0,
+  "oxygen_greedy": false,
+  "proba_oxygen": 0.01,
+  "nb_up_actions": 10
 }
