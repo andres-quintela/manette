@@ -2,6 +2,7 @@ import argparse
 import os
 import shutil
 import time
+import subprocess
 
 """Pour arreter la sauvegarde des checkpoints, creer un fichier STOP
 dans le dossier checkpoints_saved"""
@@ -21,10 +22,15 @@ def save_checkpoints(args, n):
 
 def main(args):
     path = args.debugging_folder+"checkpoints_saved"
-    if not os.path.exists(path):
-        os.makedirs(path)
     pathSTOP = args.debugging_folder+"checkpoints_saved/STOP"
     n = 0
+    if not os.path.exists(path):
+        os.makedirs(path)
+    else :
+        if os.path.exists(pathSTOP):
+            subprocess.call(("rm "+pathSTOP), shell = True)
+        l = os.listdir(path)
+        n = max([int(x) for x in l]) + 1
     while not(os.path.exists(pathSTOP)):
         save_checkpoints(args, n)
         time.sleep(args.time)
