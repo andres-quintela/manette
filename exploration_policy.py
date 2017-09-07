@@ -62,7 +62,8 @@ class ExplorationPolicy:
         if self.compteur_up_actions == 0 and np.random.rand(1)[0] > self.proba_oxygen :
             return self.multinomial_choose(probs)
         else :
-            action_indexes = [2]*len(probs)
+            action_indexes = [2 for i in range(10)] #exploration pour les 10 premmiers environments
+            action_indexes += [int(np.nonzero(np.random.multinomial(1, p))[0]) for p in probs[10:]]
             self.compteur_up_actions = (self.compteur_up_actions + 1) % self.nb_up_actions
             return action_indexes
 
