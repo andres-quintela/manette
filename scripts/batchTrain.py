@@ -32,7 +32,10 @@ def create_cmd(data, path):
                 " --play_in_colours "+str(data["play_in_colours"])+
                 " --entropy_ann_steps "+str(data["entropy_ann_steps"])+
                 " --random_actions "+str(data["random_actions"])+
-                " --nb_actions "+str(data["nb_actions"]))
+                " --nb_actions "+str(data["nb_actions"])+
+                " --oxygen_greedy "+str(data["oxygen_greedy"])+
+                " --proba_oxygen "+str(data["proba_oxygen"])+
+                " --nb_up_actions "+str(data["nb_up_actions"]))
     return cmd
 
 def create_chpt_cmd(args, path):
