@@ -25,9 +25,7 @@ def bool_arg(string):
 def main(args):
     logging.debug('Configuration: {}'.format(args))
 
-    explo_policy = ExplorationPolicy(args.egreedy, args.epsilon, args.softmax_temp,
-                                     args.use_dropout, args.keep_percentage, args.annealed,
-                                     args.pwyx_net, args.play_in_colours)
+    explo_policy = ExplorationPolicy(args)
 
     network_creator, env_creator = get_network_and_environment_creator(args, explo_policy)
 
@@ -122,6 +120,10 @@ def get_arg_parser():
     parser.add_argument('--entropy_ann_steps', default=0, type=int, help="If different drom 0, the entropy_regularisation_strength will be annealed toward 0 with this nb of steps", dest="entropy_ann_steps")
     parser.add_argument('--random_actions', default=0, type=int, help="Number of global steps where we add random actions at the begining of each environment", dest="random_actions")
     parser.add_argument('--nb_actions', default=0, type=int, help="Number of random_actions to do at the beginning", dest="nb_actions")
+    parser.add_argument('--oxygen_greedy', default=False, type=bool_arg, help="True if we use the oxygen_greedy policy", dest="oxygen_greedy")
+    parser.add_argument('--proba_oxygen', default=0.01, type=float, help="probability of going up with the oxygen policy", dest="proba_oxygen")
+    parser.add_argument('--nb_up_actions', default=10, type=int, help="number of consecutive UPs", dest="nb_up_actions")
+
 
     return parser
 

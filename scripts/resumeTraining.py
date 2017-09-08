@@ -4,6 +4,8 @@ import datetime
 import json
 import subprocess
 
+#on considere que le fichier .json a eventuellement été modifié
+
 def create_cmd(data, path):
     cmd = ("python3 train.py -g "+data["game"]+" -df "+path+"/"+
                 " --e "+str(data["e"])+
@@ -40,32 +42,24 @@ def create_cmd(data, path):
 
 def create_chpt_cmd(args, path):
     cmd = ("nohup python3 scripts/checkpoints.py "+
-                " -df "+path+"/"
+                " -df "+path+"/"+
                 " -t "+str(args.time)+
-                " &> nohupLogs/saveCheckpoints"+str(args.gpu)+".out &")
+                " &> nohupLogs/saveCheckpoints.out &")
     return cmd
 
-
 def main(args):
-    pathSrc = "toTrain/gpu"+str(args.gpu)
-    for folder in os.listdir(pathSrc):
-        i = datetime.datetime.now()
-        path = "logs/"+str(i.year)+"-"+str(i.month)+"-"+str(i.day)+"-"+folder
-        if not os.path.exists(path):
-            os.makedirs(path)
-        for f in os.listdir(pathSrc+"/"+folder):
-            with open(pathSrc+"/"+folder+"/"+f, 'r') as d :
-                data = json.load(d)
-                pathDest = path + "/"+f[:-5]
-                subprocess.call(create_chpt_cmd(args, pathDest), shell = True)
-                subprocess.call(create_cmd(data, pathDest), shell = True)
-                subprocess.call(("touch "+pathDest+"/checkpoints_saved/STOP"), shell = True)
+    pathJson = args.debugging_folder+"args.json"
+    with open(pathJson, 'r') as d :
+        data = json.load(d)
+        subprocess.call(create_chpt_cmd(args, args.debugging_folder), shell = True)
+        subprocess.call(create_cmd(data, args.debugging_folder), shell = True)
+        subprocess.call(("touch "+args.debugging_folder+"/checkpoints_saved/STOP"), shell = True)
+
 
 
 def get_arg_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-gpu', default= 0, type=int,
-                        help='Number of the gpu to be used', dest='gpu')
+    parser.add_argument('-df', '--debugging_folder', default='logs/', type=str, help="Folder where to save the debugging information.", dest="debugging_folder")
     parser.add_argument('-t', default=1800, type=int,
                         help='Period of time btw save', dest='time')
     return parser

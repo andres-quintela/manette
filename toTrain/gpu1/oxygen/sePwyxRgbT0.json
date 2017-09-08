@@ -2,11 +2,11 @@
   "game": "seaquest",
   "initial_lr": 0.0224,
   "lr_annealing_steps": 80000000,
-  "max_global_steps": 20000000,
+  "max_global_steps": 30000000,
   "max_local_steps": 5,
   "gamma": 0.99,
   "alpha": 0.99,
-  "entropy_regularisation_strength": 0.1,
+  "entropy_regularisation_strength": 0.02,
   "arch": "NIPS",
   "emulator_workers": 8,
   "emulator_counts": 32,
@@ -23,5 +23,11 @@
   "annealed": false,
   "keep_percentage": 0.9,
   "pwyx_net": true,
-  "play_in_colours": false
+  "play_in_colours": true,
+  "entropy_ann_steps": 0,
+  "random_actions": 0,
+  "nb_actions": 0,
+  "oxygen_greedy": true,
+  "proba_oxygen": 0.01,
+  "nb_up_actions": 10
 }
