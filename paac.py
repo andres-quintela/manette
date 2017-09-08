@@ -70,6 +70,7 @@ class PAACLearner(ActorLearner):
         global_step_start = self.global_step
 
         total_rewards = []
+        total_steps = []
 
         # state, reward, episode_over, action
         variables = [(np.asarray([emulator.get_initial_state() for emulator in self.emulators], dtype=np.uint8)),
@@ -129,6 +130,7 @@ class PAACLearner(ActorLearner):
                     self.global_step += 1
                     if episode_over:
                         total_rewards.append(total_episode_rewards[e])
+                        total_steps.append(emulator_steps[e])
                         episode_summary = tf.Summary(value=[
                             tf.Summary.Value(tag='rl/reward', simple_value=total_episode_rewards[e]),
                             tf.Summary.Value(tag='rl/episode_length', simple_value=emulator_steps[e])
@@ -169,10 +171,10 @@ class PAACLearner(ActorLearner):
                 feed_dict=feed_dict)
 
             self.summary_writer.add_summary(summaries, self.global_step)
-            step_summary = tf.Summary(value=[
+            param_summary = tf.Summary(value=[
                 tf.Summary.Value(tag='parameters/lr', simple_value=lr)
             ])
-            self.summary_writer.add_summary(step_summary, self.global_step)
+            self.summary_writer.add_summary(param_summary, self.global_step)
 
             if len(total_rewards) > 50 and self.global_step % 500 == 0 :
                 mean = np.mean(total_rewards[-50:])
@@ -185,6 +187,18 @@ class PAACLearner(ActorLearner):
                     tf.Summary.Value(tag='rewards_env/std_over_mean', simple_value=min(2, np.absolute(std/mean)))
                 ])
                 self.summary_writer.add_summary(rewards_summary, self.global_step)
+
+            if len(total_steps) > 50 and self.global_step % 500 == 0 :
+                mean_step = np.mean(total_steps[-50:])
+                std_step = np.std(total_steps[-50:])
+                steps_summary = tf.Summary(value=[
+                    tf.Summary.Value(tag='steps_per_episode/mean', simple_value=mean_step),
+                    tf.Summary.Value(tag='steps_per_episode/min', simple_value=min(total_steps[-50:])),
+                    tf.Summary.Value(tag='steps_per_episode/max', simple_value=max(total_rewards[-50:])),
+                    tf.Summary.Value(tag='steps_per_episode/std', simple_value=std_step),
+                    tf.Summary.Value(tag='steps_per_episode/std_over_mean', simple_value=min(2, np.absolute(std_step/mean_step)))
+                ])
+                self.summary_writer.add_summary(steps_summary, self.global_step)
 
             self.summary_writer.flush()
 
