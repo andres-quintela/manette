@@ -24,12 +24,18 @@ class PolicyVNetwork(Network):
                 # Final actor layer
                 layer_name = 'actor_output'
                 _, _, self.output_layer_pi = self.op.softmax(layer_name, self.output, self.num_actions, self.softmax_temp)
+
+                # Finql repetition layer
+                _, _, self.output_layer_rep = self.op.softmax('repetition_output', self.output, self.num_actions, self.softmax_temp)
+
                 # Final critic layer
                 _, _, self.output_layer_v = self.op.fc('critic_output', self.output, 1, activation="linear")
 
                 # Avoiding log(0) by adding a very small quantity (1e-30) to output.
                 self.log_output_layer_pi = tf.log(tf.add(self.output_layer_pi, tf.constant(1e-30)),
                                                   name=layer_name + '_log_policy')
+                self.log_output_layer_rep = tf.log(tf.add(self.output_layer_rep, tf.constant(1e-30)),
+                                                name='repetition_output_log_policy')
 
                 # Entropy: sum_a (-p_a ln p_a)
                 self.output_layer_entropy = tf.reduce_sum(tf.multiply(

@@ -71,7 +71,7 @@ class ExplorationPolicy:
         self.global_step += len(network_output_pi)
         if self.annealed : self.epsilon = get_epsilon()
 
-        return new_actions, network_output_v, network_output_pi
+        return self.next_actions, new_actions, network_output_v, network_output_pi
 
     def e_greedy_choose(self, probs):
         """Sample an action from an action probability distribution output by

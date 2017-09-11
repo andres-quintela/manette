@@ -76,7 +76,7 @@ class PAACLearner(ActorLearner):
         variables = [(np.asarray([emulator.get_initial_state() for emulator in self.emulators], dtype=np.uint8)),
                      (np.zeros(self.emulator_counts, dtype=np.float32)),
                      (np.asarray([False] * self.emulator_counts, dtype=np.float32)),
-                     (np.zeros((self.emulator_counts, self.num_actions), dtype=np.float32))]
+                     [0 for _ in range(emulator_counts)]]
 
         self.runners = Runners(EmulatorRunner, self.emulators, self.workers, variables)
         self.runners.start()
@@ -105,10 +105,10 @@ class PAACLearner(ActorLearner):
             max_local_steps = self.max_local_steps
             for t in range(max_local_steps):
                 #next_actions, readouts_v_t, readouts_pi_t = self.__choose_next_actions(shared_states)
-                next_actions, readouts_v_t, readouts_pi_t = self.explo_policy.choose_next_actions(self.network, self.num_actions, shared_states, self.session)
+                list_actions, next_actions, readouts_v_t, readouts_pi_t = self.explo_policy.choose_next_actions(self.network, self.num_actions, shared_states, self.session)
                 actions_sum += next_actions
-                for z in range(next_actions.shape[0]):
-                    shared_actions[z] = next_actions[z]
+
+                shared_actions = list_actions
 
                 actions[t] = next_actions
                 values[t] = readouts_v_t
@@ -140,7 +140,7 @@ class PAACLearner(ActorLearner):
                         self.summary_writer.flush()
                         total_episode_rewards[e] = 0
                         emulator_steps[e] = 0
-                        actions_sum[e] = np.zeros(self.num_actions)
+                        #actions_sum[e] = np.zeros(self.num_actions)
 
 
             nest_state_value = self.session.run(
@@ -163,6 +163,7 @@ class PAACLearner(ActorLearner):
             feed_dict = {self.network.input_ph: flat_states,
                          self.network.critic_target_ph: flat_y_batch,
                          self.network.selected_action_ph: flat_actions,
+                         self.network.selected_repetition: flat_rep,
                          self.network.adv_actor_ph: flat_adv_batch,
                          self.learning_rate: lr}
 

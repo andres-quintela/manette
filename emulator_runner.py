@@ -21,6 +21,7 @@ class EmulatorRunner(Process):
             instruction = self.queue.get()
             if instruction is None:
                 break
+            ## pour FiGAR , changer le traitement des actions ici !s
             for i, (emulator, action) in enumerate(zip(self.emulators, self.variables[-1])):
                 new_s, reward, episode_over = emulator.next(action)
                 if episode_over:
@@ -31,6 +32,3 @@ class EmulatorRunner(Process):
                 self.variables[2][i] = episode_over
             count += 1
             self.barrier.put(True)
-
-
-
