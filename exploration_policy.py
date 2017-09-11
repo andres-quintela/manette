@@ -9,13 +9,10 @@ class ExplorationPolicy:
         self.initial_epsilon = args.epsilon
         self.epsilon = args.epsilon
         self.softmax_temp = args.softmax_temp
-        self.use_dropout = args.use_dropout
         self.keep_percentage = args.keep_percentage
         self.global_step = 0
         self.annealed = args.annealed
         self.annealing_steps = 80000000
-        self.pwyx_net = args.pwyx_net
-        self.play_in_colours = args.play_in_colours
         self.oxygen_greedy = args.oxygen_greedy
         self.proba_oxygen = args.proba_oxygen
         self.nb_up_actions = args.nb_up_actions
@@ -77,6 +74,3 @@ class ExplorationPolicy:
 
         action_indexes = [int(np.nonzero(np.random.multinomial(1, p))[0]) for p in probs]
         return action_indexes
-
-    def compute_entropy_term(self):
-       pass

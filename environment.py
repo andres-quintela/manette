@@ -57,10 +57,10 @@ class FramePool(object):
 
 class ObservationPool(object):
 
-    def __init__(self, observation_pool, play_in_colours):
-        self.play_in_colours = play_in_colours
+    def __init__(self, observation_pool, rgb):
+        self.rgb = rgb
         self.depth = 1
-        if self.play_in_colours : self.depth = 3
+        if self.rgb : self.depth = 3
         self.observation_pool = observation_pool
         self.pool_size = observation_pool.shape[-1]
         self.permutation = [self.__shift(list(range(self.pool_size)), i) for i in range(self.pool_size)]

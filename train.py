@@ -65,18 +65,16 @@ def get_network_and_environment_creator(args, explo_policy, random_seed=3):
                     'clip_norm_type': args.clip_norm_type,
                     'softmax_temp' : explo_policy.softmax_temp,
                     'keep_percentage' : explo_policy.keep_percentage,
-                    'play_in_colours' : explo_policy.play_in_colours,
-                    'entropy_ann_steps' : args.entropy_ann_steps}
+                    'rgb' : args.rgb}
 
-    if explo_policy.pwyx_net :
+    if args.arch == 'PWYX' :
         network = PpwwyyxxPolicyVNetwork
-    elif explo_policy.use_dropout :
+    elif args.arch == 'BAYESIAN' :
         network = BayesianPolicyVNetwork
-    else :
-        if args.arch == 'NIPS':
-            network = NIPSPolicyVNetwork
-        else:
-            network = NaturePolicyVNetwork
+    elif args.arch == 'NIPS':
+        network = NIPSPolicyVNetwork
+    else:
+        network = NaturePolicyVNetwork
 
     def network_creator(name='local_learning'):
         nonlocal network_conf
@@ -102,7 +100,7 @@ def get_arg_parser():
     parser.add_argument('--gamma', default=0.99, type=float, help="Discount factor", dest="gamma")
     parser.add_argument('--max_global_steps', default=80000000, type=int, help="Max. number of training steps", dest="max_global_steps")
     parser.add_argument('--max_local_steps', default=5, type=int, help="Number of steps to gain experience from before every update.", dest="max_local_steps")
-    parser.add_argument('--arch', default='NIPS', help="Which network architecture to use: from the NIPS or NATURE paper", dest="arch")
+    parser.add_argument('--arch', default='NIPS', help="Which network architecture to use: from the NIPS or NATURE paper, or PWYX, or BAYESIAN ie dropout", dest="arch")
     parser.add_argument('--single_life_episodes', default=False, type=bool_arg, help="If True, training episodes will be terminated when a life is lost (for games)", dest="single_life_episodes")
     parser.add_argument('-ec', '--emulator_counts', default=32, type=int, help="The amount of emulators per agent. Default is 32.", dest="emulator_counts")
     parser.add_argument('-ew', '--emulator_workers', default=8, type=int, help="The amount of emulator workers per agent. Default is 8.", dest="emulator_workers")
@@ -112,12 +110,9 @@ def get_arg_parser():
     parser.add_argument('--egreedy', default=False, type=bool_arg, help="True if e-greedy policy is used to  choose actions", dest="egreedy")
     parser.add_argument('--epsilon', default=0.05, type=float, help="Epsilon for the egreedy policy", dest='epsilon')
     parser.add_argument('--softmax_temp', default=1.0, type=float, help="Softmax temperature for the Boltzmann action policy", dest='softmax_temp' )
-    parser.add_argument('--use_dropout', default=False, type=bool_arg, help="True if dropout is used to choose actions", dest="use_dropout")
     parser.add_argument('--annealed', default=False, type=bool_arg, help="True if the parameters for explo_policy are annealed toward zero", dest="annealed")
     parser.add_argument('--keep_percentage', default=0.9, type=float, help="keep percentage when dropout is used", dest='keep_percentage' )
-    parser.add_argument('--pwyx_net', default=False, type=bool_arg, help="True if the ppwwyyxx network is used", dest="pwyx_net")
-    parser.add_argument('--play_in_colours', default=False, type=bool_arg, help="True if RGB images are given to the agent", dest="play_in_colours")
-    parser.add_argument('--entropy_ann_steps', default=0, type=int, help="If different drom 0, the entropy_regularisation_strength will be annealed toward 0 with this nb of steps", dest="entropy_ann_steps")
+    parser.add_argument('--rgb', default=False, type=bool_arg, help="True if RGB images are given to the agent", dest="rgb")
     parser.add_argument('--random_actions', default=0, type=int, help="Number of global steps where we add random actions at the begining of each environment", dest="random_actions")
     parser.add_argument('--nb_actions', default=0, type=int, help="Number of random_actions to do at the beginning", dest="nb_actions")
     parser.add_argument('--oxygen_greedy', default=False, type=bool_arg, help="True if we use the oxygen_greedy policy", dest="oxygen_greedy")

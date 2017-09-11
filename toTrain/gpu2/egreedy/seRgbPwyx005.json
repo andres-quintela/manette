@@ -1,8 +1,8 @@
 {
   "game": "seaquest",
   "initial_lr": 0.0224,
-  "lr_annealing_steps": 80000000,
-  "max_global_steps": 30000000,
+  "lr_annealing_steps": 8000000000,
+  "max_global_steps": 160000000,
   "max_local_steps": 5,
   "gamma": 0.99,
   "alpha": 0.99,
@@ -16,7 +16,7 @@
   "e": 0.1,
   "random_start": true,
 
-  "egreedy": false,
+  "egreedy": true,
   "epsilon": 0.05,
   "softmax_temp": 1.0,
   "annealed": false,

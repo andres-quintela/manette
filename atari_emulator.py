@@ -39,17 +39,17 @@ class AtariEmulator(BaseEnvironment):
 
         # Processed historcal frames that will be fed in to the network
         # (i.e., four 84x84 images)
-        self.play_in_colours = args.play_in_colours
+        self.rgb = args.rgb
         self.depth = 1
-        if self.play_in_colours : self.depth = 3
-        #self.observation_pool = ObservationPool(np.zeros((IMG_SIZE_X, IMG_SIZE_Y, NR_IMAGES), dtype=np.uint8), self.play_in_colours)
+        if self.rgb : self.depth = 3
+        #self.observation_pool = ObservationPool(np.zeros((IMG_SIZE_X, IMG_SIZE_Y, NR_IMAGES), dtype=np.uint8), self.rgb)
         self.rgb_screen = np.zeros((self.screen_height, self.screen_width, 3), dtype=np.uint8)
         self.gray_screen = np.zeros((self.screen_height, self.screen_width,1), dtype=np.uint8)
         #self.frame_pool = FramePool(np.empty((2, self.screen_height,self.screen_width), dtype=np.uint8),
         #                            self.__process_frame_pool)
         self.frame_pool = FramePool(np.empty((2, self.screen_height,self.screen_width, self.depth), dtype=np.uint8),
                                         self.__process_frame_pool)
-        self.observation_pool = ObservationPool(np.zeros((IMG_SIZE_X, IMG_SIZE_Y, self.depth, NR_IMAGES), dtype=np.uint8), self.play_in_colours)
+        self.observation_pool = ObservationPool(np.zeros((IMG_SIZE_X, IMG_SIZE_Y, self.depth, NR_IMAGES), dtype=np.uint8), self.rgb)
 
 
     def get_legal_actions(self):
@@ -61,12 +61,12 @@ class AtariEmulator(BaseEnvironment):
         :return: the current frame
         """
         self.ale.getScreenGrayscale(self.gray_screen)
-        if self.play_in_colours :
+        if self.rgb :
             self.ale.getScreenRGB(self.rgb_screen)
         if self.call_on_new_frame:
             self.ale.getScreenRGB(self.rgb_screen)
             self.on_new_frame(self.rgb_screen)
-        if self.play_in_colours :
+        if self.rgb :
             return self.rgb_screen
         return self.gray_screen
 
@@ -89,11 +89,11 @@ class AtariEmulator(BaseEnvironment):
     def __process_frame_pool(self, frame_pool):
         """ Preprocess frame pool """
         img = np.amax(frame_pool, axis=0)
-        if not self.play_in_colours :
+        if not self.rgb :
             img = np.reshape(img, (210, 160))
         img = imresize(img, (84, 84), interp='nearest')
         img = img.astype(np.uint8)
-        if not self.play_in_colours :
+        if not self.rgb :
             img = np.reshape(img, (84, 84, 1))
         return img
 

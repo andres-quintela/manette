@@ -4,9 +4,9 @@ import numpy as np
 
 class Operations():
     def __init__(self, conf):
-        self.play_in_colours = conf['play_in_colours']
+        self.rgb = conf['rgb']
         self.depth = 1
-        if self.play_in_colours :
+        if self.rgb :
             self.depth = 3
 
     def flatten(self, _input):
@@ -117,9 +117,9 @@ class Network(object):
         self.clip_norm = conf['clip_norm']
         self.clip_norm_type = conf['clip_norm_type']
         self.device = conf['device']
-        self.play_in_colours = conf['play_in_colours']
+        self.rgb = conf['rgb']
         self.depth = 1
-        if self.play_in_colours :
+        if self.rgb :
             self.depth = 3
         self.op = Operations(conf)
 
