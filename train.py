@@ -118,7 +118,8 @@ def get_arg_parser():
     parser.add_argument('--oxygen_greedy', default=False, type=bool_arg, help="True if we use the oxygen_greedy policy", dest="oxygen_greedy")
     parser.add_argument('--proba_oxygen', default=0.01, type=float, help="probability of going up with the oxygen policy", dest="proba_oxygen")
     parser.add_argument('--nb_up_actions', default=10, type=int, help="number of consecutive UPs", dest="nb_up_actions")
-
+    parser.add_argument('--FiGAR', default=False, type=bool_arg, help="Whether to use FiGAR or not.", dest="FiGAR")
+    parser.add_argument('--max_repetition', default=20, type=int, help="Maximum number of repetition for FiGAR", dest="max_repetition")
 
     return parser
 

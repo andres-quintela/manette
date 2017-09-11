@@ -32,7 +32,9 @@ def create_cmd(data, path):
                 " --nb_actions "+str(data["nb_actions"])+
                 " --oxygen_greedy "+str(data["oxygen_greedy"])+
                 " --proba_oxygen "+str(data["proba_oxygen"])+
-                " --nb_up_actions "+str(data["nb_up_actions"]))
+                " --nb_up_actions "+str(data["nb_up_actions"])+
+                " --FiGAR "+str(data["FiGAR"])+
+                " --max_repetition "+str(data["max_repetition"]))
     return cmd
 
 def create_chpt_cmd(args, path):

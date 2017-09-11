@@ -21,10 +21,12 @@
   "softmax_temp": 1.0,
   "annealed": false,
   "keep_percentage": 0.9,
-  "rgb": true,
+  "rgb": false,
   "random_actions": 0,
   "nb_actions": 0,
   "oxygen_greedy": false,
   "proba_oxygen": 0.01,
-  "nb_up_actions": 10
+  "nb_up_actions": 10,
+  "FiGAR": false,
+  "max_repetition": 20
 }
