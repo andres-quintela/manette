@@ -2,6 +2,23 @@ import numpy as np
 import tensorflow as tf
 import logging
 
+class Action :
+    def __init__(self, i):
+        self.id = i
+        self.repeated = False
+        self.current_action = 0
+        self.nb_repetitions_left = 0
+
+    def repeat(self):
+        self.nb_repetitions_left -= 1
+        if self.nb_repetitions_left == 0 :
+            self.repeated = False
+            self.current_action = 0
+        return self.current_action
+
+    def is_repeated(self):
+        return self.repeated
+
 class ExplorationPolicy:
 
     def __init__(self, args):
@@ -17,6 +34,10 @@ class ExplorationPolicy:
         self.proba_oxygen = args.proba_oxygen
         self.nb_up_actions = args.nb_up_actions
         self.compteur_up_actions = 0
+        self.FiGAR = args.FiGAR
+        self.max_repetition = args.max_repetition
+        self.nb_env = args.emulator_counts
+        self.next_actions = [Action(e) for e in range(self.nb_env)]
 
     def get_epsilon(self):
         if self.global_step <= self.annealing_steps:
@@ -25,9 +46,9 @@ class ExplorationPolicy:
             return 0.0
 
     def choose_next_actions(self, network, num_actions, states, session):
-        network_output_v, network_output_pi = session.run(
+        network_output_v, network_output_pi, network_output_rep = session.run(
             [network.output_layer_v,
-             network.output_layer_pi],
+             network.output_layer_pi, network.output_layer_rep],
             feed_dict={network.input_ph: states})
 
         if self.oxygen_greedy :
@@ -36,6 +57,15 @@ class ExplorationPolicy:
             action_indices = self.e_greedy_choose(network_output_pi)
         else :
             action_indices = self.multinomial_choose(network_output_pi)
+
+        repetition_indices = self.choose_repetition(network_output_rep)
+
+        for e in range(self.nb_env):
+            next_actions[e].current_action = action_indices[e]
+            next_actions[e].nb_repetitions_left = repetition_indices[e]
+            if next_actions[e].nb_repetitions_left > 0 :
+                next_actions[e].repeated = True
+
         new_actions = np.eye(num_actions)[action_indices]
 
         self.global_step += len(network_output_pi)
@@ -74,3 +104,6 @@ class ExplorationPolicy:
 
         action_indexes = [int(np.nonzero(np.random.multinomial(1, p))[0]) for p in probs]
         return action_indexes
+
+    def choose_repetition(self, probs):
+        return self.multinomial_choose(probs)
