@@ -3,11 +3,19 @@ import tensorflow as tf
 import logging
 
 class Action :
-    def __init__(self, i):
+    def __init__(self, i, l=[]):
         self.id = i
         self.repeated = False
         self.current_action = 0
         self.nb_repetitions_left = 0
+        if l != [] : self.init_from_list(l)
+
+    def init_from_list(self, l):
+        self.current_action = np.argmax(l)
+        self.nb_repetitions_left = max(l)
+        if self.nb_repetitions_left > 0 :
+            self.repeated = True
+
 
     def repeat(self):
         self.nb_repetitions_left -= 1
@@ -15,6 +23,11 @@ class Action :
             self.repeated = False
             self.current_action = 0
         return self.current_action
+
+    def reset(self):
+        self.repeated = False
+        self.current_action = 0
+        self.nb_repetitions_left = 0
 
     def is_repeated(self):
         return self.repeated
@@ -37,7 +50,8 @@ class ExplorationPolicy:
         self.FiGAR = args.FiGAR
         self.max_repetition = args.max_repetition
         self.nb_env = args.emulator_counts
-        self.next_actions = [Action(e) for e in range(self.nb_env)]
+        self.next_actions = np.array([Action(e) for e in range(self.nb_env)])
+        logging.info('####### DTYPE : '+str(self.next_actions.dtype))
 
     def get_epsilon(self):
         if self.global_step <= self.annealing_steps:

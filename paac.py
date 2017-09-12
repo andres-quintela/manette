@@ -13,8 +13,10 @@ import numpy as np
 
 class PAACLearner(ActorLearner):
     def __init__(self, network_creator, environment_creator, explo_policy, args):
+        logging.info('#######Init PAAC')
         super(PAACLearner, self).__init__(network_creator, environment_creator, explo_policy, args)
         self.workers = args.emulator_workers
+
 
     @staticmethod
     def choose_next_actions(network, num_actions, states, session):
@@ -76,7 +78,7 @@ class PAACLearner(ActorLearner):
         variables = [(np.asarray([emulator.get_initial_state() for emulator in self.emulators], dtype=np.uint8)),
                      (np.zeros(self.emulator_counts, dtype=np.float32)),
                      (np.asarray([False] * self.emulator_counts, dtype=np.float32)),
-                     [0 for _ in range(emulator_counts)]]
+                     (np.zeros((self.emulator_counts, self.num_actions), dtype=np.float32))]
 
         self.runners = Runners(EmulatorRunner, self.emulators, self.workers, variables)
         self.runners.start()
@@ -106,9 +108,11 @@ class PAACLearner(ActorLearner):
             for t in range(max_local_steps):
                 #next_actions, readouts_v_t, readouts_pi_t = self.__choose_next_actions(shared_states)
                 list_actions, next_actions, readouts_v_t, readouts_pi_t = self.explo_policy.choose_next_actions(self.network, self.num_actions, shared_states, self.session)
+
                 actions_sum += next_actions
 
-                shared_actions = list_actions
+                for z in range(next_actions.shape[0]):
+                    shared_actions[z] = next_actions[z]
 
                 actions[t] = next_actions
                 values[t] = readouts_v_t

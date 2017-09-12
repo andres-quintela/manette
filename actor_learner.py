@@ -12,8 +12,10 @@ class ActorLearner(Process):
 
     def __init__(self, network_creator, environment_creator, explo_policy, args):
 
+        logging.info('#######Init actor learner')
         super(ActorLearner, self).__init__()
 
+        logging.info('#######Init explo policy')
         self.explo_policy = explo_policy
 
         self.global_step = 0
@@ -35,17 +37,24 @@ class ActorLearner(Process):
         self.optimizer = tf.train.RMSPropOptimizer(self.learning_rate, decay=args.alpha, epsilon=args.e,
                                                    name=optimizer_variable_names)
 
+        logging.info('#######Init emulators')
         self.emulators = np.asarray([environment_creator.create_environment(i)
                                      for i in range(self.emulator_counts)])
         self.max_global_steps = args.max_global_steps
         self.gamma = args.gamma
         self.game = args.game
+        logging.info('#######Init network')
         self.network = network_creator()
 
         # Optimizer
+        logging.info('#######Init compute gradients')
         grads_and_vars = self.optimizer.compute_gradients(self.network.loss)
 
-        self.flat_raw_gradients = tf.concat([tf.reshape(g, [-1]) for g, v in grads_and_vars], axis=0)
+        logging.info('#######Init reshape')
+        #logging.info(str(grads_and_vars))
+        test = [tf.reshape(g, [-1]) for g, v in grads_and_vars]
+        logging.info('#######Init concat')
+        self.flat_raw_gradients = tf.concat(test, axis=0)
 
         # This is not really an operation, but a list of gradient Tensors.
         # When calling run() on it, the value of those Tensors
@@ -55,6 +64,7 @@ class ActorLearner(Process):
             global_norm = tf.global_norm([g for g, v in grads_and_vars], name='global_norm')
         elif args.clip_norm_type == 'global':
             # Clip network grads by network norm
+            logging.info('#######Init global clip norm')
             gradients_n_norm = tf.clip_by_global_norm(
                 [g for g, v in grads_and_vars], args.clip_norm)
             global_norm = tf.identity(gradients_n_norm[1], name='global_norm')
@@ -76,6 +86,7 @@ class ActorLearner(Process):
             logging.debug('Dynamic gpu mem allocation')
             config.gpu_options.allow_growth = True
 
+        logging.info('#######Init Session')
         self.session = tf.Session(config=config)
 
         self.network_saver = tf.train.Saver()
@@ -89,6 +100,8 @@ class ActorLearner(Process):
         tf.summary.scalar('global_norm', global_norm)
         tf.summary.scalar('loss/loss', self.network.loss)
         tf.summary.scalar('loss/critic_loss_mean', self.network.critic_loss_mean)
+
+        logging.info('#######Init END actor learner')
 
     def save_vars(self, force=False):
         if force or self.global_step - self.last_saving_step >= CHECKPOINT_INTERVAL:

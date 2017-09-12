@@ -27,10 +27,13 @@ def main(args):
 
     explo_policy = ExplorationPolicy(args)
 
+    logging.info('#######Creation of network')
     network_creator, env_creator = get_network_and_environment_creator(args, explo_policy)
 
+    logging.info('#######Creation of learner')
     learner = PAACLearner(network_creator, env_creator, explo_policy, args)
 
+    logging.info('#######Creation of kill signal')
     setup_kill_signal_handler(learner)
 
     logging.info('Starting training')
@@ -65,7 +68,8 @@ def get_network_and_environment_creator(args, explo_policy, random_seed=3):
                     'clip_norm_type': args.clip_norm_type,
                     'softmax_temp' : explo_policy.softmax_temp,
                     'keep_percentage' : explo_policy.keep_percentage,
-                    'rgb' : args.rgb}
+                    'rgb' : args.rgb,
+                    'max_repetition' : args.max_repetition}
 
     if args.arch == 'PWYX' :
         network = PpwwyyxxPolicyVNetwork
