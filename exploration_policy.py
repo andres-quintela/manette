@@ -32,6 +32,13 @@ class Action :
     def is_repeated(self):
         return self.repeated
 
+    @staticmethod
+    def make_array(actions_list, nb_env, num_actions):
+        actions_array = np.zeros((nb_env, num_actions), dtype = np.float32)
+        for action in actions_list :
+            actions_array[action.id][action.current_action] = action.nb_repetitions_left
+        return actions_array
+
 class ExplorationPolicy:
 
     def __init__(self, args):
@@ -51,7 +58,6 @@ class ExplorationPolicy:
         self.max_repetition = args.max_repetition
         self.nb_env = args.emulator_counts
         self.next_actions = np.array([Action(e) for e in range(self.nb_env)])
-        logging.info('####### DTYPE : '+str(self.next_actions.dtype))
 
     def get_epsilon(self):
         if self.global_step <= self.annealing_steps:
@@ -75,17 +81,15 @@ class ExplorationPolicy:
         repetition_indices = self.choose_repetition(network_output_rep)
 
         for e in range(self.nb_env):
-            next_actions[e].current_action = action_indices[e]
-            next_actions[e].nb_repetitions_left = repetition_indices[e]
-            if next_actions[e].nb_repetitions_left > 0 :
-                next_actions[e].repeated = True
-
-        new_actions = np.eye(num_actions)[action_indices]
+            self.next_actions[e].current_action = action_indices[e]
+            self.next_actions[e].nb_repetitions_left = repetition_indices[e]
+            if self.next_actions[e].nb_repetitions_left > 0 :
+                self.next_actions[e].repeated = True
 
         self.global_step += len(network_output_pi)
         if self.annealed : self.epsilon = get_epsilon()
 
-        return self.next_actions, new_actions, network_output_v, network_output_pi
+        return self.next_actions, network_output_v, network_output_pi
 
     def e_greedy_choose(self, probs):
         """Sample an action from an action probability distribution output by

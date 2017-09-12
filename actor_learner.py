@@ -51,7 +51,9 @@ class ActorLearner(Process):
         grads_and_vars = self.optimizer.compute_gradients(self.network.loss)
 
         logging.info('#######Init reshape')
-        #logging.info(str(grads_and_vars))
+        logging.info(str(grads_and_vars))
+        logging.info('#################')
+        logging.info(str([(g, v) for g, v in grads_and_vars]))
         test = [tf.reshape(g, [-1]) for g, v in grads_and_vars]
         logging.info('#######Init concat')
         self.flat_raw_gradients = tf.concat(test, axis=0)

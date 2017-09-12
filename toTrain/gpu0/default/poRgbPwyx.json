@@ -7,7 +7,7 @@
   "gamma": 0.99,
   "alpha": 0.99,
   "entropy_regularisation_strength": 0.02,
-  "arch": "PWYX",
+  "arch": "NIPS",
   "emulator_workers": 8,
   "emulator_counts": 32,
   "clip_norm_type": "global",

@@ -7,6 +7,7 @@ import logging
 from logger_utils import variable_summaries
 
 from emulator_runner import EmulatorRunner
+from exploration_policy import Action
 from runners import Runners
 import numpy as np
 
@@ -107,13 +108,14 @@ class PAACLearner(ActorLearner):
             max_local_steps = self.max_local_steps
             for t in range(max_local_steps):
                 #next_actions, readouts_v_t, readouts_pi_t = self.__choose_next_actions(shared_states)
-                list_actions, next_actions, readouts_v_t, readouts_pi_t = self.explo_policy.choose_next_actions(self.network, self.num_actions, shared_states, self.session)
+                list_actions, readouts_v_t, readouts_pi_t = self.explo_policy.choose_next_actions(self.network, self.num_actions, shared_states, self.session)
 
+                next_actions = Action.make_array(list_actions, self.emulator_counts, self.num_actions)
                 actions_sum += next_actions
 
-                for z in range(next_actions.shape[0]):
-                    shared_actions[z] = next_actions[z]
+                shared_actions = next_actions
 
+##########add rep, form max_local_steps x emulator_counts x max_repetition , type eye
                 actions[t] = next_actions
                 values[t] = readouts_v_t
                 states[t] = shared_states
@@ -162,12 +164,13 @@ class PAACLearner(ActorLearner):
             flat_y_batch = y_batch.reshape(-1)
             flat_adv_batch = adv_batch.reshape(-1)
             flat_actions = actions.reshape(max_local_steps * self.emulator_counts, self.num_actions)
+            flat_rep = rep.reshape(max_local_steps * self.emulator_counts, self.max_repetition)
 
             lr = self.get_lr()
             feed_dict = {self.network.input_ph: flat_states,
                          self.network.critic_target_ph: flat_y_batch,
                          self.network.selected_action_ph: flat_actions,
-                         self.network.selected_repetition: flat_rep,
+                         self.network.selected_repetition_ph: flat_rep,
                          self.network.adv_actor_ph: flat_adv_batch,
                          self.learning_rate: lr}
 
@@ -199,7 +202,7 @@ class PAACLearner(ActorLearner):
                 steps_summary = tf.Summary(value=[
                     tf.Summary.Value(tag='steps_per_episode/mean', simple_value=mean_step),
                     tf.Summary.Value(tag='steps_per_episode/min', simple_value=min(total_steps[-50:])),
-                    tf.Summary.Value(tag='steps_per_episode/max', simple_value=max(total_rewards[-50:])),
+                    tf.Summary.Value(tag='steps_per_episode/max', simple_value=max(total_steps[-50:])),
                     tf.Summary.Value(tag='steps_per_episode/std', simple_value=std_step),
                     tf.Summary.Value(tag='steps_per_episode/std_over_mean', simple_value=min(2, np.absolute(std_step/mean_step)))
                 ])

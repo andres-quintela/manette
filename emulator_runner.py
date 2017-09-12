@@ -1,5 +1,5 @@
 from multiprocessing import Process
-from ExplorationPolicy import Action
+from exploration_policy import Action
 
 
 class EmulatorRunner(Process):

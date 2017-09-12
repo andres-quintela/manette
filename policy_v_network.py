@@ -21,13 +21,14 @@ class PolicyVNetwork(Network):
                 self.critic_target_ph = tf.placeholder(
                     "float32", [None], name='target')
                 self.adv_actor_ph = tf.placeholder("float", [None], name='advantage')
+                #self.adv_rep_ph = tf.placeholder("float", [None], name='advantage_rep')
 
                 # Final actor layer
                 layer_name = 'actor_output'
                 _, _, self.output_layer_pi = self.op.softmax(layer_name, self.output, self.num_actions, self.softmax_temp)
 
                 # Final repetition layer
-                #_, _, self.output_layer_rep = self.op.softmax('repetition_output', self.output, self.max_repetition, self.softmax_temp)
+                _, _, self.output_layer_rep = self.op.softmax('repetition_output', self.output, self.max_repetition, self.softmax_temp)
 
                 # Final critic layer
                 _, _, self.output_layer_v = self.op.fc('critic_output', self.output, 1, activation="linear")
@@ -35,8 +36,8 @@ class PolicyVNetwork(Network):
                 # Avoiding log(0) by adding a very small quantity (1e-30) to output.
                 self.log_output_layer_pi = tf.log(tf.add(self.output_layer_pi, tf.constant(1e-30)),
                                                   name=layer_name + '_log_policy')
-                #self.log_output_layer_rep = tf.log(tf.add(self.output_layer_rep, tf.constant(1e-30)),
-                                                #name='repetition_output_log_policy')
+                self.log_output_layer_rep = tf.log(tf.add(self.output_layer_rep, tf.constant(1e-30)),
+                                                name='repetition_output_log_policy')
 
                 # Entropy: sum_a (-p_a ln p_a)
                 self.output_layer_entropy = tf.reduce_sum(tf.multiply(
@@ -52,7 +53,13 @@ class PolicyVNetwork(Network):
                     tf.multiply(self.log_output_layer_pi, self.selected_action_ph),
                     reduction_indices=1)
 
-                self.actor_objective_advantage_term = tf.multiply(log_output_selected_action, self.adv_actor_ph)
+                log_output_selected_repetition = tf.reduce_sum(
+                    tf.multiply(self.log_output_layer_rep, self.selected_repetition_ph),
+                    reduction_indices=1)
+
+                self.actor_objective_advantage_term = tf.multiply(
+                                    tf.add(log_output_selected_action, log_output_selected_repetition),
+                                    self.adv_actor_ph)
                 self.actor_objective_entropy_term = tf.multiply(self.entropy_regularisation_strength, self.output_layer_entropy)
 
                 self.actor_objective_mean = tf.reduce_mean(tf.multiply(tf.constant(-1.0),

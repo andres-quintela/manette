@@ -122,6 +122,7 @@ class Network(object):
         if self.rgb :
             self.depth = 3
         self.op = Operations(conf)
+        self.max_repetition = conf['max_repetition']
 
         with tf.device(self.device):
             with tf.name_scope(self.name):
@@ -129,6 +130,7 @@ class Network(object):
 
                 self.input_ph = tf.placeholder(tf.uint8, [None, 84, 84, self.depth* 4], name='input')
                 self.selected_action_ph = tf.placeholder("float32", [None, self.num_actions], name="selected_action")
+                self.selected_repetition_ph = tf.placeholder("float32", [None, self.max_repetition], name="selected_repetition")
                 self.input = tf.scalar_mul(1.0/255.0, tf.cast(self.input_ph, tf.float32))
 
                 # This class should never be used, must be subclassed
