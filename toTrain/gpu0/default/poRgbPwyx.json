@@ -28,5 +28,5 @@
   "proba_oxygen": 0.01,
   "nb_up_actions": 10,
   "FiGAR": false,
-  "max_repetition": 20
+  "max_repetition": 0
 }

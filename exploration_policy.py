@@ -127,4 +127,7 @@ class ExplorationPolicy:
         return action_indexes
 
     def choose_repetition(self, probs):
-        return self.multinomial_choose(probs)
+        if self.max_repetition == 0 :
+            return [0 for p in probs]
+        else :
+            return self.multinomial_choose(probs)
