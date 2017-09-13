@@ -14,6 +14,7 @@ class PolicyVNetwork(Network):
         self.softmax_temp = conf['softmax_temp']
         self.op = Operations(conf)
         self.max_repetition = conf['max_repetition']
+        self.total_repetitions = self.max_repetition + 1
 
         with tf.device(conf['device']):
             with tf.name_scope(self.name):
@@ -28,7 +29,7 @@ class PolicyVNetwork(Network):
                 _, _, self.output_layer_pi = self.op.softmax(layer_name, self.output, self.num_actions, self.softmax_temp)
 
                 # Final repetition layer
-                _, _, self.output_layer_rep = self.op.softmax('repetition_output', self.output, self.max_repetition, self.softmax_temp)
+                _, _, self.output_layer_rep = self.op.softmax('repetition_output', self.output, self.total_repetitions, self.softmax_temp)
 
                 # Final critic layer
                 _, _, self.output_layer_v = self.op.fc('critic_output', self.output, 1, activation="linear")
@@ -47,7 +48,7 @@ class PolicyVNetwork(Network):
                 self.output_layer_v = tf.reshape(self.output_layer_v, [-1])
 
                 # Advantage critic
-                self.critic_loss = tf.subtract(self.critic_target_ph, self.output_layer_v)
+                self.critic_loss = tf.subtract(self.critic_target_ph, self.output_layer_v) ## a changer
 
                 log_output_selected_action = tf.reduce_sum(
                     tf.multiply(self.log_output_layer_pi, self.selected_action_ph),

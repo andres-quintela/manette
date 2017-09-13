@@ -1,5 +1,6 @@
 from multiprocessing import Process
 from exploration_policy import Action
+import logging
 
 
 class EmulatorRunner(Process):
@@ -22,24 +23,24 @@ class EmulatorRunner(Process):
             instruction = self.queue.get()
             if instruction is None:
                 break
-            ## pour FiGAR , changer le traitement des actions ici !s
-            for i, (emulator, action_list) in enumerate(zip(self.emulators, self.variables[-1])):
-                action = Action(i, action_list)
-                new_s, reward, episode_over = emulator.next(action.current_action)
+            for i, (emulator, action, rep) in enumerate(zip(self.emulators, self.variables[-2], self.variables[-1])):
+                macro_action = Action(i, action, rep)
+                logging.info("current_action : "+str(macro_action.current_action))
+                new_s, reward, episode_over = emulator.next(macro_action.current_action)
                 if episode_over:
                     self.variables[0][i] = emulator.get_initial_state()
                 else:
                     self.variables[0][i] = new_s
                 self.variables[1][i] = reward
                 self.variables[2][i] = episode_over
-                while action.is_repeated() and not episode_over :
-                    new_s, reward, episode_over = emulator.next(action.repeat())
+                while macro_action.is_repeated() and not episode_over :
+                    new_s, reward, episode_over = emulator.next(macro_action.repeat())
                     if episode_over:
                         self.variables[0][i] = emulator.get_initial_state()
                     else:
                         self.variables[0][i] = new_s
                     self.variables[1][i] += reward
                     self.variables[2][i] = episode_over
-                action.reset()
+                macro_action.reset()
             count += 1
             self.barrier.put(True)
