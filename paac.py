@@ -194,7 +194,7 @@ class PAACLearner(ActorLearner):
                 steps_summary = tf.Summary(value=[
                     tf.Summary.Value(tag='steps_per_episode/mean', simple_value=mean_step),
                     tf.Summary.Value(tag='steps_per_episode/min', simple_value=min(total_steps[-50:])),
-                    tf.Summary.Value(tag='steps_per_episode/max', simple_value=max(total_rewards[-50:])),
+                    tf.Summary.Value(tag='steps_per_episode/max', simple_value=max(total_steps[-50:])),
                     tf.Summary.Value(tag='steps_per_episode/std', simple_value=std_step),
                     tf.Summary.Value(tag='steps_per_episode/std_over_mean', simple_value=min(2, np.absolute(std_step/mean_step)))
                 ])
