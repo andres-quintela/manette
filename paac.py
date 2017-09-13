@@ -17,6 +17,7 @@ class PAACLearner(ActorLearner):
         logging.info('#######Init PAAC')
         super(PAACLearner, self).__init__(network_creator, environment_creator, explo_policy, args)
         self.workers = args.emulator_workers
+        self.max_repetition = args.max_repetition
 
 
     @staticmethod
@@ -75,7 +76,7 @@ class PAACLearner(ActorLearner):
         total_rewards = []
         total_steps = []
 
-        # state, reward, episode_over, action
+        # state, reward, episode_over, action_rep
         variables = [(np.asarray([emulator.get_initial_state() for emulator in self.emulators], dtype=np.uint8)),
                      (np.zeros(self.emulator_counts, dtype=np.float32)),
                      (np.asarray([False] * self.emulator_counts, dtype=np.float32)),
@@ -83,7 +84,7 @@ class PAACLearner(ActorLearner):
 
         self.runners = Runners(EmulatorRunner, self.emulators, self.workers, variables)
         self.runners.start()
-        shared_states, shared_rewards, shared_episode_over, shared_actions = self.runners.get_shared_variables()
+        shared_states, shared_rewards, shared_episode_over, shared_actions_rep = self.runners.get_shared_variables()
 
         summaries_op = tf.summary.merge_all()
 
@@ -96,6 +97,7 @@ class PAACLearner(ActorLearner):
         rewards = np.zeros((self.max_local_steps, self.emulator_counts))
         states = np.zeros([self.max_local_steps] + list(shared_states.shape), dtype=np.uint8)
         actions = np.zeros((self.max_local_steps, self.emulator_counts, self.num_actions))
+        repetitions = np.zeros((self.max_local_steps, self.emulator_counts, self.max_repetition))
         values = np.zeros((self.max_local_steps, self.emulator_counts))
         episodes_over_masks = np.zeros((self.max_local_steps, self.emulator_counts))
 
@@ -108,17 +110,17 @@ class PAACLearner(ActorLearner):
             max_local_steps = self.max_local_steps
             for t in range(max_local_steps):
                 #next_actions, readouts_v_t, readouts_pi_t = self.__choose_next_actions(shared_states)
-                list_actions, readouts_v_t, readouts_pi_t = self.explo_policy.choose_next_actions(self.network, self.num_actions, shared_states, self.session)
+                list_actions, new_actions, new_repetitions, readouts_v_t, readouts_pi_t = self.explo_policy.choose_next_actions(self.network, self.num_actions, shared_states, self.session)
 
-                next_actions = Action.make_array(list_actions, self.emulator_counts, self.num_actions)
-                actions_sum += next_actions
+                next_actions_rep = Action.make_array(list_actions, self.emulator_counts, self.num_actions)
+                actions_sum += new_actions
 
-                shared_actions = next_actions
+                shared_actions_rep = next_actions_rep
 
-##########add rep, form max_local_steps x emulator_counts x max_repetition , type eye
-                actions[t] = next_actions
+                actions[t] = new_actions
                 values[t] = readouts_v_t
                 states[t] = shared_states
+                repetitions[t] = new_repetitions
 
                 # Start updating all environments with next_actions
                 self.runners.update_environments()
@@ -146,7 +148,7 @@ class PAACLearner(ActorLearner):
                         self.summary_writer.flush()
                         total_episode_rewards[e] = 0
                         emulator_steps[e] = 0
-                        #actions_sum[e] = np.zeros(self.num_actions)
+                        actions_sum[e] = np.zeros(self.num_actions)
 
 
             nest_state_value = self.session.run(
@@ -164,7 +166,7 @@ class PAACLearner(ActorLearner):
             flat_y_batch = y_batch.reshape(-1)
             flat_adv_batch = adv_batch.reshape(-1)
             flat_actions = actions.reshape(max_local_steps * self.emulator_counts, self.num_actions)
-            flat_rep = rep.reshape(max_local_steps * self.emulator_counts, self.max_repetition)
+            flat_rep = repetitions.reshape(max_local_steps * self.emulator_counts, self.max_repetition)
 
             lr = self.get_lr()
             feed_dict = {self.network.input_ph: flat_states,

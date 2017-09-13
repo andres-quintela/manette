@@ -80,6 +80,9 @@ class ExplorationPolicy:
 
         repetition_indices = self.choose_repetition(network_output_rep)
 
+        new_actions = np.eye(num_actions)[action_indices]
+        new_repetitions = np.eye(self.max_repetition)[repetition_indices]
+
         for e in range(self.nb_env):
             self.next_actions[e].current_action = action_indices[e]
             self.next_actions[e].nb_repetitions_left = repetition_indices[e]
@@ -89,7 +92,7 @@ class ExplorationPolicy:
         self.global_step += len(network_output_pi)
         if self.annealed : self.epsilon = get_epsilon()
 
-        return self.next_actions, network_output_v, network_output_pi
+        return self.next_actions, new_actions, new_repetitions, network_output_v, network_output_pi
 
     def e_greedy_choose(self, probs):
         """Sample an action from an action probability distribution output by
