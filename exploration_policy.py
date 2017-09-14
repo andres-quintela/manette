@@ -3,19 +3,18 @@ import tensorflow as tf
 import logging
 
 class Action :
-    def __init__(self, i, l=[]):
+    def __init__(self, i, a, r):
         self.id = i
         self.repeated = False
         self.current_action = 0
         self.nb_repetitions_left = 0
-        if l != [] : self.init_from_list(l)
+        self.init_from_list(a, r)
 
-    def init_from_list(self, l):
-        self.current_action = np.argmax(l)
-        self.nb_repetitions_left = max(l)
+    def init_from_list(self, a, r):
+        self.current_action = np.argmax(a)
+        self.nb_repetitions_left = np.argmax(r)
         if self.nb_repetitions_left > 0 :
             self.repeated = True
-
 
     def repeat(self):
         self.nb_repetitions_left -= 1
@@ -56,8 +55,8 @@ class ExplorationPolicy:
         self.compteur_up_actions = 0
         self.FiGAR = args.FiGAR
         self.max_repetition = args.max_repetition
+        self.total_repetitions = self.max_repetition + 1
         self.nb_env = args.emulator_counts
-        self.next_actions = np.array([Action(e) for e in range(self.nb_env)])
 
     def get_epsilon(self):
         if self.global_step <= self.annealing_steps:
@@ -81,18 +80,12 @@ class ExplorationPolicy:
         repetition_indices = self.choose_repetition(network_output_rep)
 
         new_actions = np.eye(num_actions)[action_indices]
-        new_repetitions = np.eye(self.max_repetition)[repetition_indices]
-
-        for e in range(self.nb_env):
-            self.next_actions[e].current_action = action_indices[e]
-            self.next_actions[e].nb_repetitions_left = repetition_indices[e]
-            if self.next_actions[e].nb_repetitions_left > 0 :
-                self.next_actions[e].repeated = True
+        new_repetitions = np.eye(self.total_repetitions)[repetition_indices]
 
         self.global_step += len(network_output_pi)
         if self.annealed : self.epsilon = get_epsilon()
 
-        return self.next_actions, new_actions, new_repetitions, network_output_v, network_output_pi
+        return new_actions, new_repetitions, network_output_v, network_output_pi
 
     def e_greedy_choose(self, probs):
         """Sample an action from an action probability distribution output by

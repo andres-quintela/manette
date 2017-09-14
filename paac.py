@@ -10,7 +10,7 @@ from emulator_runner import EmulatorRunner
 from exploration_policy import Action
 from runners import Runners
 import numpy as np
-
+import sys
 
 class PAACLearner(ActorLearner):
     def __init__(self, network_creator, environment_creator, explo_policy, args):
@@ -18,6 +18,7 @@ class PAACLearner(ActorLearner):
         super(PAACLearner, self).__init__(network_creator, environment_creator, explo_policy, args)
         self.workers = args.emulator_workers
         self.max_repetition = args.max_repetition
+        self.total_repetitions = self.max_repetition + 1
 
 
     @staticmethod
@@ -59,6 +60,7 @@ class PAACLearner(ActorLearner):
 
         shape = array.shape
         shared = RawArray(dtype, array.reshape(-1))
+        print('paac shared array length=',len(shared))
         return np.frombuffer(shared, dtype).reshape(shape)
 
     def train(self):
@@ -76,15 +78,16 @@ class PAACLearner(ActorLearner):
         total_rewards = []
         total_steps = []
 
-        # state, reward, episode_over, action_rep
+        # state, reward, episode_over, action, repetition
         variables = [(np.asarray([emulator.get_initial_state() for emulator in self.emulators], dtype=np.uint8)),
                      (np.zeros(self.emulator_counts, dtype=np.float32)),
                      (np.asarray([False] * self.emulator_counts, dtype=np.float32)),
-                     (np.zeros((self.emulator_counts, self.num_actions), dtype=np.float32))]
+                     (np.zeros((self.emulator_counts, self.num_actions), dtype=np.float32)),
+                     (np.zeros((self.emulator_counts, self.max_repetition+1), dtype=np.float32))]
 
         self.runners = Runners(EmulatorRunner, self.emulators, self.workers, variables)
         self.runners.start()
-        shared_states, shared_rewards, shared_episode_over, shared_actions_rep = self.runners.get_shared_variables()
+        shared_states, shared_rewards, shared_episode_over, shared_actions, shared_rep = self.runners.get_shared_variables()
 
         summaries_op = tf.summary.merge_all()
 
@@ -97,7 +100,7 @@ class PAACLearner(ActorLearner):
         rewards = np.zeros((self.max_local_steps, self.emulator_counts))
         states = np.zeros([self.max_local_steps] + list(shared_states.shape), dtype=np.uint8)
         actions = np.zeros((self.max_local_steps, self.emulator_counts, self.num_actions))
-        repetitions = np.zeros((self.max_local_steps, self.emulator_counts, self.max_repetition))
+        repetitions = np.zeros((self.max_local_steps, self.emulator_counts, self.total_repetitions))
         values = np.zeros((self.max_local_steps, self.emulator_counts))
         episodes_over_masks = np.zeros((self.max_local_steps, self.emulator_counts))
 
@@ -110,12 +113,19 @@ class PAACLearner(ActorLearner):
             max_local_steps = self.max_local_steps
             for t in range(max_local_steps):
                 #next_actions, readouts_v_t, readouts_pi_t = self.__choose_next_actions(shared_states)
-                list_actions, new_actions, new_repetitions, readouts_v_t, readouts_pi_t = self.explo_policy.choose_next_actions(self.network, self.num_actions, shared_states, self.session)
+                new_actions, new_repetitions, readouts_v_t, readouts_pi_t = self.explo_policy.choose_next_actions(self.network, self.num_actions, shared_states, self.session)
 
-                next_actions_rep = Action.make_array(list_actions, self.emulator_counts, self.num_actions)
                 actions_sum += new_actions
 
-                shared_actions_rep = next_actions_rep
+                for z in range(new_actions.shape[0]):
+                    shared_actions[z] = new_actions[z]
+                for z in range(new_repetitions.shape[0]):
+                    shared_rep[z] = new_repetitions[z]
+
+                shared_rep = new_repetitions
+                logging.info("SHARED ACTIONS : "+str(shared_actions))
+                logging.info("SHARED REP : "+str(shared_rep))
+
 
                 actions[t] = new_actions
                 values[t] = readouts_v_t
@@ -157,8 +167,15 @@ class PAACLearner(ActorLearner):
 
             estimated_return = np.copy(nest_state_value)
 
+            rep = np.zeros((self.max_local_steps, self.emulator_counts))
+            for t in range(self.max_local_steps) :
+                for e in range(self.emulator_counts) :
+                    rep[t, e] = np.argmax(repetitions[t, e])
+
             for t in reversed(range(max_local_steps)):
-                estimated_return = rewards[t] + self.gamma * estimated_return * episodes_over_masks[t]
+                gamma_pow = np.power(self.gamma, rep[t])
+                estimated_return = rewards[t] + gamma_pow * estimated_return * episodes_over_masks[t]
+                ## ici changer des choses , puissance gamma
                 y_batch[t] = np.copy(estimated_return)
                 adv_batch[t] = estimated_return - values[t]
 
@@ -166,7 +183,7 @@ class PAACLearner(ActorLearner):
             flat_y_batch = y_batch.reshape(-1)
             flat_adv_batch = adv_batch.reshape(-1)
             flat_actions = actions.reshape(max_local_steps * self.emulator_counts, self.num_actions)
-            flat_rep = repetitions.reshape(max_local_steps * self.emulator_counts, self.max_repetition)
+            flat_rep = repetitions.reshape(max_local_steps * self.emulator_counts, self.total_repetitions)
 
             lr = self.get_lr()
             feed_dict = {self.network.input_ph: flat_states,
