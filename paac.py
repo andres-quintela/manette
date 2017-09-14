@@ -167,8 +167,14 @@ class PAACLearner(ActorLearner):
 
             estimated_return = np.copy(nest_state_value)
 
+            rep = np.zeros((self.max_local_steps, self.emulator_counts))
+            for t in range(self.max_local_steps) :
+                for e in range(self.emulator_counts) :
+                    rep[t, e] = np.argmax(repetitions[t, e])
+
             for t in reversed(range(max_local_steps)):
-                estimated_return = rewards[t] + self.gamma * estimated_return * episodes_over_masks[t]
+                gamma_pow = np.power(self.gamma, rep[t])
+                estimated_return = rewards[t] + gamma_pow * estimated_return * episodes_over_masks[t]
                 ## ici changer des choses , puissance gamma
                 y_batch[t] = np.copy(estimated_return)
                 adv_batch[t] = estimated_return - values[t]
