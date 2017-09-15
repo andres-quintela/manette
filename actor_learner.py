@@ -89,6 +89,8 @@ class ActorLearner(Process):
         tf.summary.scalar('global_norm', global_norm)
         tf.summary.scalar('loss/loss', self.network.loss)
         tf.summary.scalar('loss/critic_loss_mean', self.network.critic_loss_mean)
+        tf.summary.scalar('loss/actor_objective_mean', self.network.actor_objective_mean)
+        tf.summary.scalar('loss/actor_advantage_mean', self.network.actor_advantage_mean)
 
     def save_vars(self, force=False):
         if force or self.global_step - self.last_saving_step >= CHECKPOINT_INTERVAL:
