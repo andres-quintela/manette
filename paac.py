@@ -123,8 +123,8 @@ class PAACLearner(ActorLearner):
                     shared_rep[z] = new_repetitions[z]
 
                 shared_rep = new_repetitions
-                logging.info("SHARED ACTIONS : "+str(shared_actions))
-                logging.info("SHARED REP : "+str(shared_rep))
+                #logging.info("SHARED ACTIONS : "+str(shared_actions))
+                #logging.info("SHARED REP : "+str(shared_rep))
 
 
                 actions[t] = new_actions

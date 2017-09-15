@@ -51,9 +51,9 @@ class ActorLearner(Process):
         grads_and_vars = self.optimizer.compute_gradients(self.network.loss)
 
         logging.info('#######Init reshape')
-        logging.info(str(grads_and_vars))
+        #logging.info(str(grads_and_vars))
         logging.info('#################')
-        logging.info(str([(g, v) for g, v in grads_and_vars]))
+        #logging.info(str([(g, v) for g, v in grads_and_vars]))
         test = [tf.reshape(g, [-1]) for g, v in grads_and_vars]
         logging.info('#######Init concat')
         self.flat_raw_gradients = tf.concat(test, axis=0)
@@ -102,6 +102,9 @@ class ActorLearner(Process):
         tf.summary.scalar('global_norm', global_norm)
         tf.summary.scalar('loss/loss', self.network.loss)
         tf.summary.scalar('loss/critic_loss_mean', self.network.critic_loss_mean)
+        tf.summary.scalar('loss/actor_objective_mean', self.network.actor_objective_mean)
+        tf.summary.scalar('loss/actor_advantage_mean', self.network.actor_advantage_mean)
+        tf.summary.scalar('loss/log_repetition_mean', self.network.log_repetition_mean)
 
         logging.info('#######Init END actor learner')
 
