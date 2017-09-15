@@ -25,7 +25,7 @@ class EmulatorRunner(Process):
                 break
             for i, (emulator, action, rep) in enumerate(zip(self.emulators, self.variables[-2], self.variables[-1])):
                 macro_action = Action(i, action, rep)
-                logging.info("current_action : "+str(macro_action.current_action))
+                #logging.info("current_action : "+str(macro_action.current_action))
                 new_s, reward, episode_over = emulator.next(macro_action.current_action)
                 if episode_over:
                     self.variables[0][i] = emulator.get_initial_state()

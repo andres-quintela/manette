@@ -144,7 +144,7 @@ class PAACLearner(ActorLearner):
                     actual_reward = self.rescale_reward(actual_reward)
                     rewards[t, e] = actual_reward
 
-                    emulator_steps[e] += 1
+                    emulator_steps[e] += np.argmax(new_repetitions[e])
                     self.global_step += 1
                     if episode_over:
                         total_rewards.append(total_episode_rewards[e])
