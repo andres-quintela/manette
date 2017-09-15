@@ -69,7 +69,7 @@ class PolicyVNetwork(Network):
                 print("LOG OUTPUT SELECTED REPETITION")
                 print(self.log_output_selected_repetition)
 
-                self.log_repetition_mean = tf.reduce_mean(self.log_output_selected_repetition)
+                self.log_repetition_mean =              tf.reduce_mean(self.log_output_selected_repetition)
 
                 self.actor_objective_advantage_term = tf.multiply(
                                     tf.add(self.log_output_selected_action, self.log_output_selected_repetition),
@@ -82,8 +82,8 @@ class PolicyVNetwork(Network):
 
 
                 self.actor_objective_mean = tf.reduce_mean(tf.multiply(tf.constant(-1.0),
-                                                                      tf.add(self.actor_objective_advantage_term, self.actor_objective_entropy_term)),
-                                                           name='mean_actor_objective')
+                                           tf.add(self.actor_objective_advantage_term,       self.actor_objective_entropy_term)),
+                               name='mean_actor_objective')
                 print("ACTOR OBJECTIVE MEAN")
                 print(self.actor_objective_mean)
 

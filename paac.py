@@ -78,12 +78,13 @@ class PAACLearner(ActorLearner):
         total_rewards = []
         total_steps = []
 
+
         # state, reward, episode_over, action, repetition
         variables = [(np.asarray([emulator.get_initial_state() for emulator in self.emulators], dtype=np.uint8)),
                      (np.zeros(self.emulator_counts, dtype=np.float32)),
                      (np.asarray([False] * self.emulator_counts, dtype=np.float32)),
                      (np.zeros((self.emulator_counts, self.num_actions), dtype=np.float32)),
-                     (np.zeros((self.emulator_counts, self.max_repetition+1), dtype=np.float32))]
+                     (np.zeros((self.emulator_counts, self.total_repetitions), dtype=np.float32))]
 
         self.runners = Runners(EmulatorRunner, self.emulators, self.workers, variables)
         self.runners.start()
@@ -110,6 +111,8 @@ class PAACLearner(ActorLearner):
 
             loop_start_time = time.time()
 
+            total_action_rep = np.zeros((self.num_actions, self.total_repetitions))
+
             max_local_steps = self.max_local_steps
             for t in range(max_local_steps):
                 #next_actions, readouts_v_t, readouts_pi_t = self.__choose_next_actions(shared_states)
@@ -125,7 +128,6 @@ class PAACLearner(ActorLearner):
                 shared_rep = new_repetitions
                 #logging.info("SHARED ACTIONS : "+str(shared_actions))
                 #logging.info("SHARED REP : "+str(shared_rep))
-
 
                 actions[t] = new_actions
                 values[t] = readouts_v_t
@@ -144,8 +146,14 @@ class PAACLearner(ActorLearner):
                     actual_reward = self.rescale_reward(actual_reward)
                     rewards[t, e] = actual_reward
 
-                    emulator_steps[e] += np.argmax(new_repetitions[e])
+                    emulator_steps[e] += np.argmax(new_repetitions[e]) + 1
                     self.global_step += 1
+
+                    #ici : rempli le tableau pour l'histogramme des actions - repetitions
+                    a = np.argmax(new_actions[e])
+                    r = np.argmax(new_repetitions[e])
+                    total_action_rep[a][r] += 1
+
                     if episode_over:
                         total_rewards.append(total_episode_rewards[e])
                         total_steps.append(emulator_steps[e])
@@ -167,13 +175,7 @@ class PAACLearner(ActorLearner):
 
             estimated_return = np.copy(nest_state_value)
 
-            rep = np.zeros((self.max_local_steps, self.emulator_counts))
-            for t in range(self.max_local_steps) :
-                for e in range(self.emulator_counts) :
-                    rep[t, e] = np.argmax(repetitions[t, e])
-
             for t in reversed(range(max_local_steps)):
-                gamma_pow = np.power(self.gamma, rep[t])
                 estimated_return = rewards[t] + self.gamma * estimated_return * episodes_over_masks[t]
                 ## ici changer des choses , puissance gamma
                 y_batch[t] = np.copy(estimated_return)
@@ -226,6 +228,20 @@ class PAACLearner(ActorLearner):
                     tf.Summary.Value(tag='steps_per_episode/std_over_mean', simple_value=min(2, np.absolute(std_step/mean_step)))
                 ])
                 self.summary_writer.add_summary(steps_summary, self.global_step)
+
+            #histogramme des actions
+            nb_a = [ sum(a) for a in total_action_rep]
+            total_action_rep_trans = np.transpose(total_action_rep)
+            nb_r = [ sum(r) for r in total_action_rep_trans ]
+            histo_a = []
+            for i in range(self.num_actions) :
+                histo_a += [i]*int(nb_a[i])
+            histo_r = []
+            for i in range(self.total_repetitions) :
+                histo_r += [i]*int(nb_r[i])
+
+            tf.summary.histogram("actions", histo_a)
+            tf.summary.histogram("repetitions", histo_r)
 
             self.summary_writer.flush()
 
