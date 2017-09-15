@@ -124,7 +124,7 @@ class PAACLearner(ActorLearner):
 
                 shared_rep = new_repetitions
                 logging.info("SHARED ACTIONS : "+str(shared_actions))
-                logging.info("SHARED REP : "+str(shared_rep))
+                #logging.info("SHARED REP : "+str(shared_rep))
 
 
                 actions[t] = new_actions
@@ -174,7 +174,7 @@ class PAACLearner(ActorLearner):
 
             for t in reversed(range(max_local_steps)):
                 gamma_pow = np.power(self.gamma, rep[t])
-                estimated_return = rewards[t] + gamma_pow * estimated_return * episodes_over_masks[t]
+                estimated_return = rewards[t] + self.gamma * estimated_return * episodes_over_masks[t]
                 ## ici changer des choses , puissance gamma
                 y_batch[t] = np.copy(estimated_return)
                 adv_batch[t] = estimated_return - values[t]
