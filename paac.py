@@ -243,8 +243,8 @@ class PAACLearner(ActorLearner):
             histo_a_var = tf.Variable(histo_a)
             histo_r_var = tf.Variable(histo_r)
 
-            tf.summary.histogram("actions", histo_a_var)
-            tf.summary.histogram("repetitions", histo_r_var)
+            self.summary_writer.add_summary(tf.summary.histogram("actions", histo_a_var), self.global_step)
+            self.summary_writer.add_summary(tf.summary.histogram("repetitions", histo_r_var), self.global_step)
 
             self.summary_writer.flush()
 
