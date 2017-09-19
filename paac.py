@@ -125,7 +125,6 @@ class PAACLearner(ActorLearner):
                 for z in range(new_repetitions.shape[0]):
                     shared_rep[z] = new_repetitions[z]
 
-                shared_rep = new_repetitions
                 #logging.info("SHARED ACTIONS : "+str(shared_actions))
                 #logging.info("SHARED REP : "+str(shared_rep))
 
@@ -229,6 +228,8 @@ class PAACLearner(ActorLearner):
                 ])
                 self.summary_writer.add_summary(steps_summary, self.global_step)
 
+            self.summary_writer.flush()
+
             #histogramme des actions
             nb_a = [ sum(a) for a in total_action_rep]
             total_action_rep_trans = np.transpose(total_action_rep)
@@ -243,8 +244,11 @@ class PAACLearner(ActorLearner):
             histo_a_var = tf.Variable(histo_a)
             histo_r_var = tf.Variable(histo_r)
 
-            self.summary_writer.add_summary(tf.summary.histogram("actions", histo_a_var), self.global_step)
-            self.summary_writer.add_summary(tf.summary.histogram("repetitions", histo_r_var), self.global_step)
+            tf.summary.histogram("actions", histo_a_var)
+            tf.summary.histogram("repetitions", histo_r_var)
+
+            #self.summary_writer.add_summary(tf.summary.histogram("actions", histo_a_var), self.global_step)
+            #self.summary_writer.add_summary(tf.summary.histogram("repetitions", histo_r_var), self.global_step)
 
             self.summary_writer.flush()
 
