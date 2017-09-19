@@ -240,7 +240,7 @@ class PAACLearner(ActorLearner):
             histo_r = []
             for i in range(self.total_repetitions) :
                 histo_r += [i]*int(nb_r[i])
-
+            
             histo_a_var = tf.Variable(histo_a)
             histo_r_var = tf.Variable(histo_r)
 
