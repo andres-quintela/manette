@@ -63,6 +63,28 @@ class PAACLearner(ActorLearner):
         print('paac shared array length=',len(shared))
         return np.frombuffer(shared, dtype).reshape(shape)
 
+    def log_histogram(self, tag, values, step, bins=1000):
+        """Logs the histogram of a list/vector of values"""
+
+        counts, bin_edges = np.histogram(values, bins=bins)
+        hist = tf.HistogramProto()
+        hist.min = float(np.min(values))
+        hist.max = float(np.max(values))
+        hist.num = int(np.prod(values.shape))
+        hist.sum = float(np.sum(values))
+        hist.sum_squares = float(np.sum(values**2))
+
+        bin_edges = bin_edges[1:]
+
+        for edge in bin_edges :
+            hist.bucket_limit.append(edge)
+        for c in counts :
+            hist.bucket.append(c)
+
+        summary = tf.Summary(value=[tf.Summary.Value(tag=tag, histo=hist)])
+        self.summary_writer.add_summary(summary, step)
+        self.summary_writer.flush()
+
     def train(self):
         """
         Main actor learner loop for parallel advantage actor critic learning.
@@ -240,17 +262,26 @@ class PAACLearner(ActorLearner):
             histo_r = []
             for i in range(self.total_repetitions) :
                 histo_r += [i]*int(nb_r[i])
-            
-            histo_a_var = tf.Variable(histo_a)
-            histo_r_var = tf.Variable(histo_r)
 
-            tf.summary.histogram("actions", histo_a_var)
-            tf.summary.histogram("repetitions", histo_r_var)
+            self.log_histogram('actions', np.array(histo_a), self.global_step)
+            self.log_histogram('repetitions', np.array(histo_r), self.global_step)
+            #len_a = len(histo_a)
+            #len_r = len(histo_r)
+            #histo_a_var = tf.Variable(tf.zeros[len_a], name="a")
+            #histo_r_var = tf.Variable(tf.zeros[len_r], name="r")
+
+            #tf.summary.histogram("actions", histo_a_var)
+            #tf.summary.histogram("repetitions", histo_r_var)
+
+            #summary_op = tf.summary.merge_all_summaries()
+            #assign_op_a = histo_var_a.assign(histo_a)
+            #summary_a, _ = self.session.run([summary_op, assign_op_a])
+            #self.summary_writer.add_summary(tf.Summary.FromString(summary), self.global_step)
 
             #self.summary_writer.add_summary(tf.summary.histogram("actions", histo_a_var), self.global_step)
             #self.summary_writer.add_summary(tf.summary.histogram("repetitions", histo_r_var), self.global_step)
 
-            self.summary_writer.flush()
+            #self.summary_writer.flush()
 
             counter += 1
 

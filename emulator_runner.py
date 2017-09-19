@@ -45,9 +45,11 @@ class EmulatorRunner(Process):
                     self.variables[1][i] += reward
                     self.variables[2][i] = episode_over
 
-                #logging.info("Env "+str(i)+str(self.id)+" : "+str(self.compteur_actions)+" actions "+str(macro_action.current_action))
-                self.compteur_actions = 0
+                
                 macro_action.reset()
             count += 1
+            if count % 50 == 0 :
+                logging.info("Runner "+str(self.id)+" : "+str(self.compteur_actions)+" actions ")
+            self.compteur_actions = 0
 
             self.barrier.put(True)
