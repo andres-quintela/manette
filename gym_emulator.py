@@ -7,6 +7,8 @@ import logging
 import sys
 
 # a changer si on veut jouer à d'autres jeux !!
+SCREEN_WIDTH = 160
+SCREEN_HEIGHT = 210
 IMG_SIZE_X = 84
 IMG_SIZE_Y = 84
 NR_IMAGES = 4
@@ -14,18 +16,21 @@ ACTION_REPEAT = 4
 MAX_START_WAIT = 30
 FRAMES_IN_POOL = 2
 
-class AtariEmulator(BaseEnvironment):
+class GymEmulator(BaseEnvironment):
     def __init__(self, actor_id, args):
-        self.game = self.parse_game(args.game)
+        self.game = args.game
+        self.gym_env = gym.make(self.game)
+        self.gym_env.reset()
 
         #a changer
-        self.legal_actions = self.ale.getMinimalActionSet()
-        self.screen_width, self.screen_height = self.ale.getScreenDims()
-        self.lives = self.ale.lives()
+        self.legal_actions = [i for i in range(gym_env.action_space.n)]
+        self.screen_width, self.screen_height = SCREEN_WIDTH , SCREEN_HEIGHT
+
+        # useless ?
+        self.lives = self.gym_env.ale.lives()
 
         self.random_start = args.random_start
         self.single_life_episodes = args.single_life_episodes
-        self.call_on_new_frame = args.visualize
         self.random_actions = args.random_actions
         self.nb_actions = args.nb_actions
         self.global_step = 0
@@ -45,44 +50,42 @@ class AtariEmulator(BaseEnvironment):
         self.observation_pool = ObservationPool(np.zeros((IMG_SIZE_X, IMG_SIZE_Y, self.depth, NR_IMAGES), dtype=np.uint8), self.rgb)
 
 
-    def parse_game(self, g):
-        if g == "seaquest" : return "Seaquest-v0"
-        if g == "pong" : return "Pong-v0"
-        if g == "breakout" : return "Breakout-v0"
-
     def get_legal_actions(self):
         return self.legal_actions
+
+    def rgb_to_gray(self, im):
+        new_im = np.zeros((self.screen_height, self.screen_width,1))
+        new_im = 0.299 * im[:,:, 0] + 0.587 * im[:,:, 1] + 0.114 * im[:,:, 2]
+        return new_im
 
     def __get_screen_image(self):
         """
         Get the current frame luminance
         :return: the current frame
         """
-        self.ale.getScreenGrayscale(self.gray_screen)
+        im = self.gym_env.render()
         if self.rgb :
-            self.ale.getScreenRGB(self.rgb_screen)
-        if self.call_on_new_frame:
-            self.ale.getScreenRGB(self.rgb_screen)
-            self.on_new_frame(self.rgb_screen)
+            self.rgb_screen = im
+        else :
+            self.gray_screen = rgb_to_gray(im)
+
         if self.rgb :
             return self.rgb_screen
         return self.gray_screen
 
-    def on_new_frame(self, frame):
-        pass
 
     def __new_game(self):
         """ Restart game """
-        self.ale.reset_game()
-        self.lives = self.ale.lives()
+        self.gym_env.reset()
+        self.lives = self.gym_env.ale.lives()
         if self.random_actions > self.global_step :
             for _ in range(self.nb_actions):
                 random_action = random.randint(0, len(self.legal_actions)-1)
-                self.ale.act(self.legal_actions[random_action])
+                self.gym_env.step(self.legal_actions[random_action])
         elif self.random_start:
             wait = random.randint(0, MAX_START_WAIT)
             for _ in range(wait):
-                self.ale.act(self.legal_actions[0])
+                self.gym_env.step(self.legal_actions[0])
 
     def __process_frame_pool(self, frame_pool):
         """ Preprocess frame pool """
@@ -99,10 +102,10 @@ class AtariEmulator(BaseEnvironment):
         """ Repeat action and grab screen into frame pool """
         reward = 0
         for i in range(times - FRAMES_IN_POOL):
-            reward += self.ale.act(self.legal_actions[a])
+            reward += self.gym_env.step(self.legal_actions[a])
         # Only need to add the last FRAMES_IN_POOL frames to the frame pool
         for i in range(FRAMES_IN_POOL):
-            reward += self.ale.act(self.legal_actions[a])
+            reward += self.gym_env.step(self.legal_actions[a])
             img = self.__get_screen_image()
             self.frame_pool.new_frame(img)
         return reward
@@ -122,14 +125,14 @@ class AtariEmulator(BaseEnvironment):
         reward = self.__action_repeat(np.argmax(action))
         self.observation_pool.new_observation(self.frame_pool.get_processed_frame())
         terminal = self.__is_terminal()
-        self.lives = self.ale.lives()
+        self.lives = self.gym_env.ale.lives()
         observation = self.observation_pool.get_pooled_observations()
         self.global_step += 1
         return observation, reward, terminal
 
     def __is_terminal(self):
         if self.single_life_episodes:
-            return self.__is_over() or (self.lives > self.ale.lives())
+            return self.__is_over() or (self.lives > self.gym_env.ale.lives())
         else:
             return self.__is_over()
 

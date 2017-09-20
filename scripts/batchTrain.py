@@ -32,7 +32,8 @@ def create_cmd(data, path):
                 " --nb_actions "+str(data["nb_actions"])+
                 " --oxygen_greedy "+str(data["oxygen_greedy"])+
                 " --proba_oxygen "+str(data["proba_oxygen"])+
-                " --nb_up_actions "+str(data["nb_up_actions"]))
+                " --nb_up_actions "+str(data["nb_up_actions"])+
+                " --emulator_name "+str(data["emulator_name"]))
     return cmd
 
 def create_chpt_cmd(args, path):
@@ -47,7 +48,8 @@ def main(args):
     pathSrc = "toTrain/gpu"+str(args.gpu)
     for folder in os.listdir(pathSrc):
         i = datetime.datetime.now()
-        path = "/data1/rl/atari/logs/tensorboard/"+str(i.year)+"-"+str(i.month)+"-"+str(i.day)+"-"+folder
+        path = "logs/"+str(i.year)+"-"+str(i.month)+"-"+str(i.day)+"-"+folder
+        #path = "/data1/rl/atari/logs/tensorboard/"+str(i.year)+"-"+str(i.month)+"-"+str(i.day)+"-"+folder
         if not os.path.exists(path):
             os.makedirs(path)
         for f in os.listdir(pathSrc+"/"+folder):
