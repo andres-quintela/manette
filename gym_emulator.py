@@ -23,14 +23,12 @@ class GymEmulator(BaseEnvironment):
         self.gym_env.reset()
 
         #a changer
-        self.legal_actions = [i for i in range(gym_env.action_space.n)]
+        self.legal_actions = [i for i in range(self.gym_env.action_space.n)]
         self.screen_width, self.screen_height = SCREEN_WIDTH , SCREEN_HEIGHT
-
-        # useless ?
-        self.lives = self.gym_env.ale.lives()
 
         self.random_start = args.random_start
         self.single_life_episodes = args.single_life_episodes
+        self.call_on_new_frame = args.visualize
         self.random_actions = args.random_actions
         self.nb_actions = args.nb_actions
         self.global_step = 0
@@ -63,21 +61,23 @@ class GymEmulator(BaseEnvironment):
         Get the current frame luminance
         :return: the current frame
         """
-        im = self.gym_env.render()
-        if self.rgb :
-            self.rgb_screen = im
-        else :
-            self.gray_screen = rgb_to_gray(im)
+        im = self.gym_env.render(mode='rgb_array')
+        if self.rgb : self.rgb_screen = im
+        else : self.gray_screen = rgb_to_gray(im)
 
-        if self.rgb :
-            return self.rgb_screen
+        if self.call_on_new_frame:
+            self.rgb_screen = im
+            self.on_new_frame(self.rgb_screen)
+
+        if self.rgb : return self.rgb_screen
         return self.gray_screen
 
+    def on_new_frame(self, frame):
+        pass
 
     def __new_game(self):
         """ Restart game """
         self.gym_env.reset()
-        self.lives = self.gym_env.ale.lives()
         if self.random_actions > self.global_step :
             for _ in range(self.nb_actions):
                 random_action = random.randint(0, len(self.legal_actions)-1)
@@ -102,42 +102,44 @@ class GymEmulator(BaseEnvironment):
         """ Repeat action and grab screen into frame pool """
         reward = 0
         for i in range(times - FRAMES_IN_POOL):
-            reward += self.gym_env.step(self.legal_actions[a])
+            obs, r, episode_over, info = self.gym_env.step(self.legal_actions[a])
+            reward += r
         # Only need to add the last FRAMES_IN_POOL frames to the frame pool
         for i in range(FRAMES_IN_POOL):
-            reward += self.gym_env.step(self.legal_actions[a])
+            obs, r, episode_over, info = self.gym_env.step(self.legal_actions[a])
+            reward += r
             img = self.__get_screen_image()
             self.frame_pool.new_frame(img)
-        return reward
+        return reward, episode_over
 
     def get_initial_state(self):
         """ Get the initial state """
         self.__new_game()
         for step in range(NR_IMAGES):
-            _ = self.__action_repeat(0)
+            _ , episode_over = self.__action_repeat(0)
             self.observation_pool.new_observation(self.frame_pool.get_processed_frame())
-        if self.__is_terminal():
+        if episode_over :
             raise Exception('This should never happen.')
         return self.observation_pool.get_pooled_observations()
 
     def next(self, action):
         """ Get the next state, reward, and game over signal """
-        reward = self.__action_repeat(np.argmax(action))
+        reward, episode_over = self.__action_repeat(np.argmax(action))
         self.observation_pool.new_observation(self.frame_pool.get_processed_frame())
-        terminal = self.__is_terminal()
-        self.lives = self.gym_env.ale.lives()
         observation = self.observation_pool.get_pooled_observations()
         self.global_step += 1
-        return observation, reward, terminal
+        return observation, reward, episode_over
 
-    def __is_terminal(self):
+    def __is_terminal(self, episode_over):
+        if episode_over :
+            self.lives = self.gym_env.ale.lives()
         if self.single_life_episodes:
-            return self.__is_over() or (self.lives > self.gym_env.ale.lives())
+            return episode_over or (self.lives < self.max_lives)
         else:
-            return self.__is_over()
+            return over
 
     def __is_over(self):
-        return self.ale.game_over()
+        return self.gym_env_ale.game_over()
 
     def get_noop(self):
         return [1.0, 0.0]

@@ -102,6 +102,8 @@ class PAACLearner(ActorLearner):
 
             loop_start_time = time.time()
 
+            print("step : "+str(self.global_step))
+
             max_local_steps = self.max_local_steps
             for t in range(max_local_steps):
                 #next_actions, readouts_v_t, readouts_pi_t = self.__choose_next_actions(shared_states)

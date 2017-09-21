@@ -37,7 +37,8 @@ def create_cmd(data, path):
                 " --nb_actions "+str(data["nb_actions"])+
                 " --oxygen_greedy "+str(data["oxygen_greedy"])+
                 " --proba_oxygen "+str(data["proba_oxygen"])+
-                " --nb_up_actions "+str(data["nb_up_actions"]))
+                " --nb_up_actions "+str(data["nb_up_actions"])+
+                " --emulator_name "+str(data["emulator_name"])))
     return cmd
 
 def create_chpt_cmd(args, path):
