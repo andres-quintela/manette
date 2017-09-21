@@ -1,5 +1,6 @@
 import numpy as np
 import gym
+import gym_ple
 from scipy.misc import imresize, imsave
 import random
 from environment import BaseEnvironment, FramePool,ObservationPool
@@ -7,8 +8,6 @@ import logging
 import sys
 
 # a changer si on veut jouer à d'autres jeux !!
-SCREEN_WIDTH = 160
-SCREEN_HEIGHT = 210
 IMG_SIZE_X = 84
 IMG_SIZE_Y = 84
 NR_IMAGES = 4
@@ -21,10 +20,12 @@ class GymEmulator(BaseEnvironment):
         self.game = args.game
         self.gym_env = gym.make(self.game)
         self.gym_env.reset()
+        with open("gym_game_info.json", 'r') as d :
+            self.game_info = json.load(d)
 
-        #a changer
         self.legal_actions = [i for i in range(self.gym_env.action_space.n)]
-        self.screen_width, self.screen_height = SCREEN_WIDTH , SCREEN_HEIGHT
+        self.screen_width = self.game_info[self.game]["screen_width"]
+        self.screen_height = self.game_info[self.game]["screen_height"]
 
         self.random_start = args.random_start
         self.single_life_episodes = args.single_life_episodes

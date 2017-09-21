@@ -1,0 +1,14 @@
+{
+  "Breakout-v0" : {
+    "screen_width" : 160,
+    "screen_height" : 210
+  },
+  "Pong-v0" : {
+    "screen_width" : 160,
+    "screen_height" : 210
+  },
+  "FlappyBird-v0" : {
+  "screen_width" : 288,
+  "screen_height" : 512
+  }
+}
