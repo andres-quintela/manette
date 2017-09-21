@@ -7,8 +7,7 @@ import time
 import tensorflow as tf
 import random
 from paac import PAACLearner
-from exploration_policy import ExplorationPolicy
-
+from exploration_policy import ExplorationPolicy, Action
 
 def get_save_frame(name):
     import imageio
@@ -70,18 +69,25 @@ if __name__ == '__main__':
         if args.noops != 0:
             for i, environment in enumerate(environments):
                 for _ in range(random.randint(0, args.noops)):
-                    state, _, _ = environment.next(environment.get_noop())
+                    state, _, _ = environment.next(0)
                     states[i] = state
 
         episodes_over = np.zeros(args.test_count, dtype=np.bool)
         rewards = np.zeros(args.test_count, dtype=np.float32)
         while not all(episodes_over):
-            actions, _, _ = PAACLearner.choose_next_actions(network, env_creator.num_actions, states, sess)
+            actions, repetitions, _, _ = explo_policy.choose_next_actions(network, env_creator.num_actions, states, sess)
             for j, environment in enumerate(environments):
-                state, r, episode_over = environment.next(actions[j])
+                macro_action = Action(j, actions, repetitions)
+                state, r, episode_over = environment.next(macro_action.current_action)
                 states[j] = state
                 rewards[j] += r
                 episodes_over[j] = episode_over
+                while macro_action.is_repeated() and not episode_over :
+                    state, r, episode_over = environment.next(macro_action.repeat())
+                    states[j] = state
+                    rewards[j] += r
+                    episodes_over[j] = episode_over
+                macro_action.reset()
 
         print('Performed {} tests for {}.'.format(args.test_count, args.game))
         print('Mean: {0:.2f}'.format(np.mean(rewards)))
