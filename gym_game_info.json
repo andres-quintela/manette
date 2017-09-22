@@ -2,18 +2,21 @@
   "Breakout-v0" : {
     "screen_width" : 160,
     "screen_height" : 210,
-    "crop" : false
+    "crop" : false,
+    "interval_checkpoint" : 1000000
   },
   "Pong-v0" : {
     "screen_width" : 160,
     "screen_height" : 210,
-    "crop" : false
+    "crop" : false,
+    "interval_checkpoint" : 1000000
   },
   "FlappyBird-v0" : {
-  "screen_width" : 288,
-  "screen_height" : 512,
-  "crop" : true,
-  "crop_width" : 288,
-  "crop_height" : 410
+    "screen_width" : 288,
+    "screen_height" : 512,
+    "crop" : true,
+    "crop_width" : 288,
+    "crop_height" : 410,
+    "interval_checkpoint" : 100000
   }
 }

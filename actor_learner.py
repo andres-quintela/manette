@@ -4,9 +4,7 @@ import tensorflow as tf
 import logging
 from logger_utils import variable_summaries
 import os
-
-CHECKPOINT_INTERVAL = 1000000
-
+import json
 
 class ActorLearner(Process):
 
@@ -39,8 +37,17 @@ class ActorLearner(Process):
                                      for i in range(self.emulator_counts)])
         self.max_global_steps = args.max_global_steps
         self.gamma = args.gamma
-        self.game = args.game
         self.network = network_creator()
+
+        self.game = args.game
+        self.emulator_name = args.emulator_name
+        if self.emulator_name == "GYM" :
+            with open("gym_game_info.json", 'r') as d :
+                data = json.load(d)
+                self.game_info  = data[self.game]
+                self.checkpoint_interval = self.game_info["interval_checkpoint"]
+        else :
+            self.checkpoint_interval = 1000000
 
         # Optimizer
         grads_and_vars = self.optimizer.compute_gradients(self.network.loss)
@@ -91,7 +98,7 @@ class ActorLearner(Process):
         tf.summary.scalar('loss/critic_loss_mean', self.network.critic_loss_mean)
 
     def save_vars(self, force=False):
-        if force or self.global_step - self.last_saving_step >= CHECKPOINT_INTERVAL:
+        if force or self.global_step - self.last_saving_step >= self.checkpoint_interval:
             self.last_saving_step = self.global_step
             self.network_saver.save(self.session, self.network_checkpoint_folder, global_step=self.last_saving_step)
             self.optimizer_saver.save(self.session, self.optimizer_checkpoint_folder, global_step=self.last_saving_step)
