@@ -48,8 +48,8 @@ class EmulatorRunner(Process):
                 
                 macro_action.reset()
             count += 1
-            if count % 50 == 0 :
-                logging.info("Runner "+str(self.id)+" : "+str(self.compteur_actions)+" actions ")
+            #if count % 50 == 0 :
+                #logging.info("Runner "+str(self.id)+" : "+str(self.compteur_actions)+" actions ")
             self.compteur_actions = 0
 
             self.barrier.put(True)

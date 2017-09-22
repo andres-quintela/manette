@@ -1,6 +1,4 @@
 from networks import *
-
-
 class PolicyVNetwork(Network):
 
     def __init__(self, conf):
@@ -48,9 +46,13 @@ class PolicyVNetwork(Network):
 
 
                 # Entropy: sum_a (-p_a ln p_a)
-                self.output_layer_entropy = tf.reduce_sum(tf.multiply(
-                    tf.constant(-1.0),
-                    tf.multiply(self.output_layer_pi, self.log_output_layer_pi)), reduction_indices=1)
+                self.output_layer_entropy = tf.add(
+                    tf.reduce_sum(tf.multiply(
+                        tf.constant(-1.0),
+                        tf.multiply(self.output_layer_pi, self.log_output_layer_pi)), reduction_indices=1),
+                    tf.reduce_sum(tf.multiply(
+                        tf.constant(-1.0),
+                        tf.multiply(self.output_layer_rep, self.log_output_layer_rep)), reduction_indices=1))
 
                 self.output_layer_v = tf.reshape(self.output_layer_v, [-1])
 
@@ -69,7 +71,7 @@ class PolicyVNetwork(Network):
                 print("LOG OUTPUT SELECTED REPETITION")
                 print(self.log_output_selected_repetition)
 
-                self.log_repetition_mean =              tf.reduce_mean(self.log_output_selected_repetition)
+                self.log_repetition_mean = tf.reduce_mean(self.log_output_selected_repetition)
 
                 self.actor_objective_advantage_term = tf.multiply(
                                     tf.add(self.log_output_selected_action, self.log_output_selected_repetition),
