@@ -22,11 +22,12 @@ class GymEmulator(BaseEnvironment):
         self.gym_env = gym.make(self.game)
         self.gym_env.reset()
         with open("gym_game_info.json", 'r') as d :
-            self.game_info = json.load(d)
+            data = json.load(d)
+            self.game_info  = data[self.game]
 
         self.legal_actions = [i for i in range(self.gym_env.action_space.n)]
-        self.screen_width = self.game_info[self.game]["screen_width"]
-        self.screen_height = self.game_info[self.game]["screen_height"]
+        self.screen_width = self.game_info["screen_width"]
+        self.screen_height = self.game_info["screen_height"]
 
         self.random_start = args.random_start
         self.single_life_episodes = args.single_life_episodes
@@ -55,7 +56,7 @@ class GymEmulator(BaseEnvironment):
 
     def rgb_to_gray(self, im):
         new_im = np.zeros((self.screen_height, self.screen_width,1))
-        new_im = 0.299 * im[:,:, 0] + 0.587 * im[:,:, 1] + 0.114 * im[:,:, 2]
+        new_im[:,:,0] = 0.299 * im[:,:, 0] + 0.587 * im[:,:, 1] + 0.114 * im[:,:, 2]
         return new_im
 
     def __get_screen_image(self):
@@ -65,7 +66,7 @@ class GymEmulator(BaseEnvironment):
         """
         im = self.gym_env.render(mode='rgb_array')
         if self.rgb : self.rgb_screen = im
-        else : self.gray_screen = rgb_to_gray(im)
+        else : self.gray_screen = self.rgb_to_gray(im)
 
         if self.call_on_new_frame:
             self.rgb_screen = im
@@ -92,8 +93,13 @@ class GymEmulator(BaseEnvironment):
     def __process_frame_pool(self, frame_pool):
         """ Preprocess frame pool """
         img = np.amax(frame_pool, axis=0)
-        if not self.rgb :
-            img = np.reshape(img, (210, 160))
+        if self.game_info["crop"] :
+            img = img[:self.game_info["crop_height"], :self.game_info["crop_width"], :]
+            if not self.rgb :
+                img = np.reshape(img, (self.game_info["crop_height"], self.game_info["crop_width"]))
+        else :
+            if not self.rgb :
+                img = np.reshape(img, (self.screen_height, self.screen_width))
         img = imresize(img, (84, 84), interp='nearest')
         img = img.astype(np.uint8)
         if not self.rgb :

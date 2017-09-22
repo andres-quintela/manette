@@ -48,8 +48,8 @@ def main(args):
     pathSrc = "toTrain/gpu"+str(args.gpu)
     for folder in os.listdir(pathSrc):
         i = datetime.datetime.now()
-        path = "logs/"+str(i.year)+"-"+str(i.month)+"-"+str(i.day)+"-"+folder
-        #path = "/data1/rl/atari/logs/tensorboard/"+str(i.year)+"-"+str(i.month)+"-"+str(i.day)+"-"+folder
+        #path = "logs/"+str(i.year)+"-"+str(i.month)+"-"+str(i.day)+"-"+folder
+        path = "/data1/rl/atari/logs/tensorboard/"+str(i.year)+"-"+str(i.month)+"-"+str(i.day)+"-"+folder
         if not os.path.exists(path):
             os.makedirs(path)
         for f in os.listdir(pathSrc+"/"+folder):
