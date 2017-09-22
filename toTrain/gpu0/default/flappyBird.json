@@ -1,5 +1,5 @@
 {
-  "game": "seaquest",
+  "game": "FlappyBird-v0",
   "initial_lr": 0.0224,
   "lr_annealing_steps": 80000000,
   "max_global_steps": 30000000,
@@ -7,7 +7,7 @@
   "gamma": 0.99,
   "alpha": 0.99,
   "entropy_regularisation_strength": 0.02,
-  "arch": "PWYX",
+  "arch": "NIPS",
   "emulator_workers": 8,
   "emulator_counts": 32,
   "clip_norm_type": "global",
@@ -26,5 +26,6 @@
   "nb_actions": 0,
   "oxygen_greedy": false,
   "proba_oxygen": 0.01,
-  "nb_up_actions": 10
+  "nb_up_actions": 10,
+  "emulator_name": "GYM"
 }

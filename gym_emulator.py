@@ -6,6 +6,7 @@ import random
 from environment import BaseEnvironment, FramePool,ObservationPool
 import logging
 import sys
+import json
 
 # a changer si on veut jouer à d'autres jeux !!
 IMG_SIZE_X = 84
