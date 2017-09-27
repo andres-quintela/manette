@@ -27,12 +27,9 @@ def create_cmd(data, path):
                 " --egreedy "+str(data["egreedy"])+
                 " --epsilon "+str(data["epsilon"])+
                 " --softmax_temp "+str(data["softmax_temp"])+
-                " --use_dropout "+str(data["use_dropout"])+
                 " --annealed "+str(data["annealed"])+
                 " --keep_percentage "+str(data["keep_percentage"])+
-                " --pwyx_net "+str(data["pwyx_net"])+
-                " --play_in_colours "+str(data["play_in_colours"])+
-                " --entropy_ann_steps "+str(data["entropy_ann_steps"])+
+                " --rgb "+str(data["rgb"])+
                 " --random_actions "+str(data["random_actions"])+
                 " --nb_actions "+str(data["nb_actions"])+
                 " --oxygen_greedy "+str(data["oxygen_greedy"])+
