@@ -65,7 +65,9 @@ def get_network_and_environment_creator(args, explo_policy, random_seed=3):
                     'clip_norm_type': args.clip_norm_type,
                     'softmax_temp' : explo_policy.softmax_temp,
                     'keep_percentage' : explo_policy.keep_percentage,
-                    'rgb' : args.rgb}
+                    'rgb' : args.rgb,
+                    'activation' : args.activation,
+                    'alpha_leaky_relu' : args.alpha_leaky_relu}
 
     if args.arch == 'PWYX' :
         network = PpwwyyxxPolicyVNetwork
@@ -118,6 +120,8 @@ def get_arg_parser():
     parser.add_argument('--oxygen_greedy', default=False, type=bool_arg, help="True if we use the oxygen_greedy policy", dest="oxygen_greedy")
     parser.add_argument('--proba_oxygen', default=0.01, type=float, help="probability of going up with the oxygen policy", dest="proba_oxygen")
     parser.add_argument('--nb_up_actions', default=10, type=int, help="number of consecutive UPs", dest="nb_up_actions")
+    parser.add_argument('--activation', default='relu', type=str, help="activation function for the network", dest="activation")
+    parser.add_argument('--alpha_leaky_relu', default=0.1, type=float, help="coef for leaky relu", dest="alpha_leaky_relu")
 
 
     return parser
