@@ -5,62 +5,28 @@ from ctypes import c_uint, c_float
 from actor_learner import *
 import logging
 from logger_utils import variable_summaries
+import numpy as np
 
 from emulator_runner import EmulatorRunner
 from exploration_policy import Action
 from runners import Runners
-import numpy as np
-import sys
+
 
 class PAACLearner(ActorLearner):
     def __init__(self, network_creator, environment_creator, explo_policy, args):
-        logging.info('#######Init PAAC')
         super(PAACLearner, self).__init__(network_creator, environment_creator, explo_policy, args)
         self.workers = args.emulator_workers
-        self.max_repetition = args.max_repetition
-        self.total_repetitions = self.max_repetition + 1
-
-
-    @staticmethod
-    def choose_next_actions(network, num_actions, states, session):
-        network_output_v, network_output_pi = session.run(
-            [network.output_layer_v,
-             network.output_layer_pi],
-            feed_dict={network.input_ph: states})
-
-        action_indices = PAACLearner.__sample_policy_action(network_output_pi)
-
-        new_actions = np.eye(num_actions)[action_indices]
-
-        return new_actions, network_output_v, network_output_pi
-
-    def __choose_next_actions(self, states):
-        return PAACLearner.choose_next_actions(self.network, self.num_actions, states, self.session)
-
-    @staticmethod
-    def __sample_policy_action(probs):
-        """
-        Sample an action from an action probability distribution output by
-        the policy network.
-        """
-        # Subtract a tiny value from probabilities in order to avoid
-        # "ValueError: sum(pvals[:-1]) > 1.0" in numpy.multinomial
-        probs = probs - np.finfo(np.float32).epsneg
-
-        action_indexes = [int(np.nonzero(np.random.multinomial(1, p))[0]) for p in probs]
-        return action_indexes
+        self.total_repetitions = args.max_repetition + 1
 
     def _get_shared(self, array, dtype=c_float):
         """
         Returns a RawArray backed numpy array that can be shared between processes.
         :param array: the array to be shared
         :param dtype: the RawArray dtype to use
-        :return: the RawArray backed numpy array
-        """
+        :return: the RawArray backed numpy array """
 
         shape = array.shape
         shared = RawArray(dtype, array.reshape(-1))
-        print('paac shared array length=',len(shared))
         return np.frombuffer(shared, dtype).reshape(shape)
 
     def log_histogram(self, tag, values, step, bins=1000):
@@ -76,30 +42,38 @@ class PAACLearner(ActorLearner):
 
         bin_edges = bin_edges[1:]
 
-        for edge in bin_edges :
-            hist.bucket_limit.append(edge)
-        for c in counts :
-            hist.bucket.append(c)
+        for edge in bin_edges : hist.bucket_limit.append(edge)
+        for c in counts : hist.bucket.append(c)
 
         summary = tf.Summary(value=[tf.Summary.Value(tag=tag, histo=hist)])
         self.summary_writer.add_summary(summary, step)
         self.summary_writer.flush()
 
+    def log_values(self, values, tag, length = 50, timestep = 500):
+        if len(values) > length and self.global_step % timestep == 0 :
+            mean = np.mean(values[-50:])
+            std = np.std(values[-50:])
+            summary = tf.Summary(value=[
+                tf.Summary.Value(tag=tag+'/mean', simple_value=mean),
+                tf.Summary.Value(tag=tag+'/min', simple_value=min(values[-50:])),
+                tf.Summary.Value(tag=tag+'/max', simple_value=max(values[-50:])),
+                tf.Summary.Value(tag=tag+'/std', simple_value=std),
+                tf.Summary.Value(tag=tag+'/std_over_mean', simple_value=min(2, np.absolute(std/mean)))
+            ])
+            self.summary_writer.add_summary(summary, self.global_step)
+            self.summary_writer.flush()
+
+
     def train(self):
-        """
-        Main actor learner loop for parallel advantage actor critic learning.
-        """
+        """ Main actor learner loop for parallel advantage actor critic learning."""
 
         self.global_step = self.init_network()
-
-        logging.debug("Starting training at Step {}".format(self.global_step))
-        counter = 0
-
         global_step_start = self.global_step
-
+        counter = 0
         total_rewards = []
         total_steps = []
 
+        logging.debug("Starting training at Step {}".format(self.global_step))
 
         # state, reward, episode_over, action, repetition
         variables = [(np.asarray([emulator.get_initial_state() for emulator in self.emulators], dtype=np.uint8)),
@@ -137,18 +111,14 @@ class PAACLearner(ActorLearner):
 
             max_local_steps = self.max_local_steps
             for t in range(max_local_steps):
-                #next_actions, readouts_v_t, readouts_pi_t = self.__choose_next_actions(shared_states)
+
                 new_actions, new_repetitions, readouts_v_t, readouts_pi_t = self.explo_policy.choose_next_actions(self.network, self.num_actions, shared_states, self.session)
 
                 actions_sum += new_actions
 
-                for z in range(new_actions.shape[0]):
-                    shared_actions[z] = new_actions[z]
-                for z in range(new_repetitions.shape[0]):
-                    shared_rep[z] = new_repetitions[z]
-
-                #logging.info("SHARED ACTIONS : "+str(shared_actions))
-                #logging.info("SHARED REP : "+str(shared_rep))
+                # sharing the actions and repetitions to the different threads
+                for z in range(new_actions.shape[0]): shared_actions[z] = new_actions[z]
+                for z in range(new_repetitions.shape[0]): shared_rep[z] = new_repetitions[z]
 
                 actions[t] = new_actions
                 values[t] = readouts_v_t
@@ -170,7 +140,7 @@ class PAACLearner(ActorLearner):
                     emulator_steps[e] += np.argmax(new_repetitions[e]) + 1
                     self.global_step += 1
 
-                    #ici : rempli le tableau pour l'histogramme des actions - repetitions
+                    #rempli le tableau pour l'histogramme des actions - repetitions
                     a = np.argmax(new_actions[e])
                     r = np.argmax(new_repetitions[e])
                     total_action_rep[a][r] += 1
@@ -181,7 +151,6 @@ class PAACLearner(ActorLearner):
                         episode_summary = tf.Summary(value=[
                             tf.Summary.Value(tag='rl/reward', simple_value=total_episode_rewards[e]),
                             tf.Summary.Value(tag='rl/episode_length', simple_value=emulator_steps[e])
-                            #tf.Summary.Value(tag='rl/loss', simple_value=self.network.loss)
                         ])
                         self.summary_writer.add_summary(episode_summary, self.global_step)
                         self.summary_writer.flush()
@@ -198,7 +167,6 @@ class PAACLearner(ActorLearner):
 
             for t in reversed(range(max_local_steps)):
                 estimated_return = rewards[t] + self.gamma * estimated_return * episodes_over_masks[t]
-                ## ici changer des choses , puissance gamma
                 y_batch[t] = np.copy(estimated_return)
                 adv_batch[t] = estimated_return - values[t]
 
@@ -219,81 +187,44 @@ class PAACLearner(ActorLearner):
             _, summaries = self.session.run(
                 [self.train_step, summaries_op],
                 feed_dict=feed_dict)
-
             self.summary_writer.add_summary(summaries, self.global_step)
+
             param_summary = tf.Summary(value=[
                 tf.Summary.Value(tag='parameters/lr', simple_value=lr)
             ])
             self.summary_writer.add_summary(param_summary, self.global_step)
-
-            if len(total_rewards) > 50 and self.global_step % 500 == 0 :
-                mean = np.mean(total_rewards[-50:])
-                std = np.std(total_rewards[-50:])
-                rewards_summary = tf.Summary(value=[
-                    tf.Summary.Value(tag='rewards_env/mean', simple_value=mean),
-                    tf.Summary.Value(tag='rewards_env/min', simple_value=min(total_rewards[-50:])),
-                    tf.Summary.Value(tag='rewards_env/max', simple_value=max(total_rewards[-50:])),
-                    tf.Summary.Value(tag='rewards_env/std', simple_value=std),
-                    tf.Summary.Value(tag='rewards_env/std_over_mean', simple_value=min(2, np.absolute(std/mean)))
-                ])
-                self.summary_writer.add_summary(rewards_summary, self.global_step)
-
-            if len(total_steps) > 50 and self.global_step % 500 == 0 :
-                mean_step = np.mean(total_steps[-50:])
-                std_step = np.std(total_steps[-50:])
-                steps_summary = tf.Summary(value=[
-                    tf.Summary.Value(tag='steps_per_episode/mean', simple_value=mean_step),
-                    tf.Summary.Value(tag='steps_per_episode/min', simple_value=min(total_steps[-50:])),
-                    tf.Summary.Value(tag='steps_per_episode/max', simple_value=max(total_steps[-50:])),
-                    tf.Summary.Value(tag='steps_per_episode/std', simple_value=std_step),
-                    tf.Summary.Value(tag='steps_per_episode/std_over_mean', simple_value=min(2, np.absolute(std_step/mean_step)))
-                ])
-                self.summary_writer.add_summary(steps_summary, self.global_step)
-
             self.summary_writer.flush()
 
-            #histogramme des actions
+            self.log_values(total_rewards, 'rewards_per_episode')
+            self.log_values(total_steps, 'steps_per_episode')
+
+            #ajout de l'histogramme des actions
             nb_a = [ sum(a) for a in total_action_rep]
             total_action_rep_trans = np.transpose(total_action_rep)
             nb_r = [ sum(r) for r in total_action_rep_trans ]
-            histo_a = []
-            for i in range(self.num_actions) :
-                histo_a += [i]*int(nb_a[i])
-            histo_r = []
-            for i in range(self.total_repetitions) :
-                histo_r += [i]*int(nb_r[i])
+            histo_a, histo_r = [], []
+            for i in range(self.num_actions) : histo_a += [i]*int(nb_a[i])
+            for i in range(self.total_repetitions) : histo_r += [i]*int(nb_r[i])
 
             self.log_histogram('actions', np.array(histo_a), self.global_step)
             self.log_histogram('repetitions', np.array(histo_r), self.global_step)
-            #len_a = len(histo_a)
-            #len_r = len(histo_r)
-            #histo_a_var = tf.Variable(tf.zeros[len_a], name="a")
-            #histo_r_var = tf.Variable(tf.zeros[len_r], name="r")
-
-            #tf.summary.histogram("actions", histo_a_var)
-            #tf.summary.histogram("repetitions", histo_r_var)
-
-            #summary_op = tf.summary.merge_all_summaries()
-            #assign_op_a = histo_var_a.assign(histo_a)
-            #summary_a, _ = self.session.run([summary_op, assign_op_a])
-            #self.summary_writer.add_summary(tf.Summary.FromString(summary), self.global_step)
-
-            #self.summary_writer.add_summary(tf.summary.histogram("actions", histo_a_var), self.global_step)
-            #self.summary_writer.add_summary(tf.summary.histogram("repetitions", histo_r_var), self.global_step)
-
-            #self.summary_writer.flush()
 
             counter += 1
-
             if counter % (2048 / self.emulator_counts) == 0:
                 curr_time = time.time()
-                global_steps = self.global_step
                 last_ten = 0.0 if len(total_rewards) < 1 else np.mean(total_rewards[-10:])
+                steps_per_sec = self.max_local_steps * self.emulator_counts / (curr_time - loop_start_time)
+                average_steps_per_sec = (self.global_step - global_step_start) / (curr_time - start_time)
                 logging.info("Ran {} steps, at {} steps/s ({} steps/s avg), last 10 rewards avg {}"
-                             .format(global_steps,
-                                     self.max_local_steps * self.emulator_counts / (curr_time - loop_start_time),
-                                     (global_steps - global_step_start) / (curr_time - start_time),
-                                     last_ten))
+                             .format(self.global_step, steps_per_sec, average_steps_per_sec, last_ten))
+                             
+                stats_summary = tf.Summary(value=[
+                    tf.Summary.Value(tag='stats/steps_per_s', simple_value=steps_per_sec),
+                    tf.Summary.Value(tag='stats/average_steps_per_s', simple_value=average_steps_per_sec)
+                ])
+                self.summary_writer.add_summary(stats_summary, self.global_step)
+                self.summary_writer.flush()
+
             self.save_vars()
 
         self.cleanup()

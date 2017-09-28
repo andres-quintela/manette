@@ -14,7 +14,6 @@ class Operations():
         dim = shape[1]*shape[2]*shape[3]
         return tf.reshape(_input, [-1,dim], name='_flattened')
 
-
     def conv2d(self, name, _input, filters, size, channels, stride, padding = 'VALID', init = "torch"):
         w = self.conv_weight_variable([size,size, channels,filters],
                                  name + '_weights', init = init)
@@ -25,7 +24,6 @@ class Operations():
         out = tf.nn.relu(tf.add(conv, b),
                          name='' + name + '_activations')
         return w, b, out
-
 
     def conv_weight_variable(self, shape, name, init = "torch"):
         if init == "glorot_uniform":
@@ -42,7 +40,6 @@ class Operations():
         initial = tf.random_uniform(shape, minval=-d, maxval=d)
         return tf.Variable(initial, name=name, dtype='float32')
 
-
     def conv_bias_variable(self, shape, w, h, input_channels, name, init= "torch"):
         if init == "glorot_uniform":
             initial = tf.zeros(shape)
@@ -51,7 +48,6 @@ class Operations():
             initial = tf.random_uniform(shape, minval=-d, maxval=d)
         return tf.Variable(initial, name=name, dtype='float32')
 
-
     def fc(self, name, _input, output_dim, activation = "relu", init = "torch"):
         input_dim = _input.get_shape().as_list()[1]
         w = self.fc_weight_variable([input_dim, output_dim],
@@ -59,12 +55,10 @@ class Operations():
         b = self.fc_bias_variable([output_dim], input_dim,
                              '' + name + '_biases', init = init)
         out = tf.add(tf.matmul(_input, w), b, name= name + '_out')
-
         if activation == "relu":
             out = tf.nn.relu(out, name='' + name + '_relu')
 
         return w, b, out
-
 
     def fc_weight_variable(self, shape, name, init="torch"):
         if init == "glorot_uniform":
@@ -77,7 +71,6 @@ class Operations():
         initial = tf.random_uniform(shape, minval=-d, maxval=d)
         return tf.Variable(initial, name=name, dtype='float32')
 
-
     def fc_bias_variable(self, shape, input_channels, name, init= "torch"):
         if init=="glorot_uniform":
             initial = tf.zeros(shape, dtype='float32')
@@ -86,7 +79,6 @@ class Operations():
             initial = tf.random_uniform(shape, minval=-d, maxval=d)
         return tf.Variable(initial, name=name, dtype='float32')
 
-
     def softmax(self, name, _input, output_dim, temp):
         softmax_temp = tf.constant(temp, dtype=tf.float32)
         input_dim = _input.get_shape().as_list()[1]
@@ -94,7 +86,6 @@ class Operations():
         b = self.fc_bias_variable([output_dim], input_dim, name + '_biases')
         out = tf.nn.softmax(tf.div(tf.add(tf.matmul(_input, w), b), softmax_temp), name= name + '_policy')
         return w, b, out
-
 
     def log_softmax(self, name, _input, output_dim):
         input_dim = _input.get_shape().as_list()[1]
@@ -119,8 +110,7 @@ class Network(object):
         self.device = conf['device']
         self.rgb = conf['rgb']
         self.depth = 1
-        if self.rgb :
-            self.depth = 3
+        if self.rgb : self.depth = 3
         self.op = Operations(conf)
         self.max_repetition = conf['max_repetition']
         self.total_repetitions = self.max_repetition + 1
@@ -181,7 +171,6 @@ class BayesianNetwork(NIPSNetwork):
 
         with tf.device(self.device):
             with tf.name_scope(self.name):
-                logging.info('Using bayesion Network')
                 dropout = tf.nn.dropout(self.output, conf["keep_percentage"])
 
                 w_fc4, b_fc4, fc4 = fc('fc4', dropout, 256, activation="relu")
@@ -194,8 +183,6 @@ class PpwwyyxxNetwork(Network):
 
         with tf.device(self.device):
             with tf.name_scope(self.name):
-
-#conv2d(name, _input, filters, size, channels, stride, padding = 'VALID', init = "torch")
 
                 _, _, conv1 = self.op.conv2d('conv1', self.input, 32, 5, self.depth * 4, 1, padding = 'SAME')
                 mp_conv1 = self.op.max_pooling('mp_conv1', conv1)

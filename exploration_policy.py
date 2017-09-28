@@ -34,33 +34,22 @@ class Action :
     def is_repeated(self):
         return self.repeated
 
-    @staticmethod
-    def make_array(actions_list, nb_env, num_actions):
-        actions_array = np.zeros((nb_env, num_actions), dtype = np.float32)
-        for action in actions_list :
-            actions_array[action.id][action.current_action] = action.nb_repetitions_left
-        return actions_array
 
 class ExplorationPolicy:
 
     def __init__(self, args, test = False):
         self.test = test
+        self.global_step = 0
+
         self.egreedy_policy = args.egreedy
         self.initial_epsilon = args.epsilon
         self.epsilon = args.epsilon
         self.softmax_temp = args.softmax_temp
         self.keep_percentage = args.keep_percentage
-        self.global_step = 0
         self.annealed = args.annealed
         self.annealing_steps = 80000000
-        self.oxygen_greedy = args.oxygen_greedy
-        self.proba_oxygen = args.proba_oxygen
-        self.nb_up_actions = args.nb_up_actions
-        self.compteur_up_actions = 0
-        self.FiGAR = args.FiGAR
         self.max_repetition = args.max_repetition
         self.total_repetitions = self.max_repetition + 1
-        self.nb_env = args.emulator_counts
 
     def get_epsilon(self):
         if self.global_step <= self.annealing_steps:
@@ -76,17 +65,16 @@ class ExplorationPolicy:
 
         if self.test :
             action_indices = self.argmax_choose(network_output_pi)
-        elif self.oxygen_greedy :
-            action_indices = self.oxygen_greedy_choose(network_output_pi)
+            repetition_indices = self.argmax_choose(network_output_rep)
         elif self.egreedy_policy :
             action_indices = self.e_greedy_choose(network_output_pi)
+            repetition_indices = self.e_greedy_choose(network_output_rep)
         else :
             action_indices = self.multinomial_choose(network_output_pi)
+            repetition_indices = self.multinomial_choose(network_output_rep)
 
-        if self.test :
-            repetition_indices = self.argmax_choose(network_output_rep)
-        else :
-            repetition_indices = self.choose_repetition(network_output_rep)
+        #if max_repetition == 0 :
+        #    repetition_indices = [0 for p in network_output_rep]
 
         new_actions = np.eye(num_actions)[action_indices]
         new_repetitions = np.eye(self.total_repetitions)[repetition_indices]
@@ -115,16 +103,6 @@ class ExplorationPolicy:
                 action_indexes.append(np.argmax(p))
         return action_indexes
 
-    def oxygen_greedy_choose(self, probs):
-        probs = probs - np.finfo(np.float32).epsneg
-        if self.compteur_up_actions == 0 and np.random.rand(1)[0] > self.proba_oxygen :
-            return self.multinomial_choose(probs)
-        else :
-            action_indexes = [2 for i in range(10)] #exploration pour les 10 premmiers environments
-            action_indexes += [int(np.nonzero(np.random.multinomial(1, p))[0]) for p in probs[10:]]
-            self.compteur_up_actions = (self.compteur_up_actions + 1) % self.nb_up_actions
-            return action_indexes
-
     def multinomial_choose(self, probs):
         """Sample an action from an action probability distribution output by
         the policy network using a multinomial law."""
@@ -134,9 +112,3 @@ class ExplorationPolicy:
 
         action_indexes = [int(np.nonzero(np.random.multinomial(1, p))[0]) for p in probs]
         return action_indexes
-
-    def choose_repetition(self, probs):
-        if self.max_repetition == 0 :
-            return [0 for p in probs]
-        else :
-            return self.multinomial_choose(probs)

@@ -11,14 +11,12 @@ def load_args(path):
     with open(path, 'r') as f:
         return json.load(f)
 
-
 def save_args(args, folder, file_name='args.json'):
     args = vars(args)
     if not os.path.exists(folder):
         os.makedirs(folder)
     with open(os.path.join(folder, file_name), 'w') as f:
         return json.dump(args, f)
-
 
 def variable_summaries(var, name):
     """Attach a lot of summaries to a Tensor (for TensorBoard visualization)."""

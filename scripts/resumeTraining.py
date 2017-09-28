@@ -4,8 +4,6 @@ import datetime
 import json
 import subprocess
 
-#on considere que le fichier .json a eventuellement été modifié
-
 def create_cmd(data, path):
     cmd = ("python3 train.py -g "+data["game"]+" -df "+path+"/"+
                 " --e "+str(data["e"])+
@@ -53,8 +51,6 @@ def main(args):
         subprocess.call(create_chpt_cmd(args, args.debugging_folder), shell = True)
         subprocess.call(create_cmd(data, args.debugging_folder), shell = True)
         subprocess.call(("touch "+args.debugging_folder+"/checkpoints_saved/STOP"), shell = True)
-
-
 
 def get_arg_parser():
     parser = argparse.ArgumentParser()

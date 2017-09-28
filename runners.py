@@ -2,7 +2,6 @@ import numpy as np
 from multiprocessing import Queue
 from multiprocessing.sharedctypes import RawArray
 from ctypes import c_uint, c_float, c_double
-import logging
 
 
 class Runners(object):
@@ -43,8 +42,6 @@ class Runners(object):
         return self.variables
 
     def update_environments(self):
-        #logging.info("VARIABLES RUNNERS 3 : "+str(self.variables[3]))
-        #logging.info("VARIABLES RUNNERS 4 : "+str(self.variables[4]))
         for queue in self.queues:
             queue.put(True)
 
