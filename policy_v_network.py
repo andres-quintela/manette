@@ -46,14 +46,13 @@ class PolicyVNetwork(Network):
 
 
                 # Entropy: sum_a (-p_a ln p_a)
-                self.output_layer_entropy = tf.add(
-                    tf.reduce_sum(tf.multiply(
+                self.output_layer_entropy_actor = tf.reduce_sum(tf.multiply(
                         tf.constant(-1.0),
-                        tf.multiply(self.output_layer_pi, self.log_output_layer_pi)), reduction_indices=1),
-                    tf.reduce_sum(tf.multiply(
+                        tf.multiply(self.output_layer_pi, self.log_output_layer_pi)), reduction_indices=1)
+                self.output_layer_entropy_rep = tf.reduce_sum(tf.multiply(
                         tf.constant(-1.0),
-                        tf.multiply(self.output_layer_rep, self.log_output_layer_rep)), reduction_indices=1))
-
+                        tf.multiply(self.output_layer_rep, self.log_output_layer_rep)), reduction_indices=1)
+                
                 self.output_layer_v = tf.reshape(self.output_layer_v, [-1])
 
                 # Advantage critic
@@ -79,13 +78,13 @@ class PolicyVNetwork(Network):
 
                 self.actor_advantage_mean = tf.reduce_mean(self.actor_objective_advantage_term)
 
-                self.actor_objective_entropy_term = tf.multiply(self.entropy_regularisation_strength, self.output_layer_entropy)
-
-
+                self.actor_objective_entropy_term = tf.multiply(self.entropy_regularisation_strength, self.output_layer_entropy_actor)
+                self.rep_objective_entropy_term = tf.multiply(self.entropy_regularisation_strength, self.output_layer_entropy_rep)
+                self.entropy_term = tf.add(self.actor_objective_entropy_term, self.rep_objective_entropy_term)
 
                 self.actor_objective_mean = tf.reduce_mean(tf.multiply(tf.constant(-1.0),
-                                           tf.add(self.actor_objective_advantage_term,       self.actor_objective_entropy_term)),
-                               name='mean_actor_objective')
+                                            tf.add(self.actor_objective_advantage_term, self.entropy_term)),
+                                            name='mean_actor_objective')
                 print("ACTOR OBJECTIVE MEAN")
                 print(self.actor_objective_mean)
 

@@ -10,6 +10,9 @@ class Action :
         self.nb_repetitions_left = 0
         self.init_from_list(a, r)
 
+    def __str__(self):
+        return "id : "+str(self.id)+", action "+str(self.current_action)+" repeated "+str(self.nb_repetitions_left)+" times."
+
     def init_from_list(self, a, r):
         self.current_action = np.argmax(a)
         self.nb_repetitions_left = np.argmax(r)
@@ -40,7 +43,8 @@ class Action :
 
 class ExplorationPolicy:
 
-    def __init__(self, args):
+    def __init__(self, args, test = False):
+        self.test = test
         self.egreedy_policy = args.egreedy
         self.initial_epsilon = args.epsilon
         self.epsilon = args.epsilon
@@ -70,14 +74,19 @@ class ExplorationPolicy:
              network.output_layer_pi, network.output_layer_rep],
             feed_dict={network.input_ph: states})
 
-        if self.oxygen_greedy :
+        if self.test :
+            action_indices = self.argmax_choose(network_output_pi)
+        elif self.oxygen_greedy :
             action_indices = self.oxygen_greedy_choose(network_output_pi)
         elif self.egreedy_policy :
             action_indices = self.e_greedy_choose(network_output_pi)
         else :
             action_indices = self.multinomial_choose(network_output_pi)
 
-        repetition_indices = self.choose_repetition(network_output_rep)
+        if self.test :
+            repetition_indices = self.argmax_choose(network_output_rep)
+        else :
+            repetition_indices = self.choose_repetition(network_output_rep)
 
         new_actions = np.eye(num_actions)[action_indices]
         new_repetitions = np.eye(self.total_repetitions)[repetition_indices]
@@ -86,6 +95,13 @@ class ExplorationPolicy:
         if self.annealed : self.epsilon = get_epsilon()
 
         return new_actions, new_repetitions, network_output_v, network_output_pi
+
+    def argmax_choose(self, probs):
+        """Choose the best actions"""
+        action_indexes = []
+        for p in probs :
+            action_indexes.append(np.argmax(p))
+        return action_indexes
 
     def e_greedy_choose(self, probs):
         """Sample an action from an action probability distribution output by

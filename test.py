@@ -47,7 +47,7 @@ if __name__ == '__main__':
     rng = np.random.RandomState(int(time.time()))
     args.random_seed = rng.randint(1000)
 
-    explo_policy = ExplorationPolicy(args)
+    explo_policy = ExplorationPolicy(args, test = True)
     network_creator, env_creator = get_network_and_environment_creator(args, explo_policy)
     network = network_creator()
     saver = tf.train.Saver()
@@ -75,18 +75,27 @@ if __name__ == '__main__':
         episodes_over = np.zeros(args.test_count, dtype=np.bool)
         rewards = np.zeros(args.test_count, dtype=np.float32)
         while not all(episodes_over):
+            print(episodes_over)
+            print(rewards)
             actions, repetitions, _, _ = explo_policy.choose_next_actions(network, env_creator.num_actions, states, sess)
+            print('actions : '+str(actions))
+            print('repetitions : '+str(repetitions))
             for j, environment in enumerate(environments):
-                macro_action = Action(j, actions, repetitions)
+                macro_action = Action(j, actions[j], repetitions[j])
+                #print(str(j)+" a : "+str(macro_action.current_action)+", r : "+str(macro_action.nb_repetitions_left))
+                print(macro_action)
                 state, r, episode_over = environment.next(macro_action.current_action)
                 states[j] = state
                 rewards[j] += r
+                print(j)
                 episodes_over[j] = episode_over
+                print(episode_over)
                 while macro_action.is_repeated() and not episode_over :
                     state, r, episode_over = environment.next(macro_action.repeat())
                     states[j] = state
                     rewards[j] += r
                     episodes_over[j] = episode_over
+                    print(episode_over)
                 macro_action.reset()
 
         print('Performed {} tests for {}.'.format(args.test_count, args.game))
