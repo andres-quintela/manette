@@ -18,6 +18,15 @@ class PAACLearner(ActorLearner):
         self.workers = args.emulator_workers
         self.total_repetitions = args.max_repetition + 1
 
+        #add the parameters to tensorboard
+        sess = tf.InteractiveSession()
+        text = str(args)
+        summary_op = tf.summary.text('text', tf.convert_to_tensor(text))
+        text = sess.run(summary_op)
+        self.summary_writer.add_summary(text, 0)
+        self.summary_writer.flush()
+
+
     def _get_shared(self, array, dtype=c_float):
         """
         Returns a RawArray backed numpy array that can be shared between processes.
@@ -217,7 +226,7 @@ class PAACLearner(ActorLearner):
                 average_steps_per_sec = (self.global_step - global_step_start) / (curr_time - start_time)
                 logging.info("Ran {} steps, at {} steps/s ({} steps/s avg), last 10 rewards avg {}"
                              .format(self.global_step, steps_per_sec, average_steps_per_sec, last_ten))
-                             
+
                 stats_summary = tf.Summary(value=[
                     tf.Summary.Value(tag='stats/steps_per_s', simple_value=steps_per_sec),
                     tf.Summary.Value(tag='stats/average_steps_per_s', simple_value=average_steps_per_sec)
