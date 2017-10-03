@@ -20,7 +20,8 @@ class PAACLearner(ActorLearner):
 
         #add the parameters to tensorboard
         sess = tf.InteractiveSession()
-        text = str(args)
+        file_args = open(args.debugging_folder+"args.json", 'r')
+        text = "patate" #str(file_args.read())
         summary_op = tf.summary.text('text', tf.convert_to_tensor(text))
         text = sess.run(summary_op)
         self.summary_writer.add_summary(text, 0)
