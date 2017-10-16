@@ -48,8 +48,7 @@ class ExplorationPolicy:
         self.keep_percentage = args.keep_percentage
         self.annealed = args.annealed
         self.annealing_steps = 80000000
-        self.max_repetition = args.max_repetition
-        self.total_repetitions = self.max_repetition + 1
+        self.total_repetitions = args.max_repetition
 
     def get_epsilon(self):
         if self.global_step <= self.annealing_steps:
@@ -72,9 +71,6 @@ class ExplorationPolicy:
         else :
             action_indices = self.multinomial_choose(network_output_pi)
             repetition_indices = self.multinomial_choose(network_output_rep)
-
-        #if max_repetition == 0 :
-        #    repetition_indices = [0 for p in network_output_rep]
 
         new_actions = np.eye(num_actions)[action_indices]
         new_repetitions = np.eye(self.total_repetitions)[repetition_indices]

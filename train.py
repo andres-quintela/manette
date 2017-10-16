@@ -115,7 +115,7 @@ def get_arg_parser():
     parser.add_argument('--annealed_steps', default=80000000, type=int, help="Nb of global steps during which epsilon will be linearly annealed towards zero", dest="annealed_steps")
     parser.add_argument('--keep_percentage', default=0.9, type=float, help="keep percentage when dropout is used", dest='keep_percentage' )
     parser.add_argument('--rgb', default=False, type=bool_arg, help="True if RGB images are given to the agent", dest="rgb")
-    parser.add_argument('--max_repetition', default=20, type=int, help="Maximum number of repetition for FiGAR", dest="max_repetition")
+    parser.add_argument('--max_repetition', default=1, type=int, help="Maximum number of repetition for FiGAR", dest="max_repetition")
     parser.add_argument('--checkpoint_interval', default=1000000, type=int, help="Interval of steps btw checkpoints", dest="checkpoint_interval")
 
     return parser

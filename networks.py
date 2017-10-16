@@ -112,8 +112,7 @@ class Network(object):
         self.depth = 1
         if self.rgb : self.depth = 3
         self.op = Operations(conf)
-        self.max_repetition = conf['max_repetition']
-        self.total_repetitions = self.max_repetition + 1
+        self.total_repetitions = conf['max_repetition']
 
         with tf.device(self.device):
             with tf.name_scope(self.name):

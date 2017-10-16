@@ -16,7 +16,7 @@ class PAACLearner(ActorLearner):
     def __init__(self, network_creator, environment_creator, explo_policy, args):
         super(PAACLearner, self).__init__(network_creator, environment_creator, explo_policy, args)
         self.workers = args.emulator_workers
-        self.total_repetitions = args.max_repetition + 1
+        self.total_repetitions = args.max_repetition
 
         #add the parameters to tensorboard
         sess = tf.InteractiveSession()
@@ -120,12 +120,17 @@ class PAACLearner(ActorLearner):
 
             total_action_rep = np.zeros((self.num_actions, self.total_repetitions))
 
+            nb_actions = 0
+
             max_local_steps = self.max_local_steps
             for t in range(max_local_steps):
 
                 new_actions, new_repetitions, readouts_v_t, readouts_pi_t = self.explo_policy.choose_next_actions(self.network, self.num_actions, shared_states, self.session)
 
                 actions_sum += new_actions
+
+                for e in range(self.emulator_counts) :
+                    nb_actions += np.argmax(new_repetitions[e]) + 1
 
                 # sharing the actions and repetitions to the different threads
                 for z in range(new_actions.shape[0]): shared_actions[z] = new_actions[z]
@@ -225,6 +230,7 @@ class PAACLearner(ActorLearner):
                 curr_time = time.time()
                 last_ten = 0.0 if len(total_rewards) < 1 else np.mean(total_rewards[-10:])
                 steps_per_sec = self.max_local_steps * self.emulator_counts / (curr_time - loop_start_time)
+                actions_per_s = nb_actions / (curr_time - loop_start_time)
                 average_steps_per_sec = (self.global_step - global_step_start) / (curr_time - start_time)
                 logging.info("Ran {} steps, at {} steps/s ({} steps/s avg), last 10 rewards avg {}"
                              .format(self.global_step, steps_per_sec, average_steps_per_sec, last_ten))
@@ -232,6 +238,7 @@ class PAACLearner(ActorLearner):
                 stats_summary = tf.Summary(value=[
                     tf.Summary.Value(tag='stats/steps_per_s', simple_value=steps_per_sec),
                     tf.Summary.Value(tag='stats/average_steps_per_s', simple_value=average_steps_per_sec)
+                    tf.Summary.Value(tag='stats/actions_per_s', simple_value=actions_per_s)
                 ])
                 self.summary_writer.add_summary(stats_summary, self.global_step)
                 self.summary_writer.flush()
