@@ -237,7 +237,7 @@ class PAACLearner(ActorLearner):
 
                 stats_summary = tf.Summary(value=[
                     tf.Summary.Value(tag='stats/steps_per_s', simple_value=steps_per_sec),
-                    tf.Summary.Value(tag='stats/average_steps_per_s', simple_value=average_steps_per_sec)
+                    tf.Summary.Value(tag='stats/average_steps_per_s', simple_value=average_steps_per_sec),
                     tf.Summary.Value(tag='stats/actions_per_s', simple_value=actions_per_s)
                 ])
                 self.summary_writer.add_summary(stats_summary, self.global_step)
