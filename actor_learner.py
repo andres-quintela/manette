@@ -5,8 +5,6 @@ import logging
 from logger_utils import variable_summaries
 import os
 
-CHECKPOINT_INTERVAL = 1000000
-
 
 class ActorLearner(Process):
 
@@ -14,37 +12,40 @@ class ActorLearner(Process):
 
         super(ActorLearner, self).__init__()
 
-        self.explo_policy = explo_policy
-
-        self.global_step = 0
-
-        self.max_local_steps = args.max_local_steps
-        self.num_actions = args.num_actions
-        self.initial_lr = args.initial_lr
-        self.lr_annealing_steps = args.lr_annealing_steps
-        self.emulator_counts = args.emulator_counts
-        self.device = args.device
+        # Folder and debug settings
+        self.checkpoint_interval = args.checkpoint_interval
         self.debugging_folder = args.debugging_folder
         self.network_checkpoint_folder = os.path.join(self.debugging_folder, 'checkpoints/')
         self.optimizer_checkpoint_folder = os.path.join(self.debugging_folder, 'optimizer_checkpoints/')
         self.last_saving_step = 0
         self.summary_writer = tf.summary.FileWriter(os.path.join(self.debugging_folder, 'tf'))
+        self.device = args.device
 
+        # Reinforcement learning settings
+        self.game = args.game
+        self.global_step = 0
+        self.max_global_steps = args.max_global_steps
+        self.max_local_steps = args.max_local_steps
+        self.num_actions = args.num_actions
+
+        self.explo_policy = explo_policy
+
+        self.gamma = args.gamma
+        self.initial_lr = args.initial_lr
+        self.lr_annealing_steps = args.lr_annealing_steps
         self.learning_rate = tf.placeholder(tf.float32, shape=[])
-        optimizer_variable_names = 'OptimizerVariables'
-        self.optimizer = tf.train.RMSPropOptimizer(self.learning_rate, decay=args.alpha, epsilon=args.e,
-                                                   name=optimizer_variable_names)
 
+        self.emulator_counts = args.emulator_counts
         self.emulators = np.asarray([environment_creator.create_environment(i)
                                      for i in range(self.emulator_counts)])
-        self.max_global_steps = args.max_global_steps
-        self.gamma = args.gamma
-        self.game = args.game
+
         self.network = network_creator()
 
         # Optimizer
+        optimizer_variable_names = 'OptimizerVariables'
+        self.optimizer = tf.train.RMSPropOptimizer(self.learning_rate, decay=args.alpha, epsilon=args.e,
+                                                   name=optimizer_variable_names)
         grads_and_vars = self.optimizer.compute_gradients(self.network.loss)
-
         self.flat_raw_gradients = tf.concat([tf.reshape(g, [-1]) for g, v in grads_and_vars], axis=0)
 
         # This is not really an operation, but a list of gradient Tensors.
@@ -91,9 +92,11 @@ class ActorLearner(Process):
         tf.summary.scalar('loss/critic_loss_mean', self.network.critic_loss_mean)
         tf.summary.scalar('loss/actor_objective_mean', self.network.actor_objective_mean)
         tf.summary.scalar('loss/actor_advantage_mean', self.network.actor_advantage_mean)
+        tf.summary.scalar('loss/log_repetition_mean', self.network.log_repetition_mean)
+
 
     def save_vars(self, force=False):
-        if force or self.global_step - self.last_saving_step >= CHECKPOINT_INTERVAL:
+        if force or self.global_step - self.last_saving_step >= self.checkpoint_interval:
             self.last_saving_step = self.global_step
             self.network_saver.save(self.session, self.network_checkpoint_folder, global_step=self.last_saving_step)
             self.optimizer_saver.save(self.session, self.optimizer_checkpoint_folder, global_step=self.last_saving_step)

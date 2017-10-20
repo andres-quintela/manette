@@ -1,6 +1,4 @@
 from networks import *
-
-
 class PolicyVNetwork(Network):
 
     def __init__(self, conf):
@@ -13,17 +11,21 @@ class PolicyVNetwork(Network):
         self.entropy_regularisation_strength = conf['entropy_regularisation_strength']
         self.softmax_temp = conf['softmax_temp']
         self.op = Operations(conf)
+        self.total_repetitions = conf['max_repetition']
 
         with tf.device(conf['device']):
             with tf.name_scope(self.name):
 
-                self.critic_target_ph = tf.placeholder(
-                    "float32", [None], name='target')
+                self.critic_target_ph = tf.placeholder("float32", [None], name='target')
                 self.adv_actor_ph = tf.placeholder("float", [None], name='advantage')
 
                 # Final actor layer
                 layer_name = 'actor_output'
                 _, _, self.output_layer_pi = self.op.softmax(layer_name, self.output, self.num_actions, self.softmax_temp)
+
+                # Final repetition layer
+                _, _, self.output_layer_rep = self.op.softmax('repetition_output', self.output, self.total_repetitions, self.softmax_temp)
+
                 # Final critic layer
                 _, _, self.output_layer_v = self.op.fc('critic_output', self.output, 1, activation="linear")
 
@@ -31,27 +33,45 @@ class PolicyVNetwork(Network):
                 self.log_output_layer_pi = tf.log(tf.add(self.output_layer_pi, tf.constant(1e-30)),
                                                   name=layer_name + '_log_policy')
 
+                self.log_output_layer_rep = tf.log(tf.add(self.output_layer_rep, tf.constant(1e-30)),
+                                                name='repetition_output_log_policy')
+
                 # Entropy: sum_a (-p_a ln p_a)
-                self.output_layer_entropy = tf.reduce_sum(tf.multiply(
-                    tf.constant(-1.0),
-                    tf.multiply(self.output_layer_pi, self.log_output_layer_pi)), reduction_indices=1)
+                self.output_layer_entropy_actor = tf.reduce_sum(tf.multiply(
+                        tf.constant(-1.0),
+                        tf.multiply(self.output_layer_pi, self.log_output_layer_pi)), reduction_indices=1)
+                self.output_layer_entropy_rep = tf.reduce_sum(tf.multiply(
+                        tf.constant(-1.0),
+                        tf.multiply(self.output_layer_rep, self.log_output_layer_rep)), reduction_indices=1)
 
                 self.output_layer_v = tf.reshape(self.output_layer_v, [-1])
 
                 # Advantage critic
-                self.critic_loss = tf.subtract(self.critic_target_ph, self.output_layer_v)
+                self.critic_loss = tf.subtract(self.critic_target_ph, self.output_layer_v) ## a changer
 
-                log_output_selected_action = tf.reduce_sum(
+                self.log_output_selected_action = tf.reduce_sum(
                     tf.multiply(self.log_output_layer_pi, self.selected_action_ph),
                     reduction_indices=1)
 
-                self.actor_objective_advantage_term = tf.multiply(log_output_selected_action, self.adv_actor_ph)
+                self.log_output_selected_repetition = tf.reduce_sum(
+                    tf.multiply(self.log_output_layer_rep, self.selected_repetition_ph),
+                    reduction_indices=1)
+
+                self.log_repetition_mean = tf.reduce_mean(self.log_output_selected_repetition)
+
+                self.actor_objective_advantage_term = tf.multiply(
+                                    tf.add(self.log_output_selected_action, self.log_output_selected_repetition),
+                                    self.adv_actor_ph)
+
                 self.actor_advantage_mean = tf.reduce_mean(self.actor_objective_advantage_term)
-                self.actor_objective_entropy_term = tf.multiply(self.entropy_regularisation_strength, self.output_layer_entropy)
+
+                self.actor_objective_entropy_term = tf.multiply(self.entropy_regularisation_strength, self.output_layer_entropy_actor)
+                self.rep_objective_entropy_term = tf.multiply(self.entropy_regularisation_strength, self.output_layer_entropy_rep)
+                self.entropy_term = tf.add(self.actor_objective_entropy_term, self.rep_objective_entropy_term)
 
                 self.actor_objective_mean = tf.reduce_mean(tf.multiply(tf.constant(-1.0),
-                                                                       tf.add(self.actor_objective_advantage_term, self.actor_objective_entropy_term)),
-                                                           name='mean_actor_objective')
+                                            tf.add(self.actor_objective_advantage_term, self.entropy_term)),
+                                            name='mean_actor_objective')
 
                 self.critic_loss_mean = tf.reduce_mean(tf.scalar_mul(0.25, tf.pow(self.critic_loss, 2)), name='mean_critic_loss')
 

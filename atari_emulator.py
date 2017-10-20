@@ -1,10 +1,9 @@
 import numpy as np
 from ale_python_interface import ALEInterface
-from scipy.misc import imresize, imsave
+from scipy.misc import imresize
 import random
-from environment import BaseEnvironment, FramePool,ObservationPool
+from environment import BaseEnvironment, FramePool, ObservationPool
 import logging
-import sys
 
 IMG_SIZE_X = 84
 IMG_SIZE_Y = 84
@@ -33,8 +32,6 @@ class AtariEmulator(BaseEnvironment):
         self.random_start = args.random_start
         self.single_life_episodes = args.single_life_episodes
         self.call_on_new_frame = args.visualize
-        self.random_actions = args.random_actions
-        self.nb_actions = args.nb_actions
         self.global_step = 0
 
         # Processed historcal frames that will be fed in to the network
@@ -42,11 +39,8 @@ class AtariEmulator(BaseEnvironment):
         self.rgb = args.rgb
         self.depth = 1
         if self.rgb : self.depth = 3
-        #self.observation_pool = ObservationPool(np.zeros((IMG_SIZE_X, IMG_SIZE_Y, NR_IMAGES), dtype=np.uint8), self.rgb)
         self.rgb_screen = np.zeros((self.screen_height, self.screen_width, 3), dtype=np.uint8)
         self.gray_screen = np.zeros((self.screen_height, self.screen_width,1), dtype=np.uint8)
-        #self.frame_pool = FramePool(np.empty((2, self.screen_height,self.screen_width), dtype=np.uint8),
-        #                            self.__process_frame_pool)
         self.frame_pool = FramePool(np.empty((2, self.screen_height,self.screen_width, self.depth), dtype=np.uint8),
                                         self.__process_frame_pool)
         self.observation_pool = ObservationPool(np.zeros((IMG_SIZE_X, IMG_SIZE_Y, self.depth, NR_IMAGES), dtype=np.uint8), self.rgb)
@@ -56,10 +50,7 @@ class AtariEmulator(BaseEnvironment):
         return self.legal_actions
 
     def __get_screen_image(self):
-        """
-        Get the current frame luminance
-        :return: the current frame
-        """
+        """ Get the current frame luminance. Return: the current frame """
         self.ale.getScreenGrayscale(self.gray_screen)
         if self.rgb :
             self.ale.getScreenRGB(self.rgb_screen)
@@ -77,11 +68,7 @@ class AtariEmulator(BaseEnvironment):
         """ Restart game """
         self.ale.reset_game()
         self.lives = self.ale.lives()
-        if self.random_actions > self.global_step :
-            for _ in range(self.nb_actions):
-                random_action = random.randint(0, len(self.legal_actions)-1)
-                self.ale.act(self.legal_actions[random_action])
-        elif self.random_start:
+        if self.random_start:
             wait = random.randint(0, MAX_START_WAIT)
             for _ in range(wait):
                 self.ale.act(self.legal_actions[0])
@@ -121,7 +108,7 @@ class AtariEmulator(BaseEnvironment):
 
     def next(self, action):
         """ Get the next state, reward, and game over signal """
-        reward = self.__action_repeat(np.argmax(action))
+        reward = self.__action_repeat(action)
         self.observation_pool.new_observation(self.frame_pool.get_processed_frame())
         terminal = self.__is_terminal()
         self.lives = self.ale.lives()

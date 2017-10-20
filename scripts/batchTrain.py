@@ -26,13 +26,11 @@ def create_cmd(data, path):
                 " --epsilon "+str(data["epsilon"])+
                 " --softmax_temp "+str(data["softmax_temp"])+
                 " --annealed "+str(data["annealed"])+
+                " --annealed_steps "+str(data["annealed_steps"])+
                 " --keep_percentage "+str(data["keep_percentage"])+
                 " --rgb "+str(data["rgb"])+
-                " --random_actions "+str(data["random_actions"])+
-                " --nb_actions "+str(data["nb_actions"])+
-                " --oxygen_greedy "+str(data["oxygen_greedy"])+
-                " --proba_oxygen "+str(data["proba_oxygen"])+
-                " --nb_up_actions "+str(data["nb_up_actions"])+
+                " --max_repetition "+str(data["max_repetition"])+
+                " --checkpoint_interval "+str(data["checkpoint_interval"]))
                 " --activation "+str(data["activation"])+
                 " --alpha_leaky_relu "+str(data["alpha_leaky_relu"]))
     return cmd
@@ -50,7 +48,7 @@ def main(args):
     for folder in os.listdir(pathSrc):
         i = datetime.datetime.now()
         #path = "logs/"+str(i.year)+"-"+str(i.month)+"-"+str(i.day)+"-"+folder
-        path = "/data1/rl/atari/logs/tensorboard/"+str(i.year)+"-"+str(i.month)+"-"+str(i.day)+"-"+folder
+        path = "/data1/rl/atari/logs/"+str(i.year)+"-"+str(i.month)+"-"+str(i.day)+"-"+folder
         if not os.path.exists(path):
             os.makedirs(path)
         for f in os.listdir(pathSrc+"/"+folder):

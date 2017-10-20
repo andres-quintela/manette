@@ -68,6 +68,7 @@ def get_network_and_environment_creator(args, explo_policy, random_seed=3):
                     'rgb' : args.rgb,
                     'activation' : args.activation,
                     'alpha_leaky_relu' : args.alpha_leaky_relu}
+                    'max_repetition' : args.max_repetition}
 
     if args.arch == 'PWYX' :
         network = PpwwyyxxPolicyVNetwork
@@ -102,7 +103,7 @@ def get_arg_parser():
     parser.add_argument('--gamma', default=0.99, type=float, help="Discount factor", dest="gamma")
     parser.add_argument('--max_global_steps', default=80000000, type=int, help="Max. number of training steps", dest="max_global_steps")
     parser.add_argument('--max_local_steps', default=5, type=int, help="Number of steps to gain experience from before every update.", dest="max_local_steps")
-    parser.add_argument('--arch', default='NIPS', help="Which network architecture to use: from the NIPS or NATURE paper, or PWYX, or BAYESIAN ie dropout", dest="arch")
+    parser.add_argument('--arch', default='PWYX', help="Which network architecture to use: from the NIPS or NATURE paper, or PWYX, or BAYESIAN ie dropout", dest="arch")
     parser.add_argument('--single_life_episodes', default=False, type=bool_arg, help="If True, training episodes will be terminated when a life is lost (for games)", dest="single_life_episodes")
     parser.add_argument('-ec', '--emulator_counts', default=32, type=int, help="The amount of emulators per agent. Default is 32.", dest="emulator_counts")
     parser.add_argument('-ew', '--emulator_workers', default=8, type=int, help="The amount of emulator workers per agent. Default is 8.", dest="emulator_workers")
@@ -113,16 +114,13 @@ def get_arg_parser():
     parser.add_argument('--epsilon', default=0.05, type=float, help="Epsilon for the egreedy policy", dest='epsilon')
     parser.add_argument('--softmax_temp', default=1.0, type=float, help="Softmax temperature for the Boltzmann action policy", dest='softmax_temp' )
     parser.add_argument('--annealed', default=False, type=bool_arg, help="True if the parameters for explo_policy are annealed toward zero", dest="annealed")
+    parser.add_argument('--annealed_steps', default=80000000, type=int, help="Nb of global steps during which epsilon will be linearly annealed towards zero", dest="annealed_steps")
     parser.add_argument('--keep_percentage', default=0.9, type=float, help="keep percentage when dropout is used", dest='keep_percentage' )
     parser.add_argument('--rgb', default=False, type=bool_arg, help="True if RGB images are given to the agent", dest="rgb")
-    parser.add_argument('--random_actions', default=0, type=int, help="Number of global steps where we add random actions at the begining of each environment", dest="random_actions")
-    parser.add_argument('--nb_actions', default=0, type=int, help="Number of random_actions to do at the beginning", dest="nb_actions")
-    parser.add_argument('--oxygen_greedy', default=False, type=bool_arg, help="True if we use the oxygen_greedy policy", dest="oxygen_greedy")
-    parser.add_argument('--proba_oxygen', default=0.01, type=float, help="probability of going up with the oxygen policy", dest="proba_oxygen")
-    parser.add_argument('--nb_up_actions', default=10, type=int, help="number of consecutive UPs", dest="nb_up_actions")
+    parser.add_argument('--max_repetition', default=1, type=int, help="Maximum number of repetition for FiGAR", dest="max_repetition")
+    parser.add_argument('--checkpoint_interval', default=1000000, type=int, help="Interval of steps btw checkpoints", dest="checkpoint_interval")
     parser.add_argument('--activation', default='relu', type=str, help="activation function for the network", dest="activation")
     parser.add_argument('--alpha_leaky_relu', default=0.1, type=float, help="coef for leaky relu", dest="alpha_leaky_relu")
-
 
     return parser
 

@@ -4,8 +4,6 @@ import datetime
 import json
 import subprocess
 
-#on considere que le fichier .json a eventuellement été modifié
-
 def create_cmd(data, path):
     cmd = ("python3 train.py -g "+data["game"]+" -df "+path+"/"+
                 " --e "+str(data["e"])+
@@ -28,13 +26,11 @@ def create_cmd(data, path):
                 " --epsilon "+str(data["epsilon"])+
                 " --softmax_temp "+str(data["softmax_temp"])+
                 " --annealed "+str(data["annealed"])+
+                " --annealed_steps "+str(data["annealed_steps"])+
                 " --keep_percentage "+str(data["keep_percentage"])+
                 " --rgb "+str(data["rgb"])+
-                " --random_actions "+str(data["random_actions"])+
-                " --nb_actions "+str(data["nb_actions"])+
-                " --oxygen_greedy "+str(data["oxygen_greedy"])+
-                " --proba_oxygen "+str(data["proba_oxygen"])+
-                " --nb_up_actions "+str(data["nb_up_actions"]))
+                " --max_repetition "+str(data["max_repetition"])+
+                " --checkpoint_interval "+str(data["checkpoint_interval"]))
     return cmd
 
 def create_chpt_cmd(args, path):
@@ -51,8 +47,6 @@ def main(args):
         subprocess.call(create_chpt_cmd(args, args.debugging_folder), shell = True)
         subprocess.call(create_cmd(data, args.debugging_folder), shell = True)
         subprocess.call(("touch "+args.debugging_folder+"/checkpoints_saved/STOP"), shell = True)
-
-
 
 def get_arg_parser():
     parser = argparse.ArgumentParser()
