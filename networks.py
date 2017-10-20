@@ -203,6 +203,37 @@ class PpwwyyxxNetwork(Network):
 
                 self.output = fc5
 
+class LSTMNetwork(Network):
+    def __init__(self, conf):
+        super(LSTMNetwork, self).__init__(conf)
+
+        with tf.device(self.device):
+            with tf.name_scope(self.name):
+
+
+                _, _, conv1 = self.op.conv2d('conv1', self.input, 32, 5, self.depth * 4, 1, padding = 'SAME', activation = self.activation)
+                mp_conv1 = self.op.max_pooling('mp_conv1', conv1)
+                _, _, conv2 = self.op.conv2d('conv2', mp_conv1, 32, 5, 32, 1, padding = 'SAME', activation = self.activation)
+                mp_conv2 = self.op.max_pooling('mp_conv2', conv2)
+                _, _, conv3 = self.op.conv2d('conv3', mp_conv2, 64, 4, 32, 1, padding = 'SAME', activation = self.activation)
+                mp_conv3 = self.op.max_pooling('mp_conv3', conv3)
+                _, _, conv4 = self.op.conv2d('conv4', mp_conv3, 64, 3, 64, 1, padding = 'SAME', activation = self.activation)
+
+                print(conv4.shape)
+                print(self.op.flatten(conv4).shape)
+                self.n_units = 6400
+                self.lstm = tf.contrib.rnn.BasicLSTMCell(self.n_units)
+                print(self.lstm.state_size)
+                hidden_state = tf.zeros([32, self.n_units])
+                current_state = tf.zeros([32, self.n_units])
+                state = hidden_state, current_state
+                print(state)
+
+                lstm_output, state = self.lstm(self.op.flatten(conv4), state)
+
+                _, _, fc5 = self.op.fc('fc5', lstm_output, 512, activation=self.activation)
+
+                self.output = fc5
 
 class NatureNetwork(Network):
 

@@ -8,7 +8,7 @@ import copy
 import environment_creator
 from exploration_policy import ExplorationPolicy
 from paac import PAACLearner
-from policy_v_network import NaturePolicyVNetwork, NIPSPolicyVNetwork, BayesianPolicyVNetwork, PpwwyyxxPolicyVNetwork
+from policy_v_network import NaturePolicyVNetwork, NIPSPolicyVNetwork, BayesianPolicyVNetwork, PpwwyyxxPolicyVNetwork, LSTMPolicyNetwork
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 
@@ -72,6 +72,8 @@ def get_network_and_environment_creator(args, explo_policy, random_seed=3):
 
     if args.arch == 'PWYX' :
         network = PpwwyyxxPolicyVNetwork
+    elif args.arch == 'LSTM' :
+        network = LSTMPolicyNetwork
     elif args.arch == 'BAYESIAN' :
         network = BayesianPolicyVNetwork
     elif args.arch == 'NIPS':
