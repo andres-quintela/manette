@@ -30,7 +30,9 @@ def create_cmd(data, path):
                 " --keep_percentage "+str(data["keep_percentage"])+
                 " --rgb "+str(data["rgb"])+
                 " --max_repetition "+str(data["max_repetition"])+
-                " --checkpoint_interval "+str(data["checkpoint_interval"]))
+                " --checkpoint_interval "+str(data["checkpoint_interval"])+
+                " --activation "+str(data["activation"])+
+                " --alpha_leaky_relu "+str(data["alpha_leaky_relu"]))
     return cmd
 
 def create_chpt_cmd(args, path):

@@ -67,7 +67,7 @@ def get_network_and_environment_creator(args, explo_policy, random_seed=3):
                     'keep_percentage' : explo_policy.keep_percentage,
                     'rgb' : args.rgb,
                     'activation' : args.activation,
-                    'alpha_leaky_relu' : args.alpha_leaky_relu}
+                    'alpha_leaky_relu' : args.alpha_leaky_relu,
                     'max_repetition' : args.max_repetition}
 
     if args.arch == 'PWYX' :
