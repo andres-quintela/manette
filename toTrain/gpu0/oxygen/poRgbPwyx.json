@@ -7,7 +7,7 @@
   "gamma": 0.99,
   "alpha": 0.99,
   "entropy_regularisation_strength": 0.02,
-  "arch": "PWYX",
+  "arch": "NIPS",
   "emulator_workers": 8,
   "emulator_counts": 32,
   "clip_norm_type": "global",
@@ -21,10 +21,12 @@
   "softmax_temp": 1.0,
   "annealed": false,
   "keep_percentage": 0.9,
-  "rgb": true,
+  "rgb": false,
   "random_actions": 0,
   "nb_actions": 0,
   "oxygen_greedy": false,
   "proba_oxygen": 0.01,
-  "nb_up_actions": 10
+  "nb_up_actions": 10,
+  "activation" : "leaky_relu",
+  "alpha_leaky_relu" : 0.1
 }

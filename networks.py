@@ -8,6 +8,7 @@ class Operations():
         self.depth = 1
         if self.rgb :
             self.depth = 3
+        self.alpha_leaky_relu = conf['alpha_leaky_relu']
 
     def flatten(self, _input):
         shape = _input.get_shape().as_list()
@@ -15,15 +16,18 @@ class Operations():
         return tf.reshape(_input, [-1,dim], name='_flattened')
 
 
-    def conv2d(self, name, _input, filters, size, channels, stride, padding = 'VALID', init = "torch"):
+    def conv2d(self, name, _input, filters, size, channels, stride, padding = 'VALID', init = "torch", activation = "relu"):
         w = self.conv_weight_variable([size,size, channels,filters],
                                  name + '_weights', init = init)
         b = self.conv_bias_variable([filters], size, size, channels,
                                name + '_biases', init = init)
         conv = tf.nn.conv2d(_input, w, strides=[1, stride, stride, 1],
                             padding=padding, name=name + '_convs')
-        out = tf.nn.relu(tf.add(conv, b),
-                         name='' + name + '_activations')
+        if activation == "relu" :
+            out = tf.nn.relu(tf.add(conv, b), name='' + name + '_activations')
+        elif activation == "leaky_relu" :
+            x = tf.add(conv, b)
+            out = tf.maximum(x, self.alpha_leaky_relu * x, name='' + name + '_activations')
         return w, b, out
 
 
@@ -62,6 +66,8 @@ class Operations():
 
         if activation == "relu":
             out = tf.nn.relu(out, name='' + name + '_relu')
+        elif activation == "leaky_relu" :
+            out = tf.maximum(out, self.alpha_leaky_relu * out, name='' + name + '_leakyrelu')
 
         return w, b, out
 
@@ -118,6 +124,8 @@ class Network(object):
         self.clip_norm_type = conf['clip_norm_type']
         self.device = conf['device']
         self.rgb = conf['rgb']
+        self.activation = conf['activation']
+        self.alpha_leaky_relu = conf['alpha_leaky_relu']
         self.depth = 1
         if self.rgb :
             self.depth = 3
@@ -159,11 +167,11 @@ class NIPSNetwork(Network):
 
         with tf.device(self.device):
             with tf.name_scope(self.name):
-                w_conv1, b_conv1, conv1 = self.op.conv2d('conv1', self.input, 16, 8, self.depth*4, 4)
+                w_conv1, b_conv1, conv1 = self.op.conv2d('conv1', self.input, 16, 8, self.depth*4, 4, activation = self.activation)
 
-                w_conv2, b_conv2, conv2 = self.op.conv2d('conv2', conv1, 32, 4, 16, 2)
+                w_conv2, b_conv2, conv2 = self.op.conv2d('conv2', conv1, 32, 4, 16, 2, activation = self.activation)
 
-                w_fc3, b_fc3, fc3 = self.op.fc('fc3', self.op.flatten(conv2), 256, activation="relu")
+                w_fc3, b_fc3, fc3 = self.op.fc('fc3', self.op.flatten(conv2), 256, activation=self.activation)
 
                 tf.summary.histogram("w_conv1", w_conv1)
                 tf.summary.histogram("w_conv2", w_conv2)
@@ -181,7 +189,7 @@ class BayesianNetwork(NIPSNetwork):
                 logging.info('Using bayesion Network')
                 dropout = tf.nn.dropout(self.output, conf["keep_percentage"])
 
-                w_fc4, b_fc4, fc4 = fc('fc4', dropout, 256, activation="relu")
+                w_fc4, b_fc4, fc4 = fc('fc4', dropout, 256, activation=self.activation)
 
                 self.output = fc4
 
@@ -194,15 +202,15 @@ class PpwwyyxxNetwork(Network):
 
 #conv2d(name, _input, filters, size, channels, stride, padding = 'VALID', init = "torch")
 
-                _, _, conv1 = self.op.conv2d('conv1', self.input, 32, 5, self.depth * 4, 1, padding = 'SAME')
+                _, _, conv1 = self.op.conv2d('conv1', self.input, 32, 5, self.depth * 4, 1, padding = 'SAME', activation = self.activation)
                 mp_conv1 = self.op.max_pooling('mp_conv1', conv1)
-                _, _, conv2 = self.op.conv2d('conv2', mp_conv1, 32, 5, 32, 1, padding = 'SAME')
+                _, _, conv2 = self.op.conv2d('conv2', mp_conv1, 32, 5, 32, 1, padding = 'SAME', activation = self.activation)
                 mp_conv2 = self.op.max_pooling('mp_conv2', conv2)
-                _, _, conv3 = self.op.conv2d('conv3', mp_conv2, 64, 4, 32, 1, padding = 'SAME')
+                _, _, conv3 = self.op.conv2d('conv3', mp_conv2, 64, 4, 32, 1, padding = 'SAME', activation = self.activation)
                 mp_conv3 = self.op.max_pooling('mp_conv3', conv3)
-                _, _, conv4 = self.op.conv2d('conv4', mp_conv3, 64, 3, 64, 1, padding = 'SAME')
+                _, _, conv4 = self.op.conv2d('conv4', mp_conv3, 64, 3, 64, 1, padding = 'SAME', activation = self.activation)
 
-                _, _, fc5 = self.op.fc('fc5', self.op.flatten(conv4), 512, activation="relu")
+                _, _, fc5 = self.op.fc('fc5', self.op.flatten(conv4), 512, activation=self.activation)
 
                 self.output = fc5
 
@@ -214,12 +222,12 @@ class NatureNetwork(Network):
 
         with tf.device(self.device):
             with tf.name_scope(self.name):
-                _, _, conv1 = self.op.conv2d('conv1', self.input, 32, 8, self.depth*4, 4)
+                _, _, conv1 = self.op.conv2d('conv1', self.input, 32, 8, self.depth*4, 4, activation = self.activation)
 
-                _, _, conv2 = self.op.conv2d('conv2', conv1, 64, 4, 32, 2)
+                _, _, conv2 = self.op.conv2d('conv2', conv1, 64, 4, 32, 2, activation = self.activation)
 
-                _, _, conv3 = self.op.conv2d('conv3', conv2, 64, 3, 64, 1)
+                _, _, conv3 = self.op.conv2d('conv3', conv2, 64, 3, 64, 1, activation = self.activation)
 
-                _, _, fc4 = self.op.fc('fc4', self.op.flatten(conv3), 512, activation="relu")
+                _, _, fc4 = self.op.fc('fc4', self.op.flatten(conv3), 512, activation=self.activation)
 
                 self.output = fc4
