@@ -11,7 +11,7 @@ class PolicyVNetwork(Network):
         self.entropy_regularisation_strength = conf['entropy_regularisation_strength']
         self.softmax_temp = conf['softmax_temp']
         self.op = Operations(conf)
-        self.total_repetitions = conf['max_repetition']
+        self.total_repetitions = conf['nb_repetition'] + 1
 
         with tf.device(conf['device']):
             with tf.name_scope(self.name):

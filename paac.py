@@ -16,7 +16,8 @@ class PAACLearner(ActorLearner):
     def __init__(self, network_creator, environment_creator, explo_policy, args):
         super(PAACLearner, self).__init__(network_creator, environment_creator, explo_policy, args)
         self.workers = args.emulator_workers
-        self.total_repetitions = args.max_repetition
+        self.total_repetitions = args.nb_repetition + 1
+        self.tab_rep = explo_policy.tab_rep
 
         #add the parameters to tensorboard
         sess = tf.InteractiveSession()
@@ -93,7 +94,7 @@ class PAACLearner(ActorLearner):
                      (np.zeros((self.emulator_counts, self.num_actions), dtype=np.float32)),
                      (np.zeros((self.emulator_counts, self.total_repetitions), dtype=np.float32))]
 
-        self.runners = Runners(EmulatorRunner, self.emulators, self.workers, variables)
+        self.runners = Runners(self.tab_rep, EmulatorRunner, self.emulators, self.workers, variables)
         self.runners.start()
         shared_states, shared_rewards, shared_episode_over, shared_actions, shared_rep = self.runners.get_shared_variables()
 
@@ -216,11 +217,10 @@ class PAACLearner(ActorLearner):
 
             #ajout de l'histogramme des actions
             nb_a = [ sum(a) for a in total_action_rep]
-            total_action_rep_trans = np.transpose(total_action_rep)
-            nb_r = [ sum(r) for r in total_action_rep_trans ]
+            nb_r = [ sum(r) for r in np.transpose(total_action_rep) ]
             histo_a, histo_r = [], []
             for i in range(self.num_actions) : histo_a += [i]*int(nb_a[i])
-            for i in range(self.total_repetitions) : histo_r += [i]*int(nb_r[i])
+            for i in range(self.total_repetitions) : histo_r += [self.tab_rep[i]+1]*int(nb_r[i])
 
             self.log_histogram('actions', np.array(histo_a), self.global_step)
             self.log_histogram('repetitions', np.array(histo_r), self.global_step)

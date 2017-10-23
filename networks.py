@@ -120,7 +120,7 @@ class Network(object):
         self.depth = 1
         if self.rgb : self.depth = 3
         self.op = Operations(conf)
-        self.total_repetitions = conf['max_repetition']
+        self.total_repetitions = conf['nb_repetition'] + 1
 
         with tf.device(self.device):
             with tf.name_scope(self.name):

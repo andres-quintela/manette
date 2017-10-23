@@ -30,6 +30,7 @@ def create_cmd(data, path):
                 " --keep_percentage "+str(data["keep_percentage"])+
                 " --rgb "+str(data["rgb"])+
                 " --max_repetition "+str(data["max_repetition"])+
+                " --nb_repetition "+str(data["nb_repetition"])+
                 " --checkpoint_interval "+str(data["checkpoint_interval"])+
                 " --activation "+str(data["activation"])+
                 " --alpha_leaky_relu "+str(data["alpha_leaky_relu"]))
@@ -47,8 +48,8 @@ def main(args):
     pathSrc = "toTrain/gpu"+str(args.gpu)
     for folder in os.listdir(pathSrc):
         i = datetime.datetime.now()
-        path = "logs/"+str(i.year)+"-"+str(i.month)+"-"+str(i.day)+"-"+folder
-        #path = "/data1/rl/atari/logs/"+str(i.year)+"-"+str(i.month)+"-"+str(i.day)+"-"+folder
+        #path = "logs/"+str(i.year)+"-"+str(i.month)+"-"+str(i.day)+"-"+folder
+        path = "/data1/rl/atari/logs/"+str(i.year)+"-"+str(i.month)+"-"+str(i.day)+"-"+folder
         if not os.path.exists(path):
             os.makedirs(path)
         for f in os.listdir(pathSrc+"/"+folder):
