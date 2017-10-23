@@ -66,6 +66,8 @@ def get_network_and_environment_creator(args, explo_policy, random_seed=3):
                     'softmax_temp' : explo_policy.softmax_temp,
                     'keep_percentage' : explo_policy.keep_percentage,
                     'rgb' : args.rgb,
+                    'activation' : args.activation,
+                    'alpha_leaky_relu' : args.alpha_leaky_relu,
                     'max_repetition' : args.max_repetition}
 
     if args.arch == 'PWYX' :
@@ -117,6 +119,8 @@ def get_arg_parser():
     parser.add_argument('--rgb', default=False, type=bool_arg, help="True if RGB images are given to the agent", dest="rgb")
     parser.add_argument('--max_repetition', default=1, type=int, help="Maximum number of repetition for FiGAR", dest="max_repetition")
     parser.add_argument('--checkpoint_interval', default=1000000, type=int, help="Interval of steps btw checkpoints", dest="checkpoint_interval")
+    parser.add_argument('--activation', default='relu', type=str, help="activation function for the network", dest="activation")
+    parser.add_argument('--alpha_leaky_relu', default=0.1, type=float, help="coef for leaky relu", dest="alpha_leaky_relu")
 
     return parser
 
