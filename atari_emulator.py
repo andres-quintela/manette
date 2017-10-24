@@ -111,9 +111,9 @@ class AtariEmulator(BaseEnvironment):
 
     def next(self, action):
         """ Get the next state, reward, and game over signal """
-        cv2.imwrite('dataset/0/'+str(self.compteur)+'.jpg', self.observation_pool.get_pooled_observations())
-        with open('dataset/0.txt', 'a') as f :
-            f.write('0/'+str(self.compteur)+'.jpg : '+str(action)+'\n')
+        cv2.imwrite('dataset/x/'+str(self.compteur)+'.jpg', self.observation_pool.get_pooled_observations())
+        with open('dataset/y.txt', 'a') as f :
+            f.write('x/'+str(self.compteur)+'.jpg : '+str(action)+'\n')
         self.compteur+=1
         reward = self.__action_repeat(action)
         self.observation_pool.new_observation(self.frame_pool.get_processed_frame())
