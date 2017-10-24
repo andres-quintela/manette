@@ -48,9 +48,9 @@ print('Action predictor')
 
 # Parameters
 learning_rate = 0.001
-nb_epochs = 10
+nb_epochs = 70
 batch_size = 32
-display_step = 2
+display_step = 20
 
 # Network Parameters
 n_input = 84*84  # input is image
@@ -87,7 +87,7 @@ b_soft = tf.Variable(tf.random_uniform([n_outputs]))
 print('Define Neural Network')
 output_lstm = RNN(x, weights_lstm, biases_lstm, n_input, n_steps, n_hidden)
 output_fc = FC(output_lstm, w_fc, b_fc)
-out_soft = tf.nn.log_softmax(tf.add(tf.matmul(output_fc, w_soft), b_soft))
+out_soft = tf.nn.softmax(tf.add(tf.matmul(output_fc, w_soft), b_soft))
 
 # Define loss (Euclidean distance) and optimizer
 print('Define loss and optimizer')
@@ -108,7 +108,9 @@ with tf.Session() as sess:
             batch_x, batch_y = data_x[i*batch_size:(i+1)*batch_size], data_y[i*batch_size:(i+1)*batch_size]
             batch_x = batch_x.reshape((batch_size, n_steps, n_input))
             batch_y = batch_y.reshape((batch_size, n_outputs))
-
+            #out = sess.run(out_soft, feed_dict={x: batch_x})
+            #print(out[0])
+            #print(batch_y[0])
             # Run optimization op (backprop)
             sess.run(optimizer, feed_dict={x: batch_x, y: batch_y})
             if i % display_step == 0:
