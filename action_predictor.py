@@ -6,20 +6,25 @@ import scipy.misc
 from random import shuffle
 
 def RNN(x, weights, biases, n_input, n_steps, n_hidden):
+    print('RNN...')
     # Current data input shape: (batch_size, n_steps, n_input)
     # Required shape: 'n_steps' tensors list of shape (batch_size, n_input)
     # Permuting batch_size and n_steps
+    print(x.shape)
     x = tf.transpose(x, [1, 0, 2])
+    print(x.shape)
     # Reshaping to (n_steps*batch_size, n_input)
     x = tf.reshape(x, [-1, n_input])
+    print(x.shape)
     # Split to get a list of 'n_steps' tensors of shape (batch_size, n_input)
     x = tf.split(x, n_steps, axis=0)
+    #print(x.shape)
 
     lstm_cell = rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
     outputs, states = rnn.static_rnn(lstm_cell, x, dtype=tf.float32)
 
     # Linear activation, using rnn inner loop last output
-    return tf.nn.bias_add(tf.matmul(outputs[-1], weights['out']), biases['out'])
+    return tf.nn.bias_add(tf.matmul(outputs[-1], weights), biases)
 
 def FC(x, n_in, n_out):
     w = tf.Variable(tf.random_uniform([n_in, n_out]))
@@ -59,7 +64,7 @@ def conv_bias_variable(shape, w, h, input_channels, name):
     initial = tf.random_uniform(shape, minval=-d, maxval=d)
     return tf.Variable(initial, name=name, dtype='float32')
 
-def create_conv_net(x, img_size):
+def create_conv_net(x, img_size, n_outputs):
     input_conv = tf.scalar_mul(1.0/255.0, tf.cast(x, tf.float32))
     print(input_conv.shape)
 
@@ -71,8 +76,34 @@ def create_conv_net(x, img_size):
     mp_conv3 = max_pooling('mp_conv3', conv3)
     _, _, conv4 = conv2d('conv4', mp_conv3, 64, 3, 64, 1, padding = 'SAME')
 
-    fc5 = FC(flatten(conv4), 6400, 20)
+    print('conv 4 : '+str(conv4.shape))
+
+    fc5 = FC(flatten(conv4), 6400, n_outputs)
+
+    print('fc5 : '+str(fc5.shape))
     return fc5
+
+def create_lstm_net(x, img_size, n_input, n_steps, n_hidden, n_outputs):
+
+    x_img = tf.reshape(x, [-1, img_size, img_size, 1])
+    print('x_img : '+str(x_img.shape))
+
+    # probleme ordre des images ?
+    out_conv = create_conv_net(x_img, img_size, n_input)
+    print('out_conv : '+str(out_conv.shape))
+
+    w_lstm = tf.Variable(tf.random_normal([n_hidden, n_hidden]))
+    b_lstm = tf.Variable(tf.random_normal([n_hidden]))
+
+    x_lstm = tf.reshape(out_conv, [-1, n_steps, n_input])
+    print('x_lstm : '+str(x_lstm.shape))
+    out_lstm = RNN(x_lstm, w_lstm, b_lstm, n_input, n_steps, n_hidden)
+
+    print('out_lstm : '+str(out_lstm.shape))
+
+    fc6 = FC(out_lstm, n_hidden, n_outputs)
+    return fc6
+
 
 
 
@@ -95,16 +126,16 @@ print('Action predictor')
 learning_rate = 0.001
 nb_epochs = 70
 batch_size = 32
-display_step = 10
+display_step = 5
 
 # Network Parameters
 img_size = 84
-n_input = 84*84  # input is image
+n_input = 6400  # same as output conv net
 n_steps = 5  # timesteps
 n_hidden = 128  # hidden layer num of features
 n_out_lstm = 128
 n_outputs = 20 #for seaquest, possible actions
-LSTM_bool = False
+LSTM_bool = True
 
 path_dataset = 'dataset/'
 data = glob(path_dataset+'x/*')
@@ -120,28 +151,19 @@ print(data_y.shape)
 
 
 # tf Graph input
-if LSTM_bool :
-    x = tf.placeholder("float32", [None, n_steps, img_size, img_size])
-else :
-    x = tf.placeholder("float32", [None, img_size, img_size, 1])
+if LSTM_bool : x = tf.placeholder("float32", [None, n_steps, img_size, img_size])
+else : x = tf.placeholder("float32", [None, img_size, img_size, 1])
 y = tf.placeholder("float32", [None, n_outputs])
-
-# Define weights
-weights_lstm = {'out': tf.Variable(tf.random_normal([n_hidden, n_out_lstm]))}
-biases_lstm = {'out': tf.Variable(tf.random_normal([n_out_lstm]))}
-d = 1.0 / np.sqrt(n_outputs)
-w_fc = tf.Variable(tf.random_uniform([n_out_lstm, n_outputs]))
-b_fc = tf.Variable(tf.random_uniform([n_outputs], minval=-d, maxval=d))
-w_soft = tf.Variable(tf.random_uniform([n_outputs, n_outputs], minval=-d, maxval=d))
-b_soft = tf.Variable(tf.random_uniform([n_outputs], minval=-d, maxval=d))
 
 print('Define Neural Network')
 
-if LSTM_bool :
-    output_lstm = RNN(x, weights_lstm, biases_lstm, n_input, n_steps, n_hidden)
-    output_fc = FC(output_lstm, w_fc, b_fc)
-else :
-    output_fc = create_conv_net(x, img_size)
+if LSTM_bool : output_fc = create_lstm_net(x, img_size, n_input, n_steps, n_hidden, n_outputs)
+else : output_fc = create_conv_net(x, img_size)
+
+# Define weights for softmax
+d = 1.0 / np.sqrt(n_outputs)
+w_soft = tf.Variable(tf.random_uniform([n_outputs, n_outputs], minval=-d, maxval=d))
+b_soft = tf.Variable(tf.random_uniform([n_outputs], minval=-d, maxval=d))
 
 out_soft = tf.nn.softmax(tf.add(tf.matmul(output_fc, w_soft), b_soft))
 
@@ -162,9 +184,7 @@ with tf.Session() as sess:
     for e in range(nb_epochs):
         for i in range(int(len(data_x)/batch_size)):
             batch_x, batch_y = data_x[i*batch_size:(i+1)*batch_size], data_y[i*batch_size:(i+1)*batch_size]
-            if LSTM_bool :
-                batch_x = batch_x.reshape((batch_size, n_steps, n_input))
-            else :
+            if not LSTM_bool :
                 batch_x = np.array([np.amax(f, axis=0) for f in batch_x])
                 batch_x = batch_x.reshape((batch_size, img_size, img_size, 1))
             batch_y = batch_y.reshape((batch_size, n_outputs))
