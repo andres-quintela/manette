@@ -23,6 +23,7 @@ n_hidden = 128  # hidden layer num of features
 n_out_lstm = 128
 n_outputs = 18 #for seaquest, possible actions
 LSTM_bool = False
+opt = 'SGD'
 
 op = Operations({'rgb':False, 'alpha_leaky_relu':0.1})
 
@@ -126,7 +127,10 @@ labels = tf.argmax(y, axis=1)
 # Define loss (Euclidean distance) and optimizer
 individual_losses = tf.reduce_sum(tf.squared_difference(out_soft, y), reduction_indices=1)
 loss = tf.reduce_mean(individual_losses)
-optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
+if opt == 'Adam' :
+    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
+else :
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(loss)
 accuracy = tf.metrics.accuracy(labels, predictions)
 
 # Initializing the variables
@@ -163,7 +167,7 @@ with tf.Session() as sess:
                 # Calculate batch loss
                 loss_value = sess.run(loss, feed_dict={x: batch_x, y: batch_y})
                 acc_value = sess.run(accuracy, feed_dict={x: batch_x, y: batch_y})
-                print("Iter "+str(e)+' - '+str(i)+", Minibatch Loss= "+str(loss_value)+" , accuracy = "+str(acc_value))
+                print("Iter "+str(e)+' - '+str(i)+", Minibatch Loss= "+str(loss_value)+" , accuracy = "+str(acc_value[0]))
                 plot_X.append(total_batch)
                 plot_Y.append(loss_value)
                 plot_Z.append(acc_value[0])
@@ -172,7 +176,7 @@ with tf.Session() as sess:
     plt.plot(plot_X, plot_Y)
     #plt.savefig('dataset/loss-lstm'+str(LSTM_bool)+'-in'+str(n_input)+'-hidden'+str(n_hidden)+'.png')
     plt.plot(plot_X, plot_Z)
-    plt.savefig('dataset/acc-lstm'+str(LSTM_bool)+'-in'+str(n_input)+'-hidden'+str(n_hidden)+'.png')
+    plt.savefig('dataset/acc-lstm'+str(LSTM_bool)+'-opt'+str(opt)+'.png')
 
     print("-- Started testing ...")
     sess.run(init_l)
@@ -195,4 +199,4 @@ with tf.Session() as sess:
         # Calculate batch loss
         loss_value = sess.run(loss, feed_dict={x: batch_x, y: batch_y})
         acc_value = sess.run(accuracy, feed_dict={x: batch_x, y: batch_y})
-        print("Iter "+str(i)+", Minibatch Loss= "+str(loss_value)+" , accuracy = "+str(acc_value))
+        print("Iter "+str(i)+", Minibatch Loss= "+str(loss_value)+" , accuracy = "+str(acc_value[0]))
