@@ -23,7 +23,7 @@ n_hidden = 128  # hidden layer num of features
 n_out_lstm = 128
 n_outputs = 18 #for seaquest, possible actions
 LSTM_bool = False
-opt = 'SGD'
+opt = 'RMSProp'
 
 op = Operations({'rgb':False, 'alpha_leaky_relu':0.1})
 
@@ -82,6 +82,13 @@ def create_lstm_net(x, img_size, n_input, n_steps, n_hidden, n_outputs):
         _, _, fc6 = op.fc('fc6', out_lstm, n_outputs)
     return fc6
 
+def shuffle_dataset(x, y):
+    n = len(x)
+    index = [i for i in range(n)]
+    shuffle(index)
+    res_x, res_y = [x[i] for i in index], [y[i] for i in index]
+    return res_x, res_y
+
 def create_dataset(timesteps, n_outputs):
     with open('dataset/y.txt', 'r') as d :
         fichier_entier = d.read()
@@ -90,13 +97,10 @@ def create_dataset(timesteps, n_outputs):
     n = len(lignes2)
     data = ['dataset/x/'+str(i)+'.jpg' for i in range(1, n+1)]
     dx, dy = [], []
-    index = [i for i in range(n-timesteps)]
     for i in range(n-timesteps):
         dx.append(data[i:i+timesteps])
         dy.append(lignes2[i+timesteps-1])
-    shuffle(index)
-    res_x = [dx[i] for i in index]
-    res_y = [dy[i] for i in index]
+    res_x, res_y = shuffle_dataset(dx, dy)
     print(res_x[0])
     print(res_y[0])
     images = [[scipy.misc.imresize(scipy.misc.imread(d, flatten=True), (img_size, img_size)) for d in l] for l in res_x]
@@ -129,6 +133,8 @@ individual_losses = tf.reduce_sum(tf.squared_difference(out_soft, y), reduction_
 loss = tf.reduce_mean(individual_losses)
 if opt == 'Adam' :
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
+elif opt == 'RMSProp' :
+    optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate).minimize(loss)
 else :
     optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(loss)
 accuracy = tf.metrics.accuracy(labels, predictions)
@@ -147,6 +153,8 @@ with tf.Session() as sess:
     plot_X, plot_Y, plot_Z = [], [], []
 
     for e in range(nb_epochs):
+        res_x, res_y = shuffle_dataset(train_x, train_y)
+        train_x, train_y = np.array(res_x), np.array(res_y)
         for i in range(int(len(train_x)/batch_size)):
             batch_x, batch_y = train_x[i*batch_size:(i+1)*batch_size], train_y[i*batch_size:(i+1)*batch_size]
             if not LSTM_bool :
