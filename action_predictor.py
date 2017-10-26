@@ -11,9 +11,9 @@ print('---- Action predictor ----')
 
 # Parameters
 learning_rate = 0.001
-nb_epochs = 5
+nb_epochs = 60
 batch_size = 32
-display_step = 5
+display_step = 10
 
 # Network Parameters
 img_size = 84
@@ -21,7 +21,7 @@ n_input = 640  # same as output conv net
 n_steps = 5  # timesteps
 n_hidden = 128  # hidden layer num of features
 n_out_lstm = 128
-n_outputs = 20 #for seaquest, possible actions
+n_outputs = 18 #for seaquest, possible actions
 LSTM_bool = False
 
 op = Operations({'rgb':False, 'alpha_leaky_relu':0.1})
@@ -82,24 +82,26 @@ def create_lstm_net(x, img_size, n_input, n_steps, n_hidden, n_outputs):
     return fc6
 
 def create_dataset(timesteps, n_outputs):
-    path_dataset = 'dataset/'
-    data = glob(path_dataset+'x/*')
-    images = [scipy.misc.imread(d, flatten=True) for d in data]
-    with open(path_dataset+'y.txt', 'r') as d :
+    with open('dataset/y.txt', 'r') as d :
         fichier_entier = d.read()
         lignes = fichier_entier.split('\n')
-        nb_actions = [int(lignes[i][-1]) for i in range(len(lignes)-1)]
-        actions = [np.eye(n_outputs)[nb_actions[i]] for i in range(len(nb_actions))]
-    n = len(images)
+        lignes2 = lignes[:-2]
+    n = len(lignes2)
+    data = ['dataset/x/'+str(i)+'.jpg' for i in range(1, n+1)]
     dx, dy = [], []
     index = [i for i in range(n-timesteps)]
     for i in range(n-timesteps):
-        dx.append(images[i:i+timesteps])
-        dy.append(actions[i+timesteps-1])
+        dx.append(data[i:i+timesteps])
+        dy.append(lignes2[i+timesteps-1])
     shuffle(index)
     res_x = [dx[i] for i in index]
     res_y = [dy[i] for i in index]
-    return np.array(res_x), np.array(res_y)
+    print(res_x[0])
+    print(res_y[0])
+    images = [[scipy.misc.imresize(scipy.misc.imread(d, flatten=True), (img_size, img_size)) for d in l] for l in res_x]
+    nb_actions = [int(res_y[i][-1]) for i in range(len(res_y))]
+    labels = [np.eye(n_outputs)[a] for a in nb_actions]
+    return np.array(images), np.array(labels)
 
 
 # import dataset
