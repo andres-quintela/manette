@@ -11,7 +11,7 @@ print('---- Action predictor ----')
 
 # Parameters
 learning_rate = 0.001
-nb_epochs = 60
+nb_epochs = 80
 batch_size = 32
 display_step = 10
 
@@ -106,6 +106,8 @@ def create_dataset(timesteps, n_outputs):
 
 # import dataset
 data_x, data_y = create_dataset(n_steps, n_outputs)
+train_x, train_y = data_x[:-256], data_y[:-256]
+test_x, test_y = data_x[-256:], data_y[-256:]
 print(data_x.shape)
 print(data_y.shape)
 
@@ -117,12 +119,7 @@ y = tf.placeholder("float32", [None, n_outputs])
 if LSTM_bool : output_fc = create_lstm_net(x, img_size, n_input, n_steps, n_hidden, n_outputs)
 else : output_fc = create_conv_net(x, img_size, n_outputs)
 
-# Define weights for softmax
-d = 1.0 / np.sqrt(n_outputs)
-w_soft = tf.Variable(tf.random_uniform([n_outputs, n_outputs], minval=-d, maxval=d))
-b_soft = tf.Variable(tf.random_uniform([n_outputs], minval=-d, maxval=d))
-
-out_soft = tf.nn.softmax(tf.add(tf.matmul(output_fc, w_soft), b_soft))
+_, _, out_soft = op.softmax("softmax", output_fc, n_outputs, 1)
 predictions = tf.argmax(out_soft, axis=1)
 labels = tf.argmax(y, axis=1)
 
@@ -143,19 +140,17 @@ with tf.Session() as sess:
     # Keep training until reach max iterations
     print('-- Start training ...')
     total_batch = 0
-    plot_X = []
-    plot_Y = []
-    plot_Z = []
+    plot_X, plot_Y, plot_Z = [], [], []
 
     for e in range(nb_epochs):
-        for i in range(int(len(data_x)/batch_size)):
-            batch_x, batch_y = data_x[i*batch_size:(i+1)*batch_size], data_y[i*batch_size:(i+1)*batch_size]
+        for i in range(int(len(train_x)/batch_size)):
+            batch_x, batch_y = train_x[i*batch_size:(i+1)*batch_size], train_y[i*batch_size:(i+1)*batch_size]
             if not LSTM_bool :
                 batch_x = np.array([np.amax(f, axis=0) for f in batch_x])
                 batch_x = batch_x.reshape((batch_size, img_size, img_size, 1))
             batch_y = batch_y.reshape((batch_size, n_outputs))
-            out = sess.run(out_soft, feed_dict={x: batch_x})
-            pred = sess.run(predictions, feed_dict={x: batch_x})
+            #out = sess.run(out_soft, feed_dict={x: batch_x})
+            #pred = sess.run(predictions, feed_dict={x: batch_x})
             #print(out[0])
             #print(pred[0])
             #lab = sess.run(labels, feed_dict={y: batch_y})
@@ -178,3 +173,26 @@ with tf.Session() as sess:
     #plt.savefig('dataset/loss-lstm'+str(LSTM_bool)+'-in'+str(n_input)+'-hidden'+str(n_hidden)+'.png')
     plt.plot(plot_X, plot_Z)
     plt.savefig('dataset/acc-lstm'+str(LSTM_bool)+'-in'+str(n_input)+'-hidden'+str(n_hidden)+'.png')
+
+    print("-- Started testing ...")
+    sess.run(init_l)
+    for i in range(int(len(test_x)/batch_size)):
+        batch_x, batch_y = test_x[i*batch_size:(i+1)*batch_size], test_y[i*batch_size:(i+1)*batch_size]
+        if not LSTM_bool :
+            batch_x = np.array([np.amax(f, axis=0) for f in batch_x])
+            batch_x = batch_x.reshape((batch_size, img_size, img_size, 1))
+        batch_y = batch_y.reshape((batch_size, n_outputs))
+        #out = sess.run(out_soft, feed_dict={x: batch_x})
+        #pred = sess.run(predictions, feed_dict={x: batch_x})
+        #print(out[0])
+        #print(pred[0])
+        #lab = sess.run(labels, feed_dict={y: batch_y})
+        #print(lab[0])
+        #l = sess.run(loss, feed_dict={x: batch_x, y: batch_y})
+        #print(l)
+        # Run optimization op (backprop)
+
+        # Calculate batch loss
+        loss_value = sess.run(loss, feed_dict={x: batch_x, y: batch_y})
+        acc_value = sess.run(accuracy, feed_dict={x: batch_x, y: batch_y})
+        print("Iter "+str(i)+", Minibatch Loss= "+str(loss_value)+" , accuracy = "+str(acc_value))
