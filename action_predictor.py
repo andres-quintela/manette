@@ -1,7 +1,6 @@
 import tensorflow as tf
 from tensorflow.contrib import rnn
 import numpy as np
-from glob import glob
 import scipy.misc
 from random import shuffle
 import matplotlib.pyplot as plt
@@ -10,19 +9,18 @@ from networks import Operations
 print('---- Action predictor ----')
 
 # Parameters
-learning_rate = 0.001
-nb_epochs = 80
+learning_rate = 0.0005
+nb_epochs = 40
 batch_size = 32
 display_step = 10
 
 # Network Parameters
 img_size = 84
-n_input = 640  # same as output conv net
+n_input = 6400  # same as output conv net
 n_steps = 5  # timesteps
-n_hidden = 128  # hidden layer num of features
-n_out_lstm = 128
+n_hidden = 64  # hidden layer num of features
 n_outputs = 18 #for seaquest, possible actions
-LSTM_bool = False
+LSTM_bool = True
 opt = 'RMSProp'
 
 op = Operations({'rgb':False, 'alpha_leaky_relu':0.1})
@@ -58,10 +56,10 @@ def create_conv_net(x, img_size, n_outputs):
         _, _, conv4 = op.conv2d('conv4', mp_conv3, 64, 3, 64, 1, padding = 'SAME')
 
         print('conv 4 : '+str(conv4.shape))
-        _, _, fc5 = op.fc('fc5', op.flatten(conv4), n_outputs)
+        #_, _, fc5 = op.fc('fc5', op.flatten(conv4), n_outputs)
 
-    print('fc5 : '+str(fc5.shape))
-    return fc5
+    #print('fc5 : '+str(fc5.shape))
+    return op.flatten(conv4)
 
 def create_lstm_net(x, img_size, n_input, n_steps, n_hidden, n_outputs):
     with tf.name_scope('net'):
@@ -78,7 +76,7 @@ def create_lstm_net(x, img_size, n_input, n_steps, n_hidden, n_outputs):
         x_lstm = tf.reshape(out_conv, [-1, n_steps, n_input])
         print('x_lstm : '+str(x_lstm.shape))
         out_lstm = RNN(x_lstm, w_lstm, b_lstm, n_input, n_steps, n_hidden)
-
+        print('out_lstm : '+str(out_lstm.shape))
         _, _, fc6 = op.fc('fc6', out_lstm, n_outputs)
     return fc6
 
@@ -122,7 +120,9 @@ else : x = tf.placeholder("float32", [None, img_size, img_size, 1])
 y = tf.placeholder("float32", [None, n_outputs])
 
 if LSTM_bool : output_fc = create_lstm_net(x, img_size, n_input, n_steps, n_hidden, n_outputs)
-else : output_fc = create_conv_net(x, img_size, n_outputs)
+else :
+    outconv = create_conv_net(x, img_size, n_outputs)
+    _, _, output_fc = op.fc('fc5', outconv, n_outputs)
 
 _, _, out_soft = op.softmax("softmax", output_fc, n_outputs, 1)
 predictions = tf.argmax(out_soft, axis=1)
@@ -161,14 +161,7 @@ with tf.Session() as sess:
                 batch_x = np.array([np.amax(f, axis=0) for f in batch_x])
                 batch_x = batch_x.reshape((batch_size, img_size, img_size, 1))
             batch_y = batch_y.reshape((batch_size, n_outputs))
-            #out = sess.run(out_soft, feed_dict={x: batch_x})
-            #pred = sess.run(predictions, feed_dict={x: batch_x})
-            #print(out[0])
-            #print(pred[0])
-            #lab = sess.run(labels, feed_dict={y: batch_y})
-            #print(lab[0])
-            #l = sess.run(loss, feed_dict={x: batch_x, y: batch_y})
-            #print(l)
+
             # Run optimization op (backprop)
             sess.run(optimizer, feed_dict={x: batch_x, y: batch_y})
             if i % display_step == 0:
@@ -179,6 +172,18 @@ with tf.Session() as sess:
                 plot_X.append(total_batch)
                 plot_Y.append(loss_value)
                 plot_Z.append(acc_value[0])
+            if total_batch % 50 ==0 :
+                sess.run(init_l)
+                for i in range(int(len(test_x)/batch_size)):
+                    batch_x, batch_y = test_x[i*batch_size:(i+1)*batch_size], test_y[i*batch_size:(i+1)*batch_size]
+                    if not LSTM_bool :
+                        batch_x = np.array([np.amax(f, axis=0) for f in batch_x])
+                        batch_x = batch_x.reshape((batch_size, img_size, img_size, 1))
+                    batch_y = batch_y.reshape((batch_size, n_outputs))
+                    loss_value = sess.run(loss, feed_dict={x: batch_x, y: batch_y})
+                    acc_value = sess.run(accuracy, feed_dict={x: batch_x, y: batch_y})
+                    print("TEST "+str(total_batch)+", Minibatch Loss= "+str(loss_value)+" , accuracy = "+str(acc_value[0]))
+
             total_batch += 1
     print("-- Optimization Finished!")
     plt.plot(plot_X, plot_Y)
@@ -194,15 +199,6 @@ with tf.Session() as sess:
             batch_x = np.array([np.amax(f, axis=0) for f in batch_x])
             batch_x = batch_x.reshape((batch_size, img_size, img_size, 1))
         batch_y = batch_y.reshape((batch_size, n_outputs))
-        #out = sess.run(out_soft, feed_dict={x: batch_x})
-        #pred = sess.run(predictions, feed_dict={x: batch_x})
-        #print(out[0])
-        #print(pred[0])
-        #lab = sess.run(labels, feed_dict={y: batch_y})
-        #print(lab[0])
-        #l = sess.run(loss, feed_dict={x: batch_x, y: batch_y})
-        #print(l)
-        # Run optimization op (backprop)
 
         # Calculate batch loss
         loss_value = sess.run(loss, feed_dict={x: batch_x, y: batch_y})
