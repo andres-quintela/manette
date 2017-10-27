@@ -115,6 +115,7 @@ class PAACLearner(ActorLearner):
         start_time = time.time()
 
         while self.global_step < self.max_global_steps:
+            print('step : '+str(self.global_step))
 
             loop_start_time = time.time()
 

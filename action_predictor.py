@@ -182,7 +182,7 @@ with tf.Session() as sess:
                     batch_y = batch_y.reshape((batch_size, n_outputs))
                     loss_value = sess.run(loss, feed_dict={x: batch_x, y: batch_y})
                     acc_value = sess.run(accuracy, feed_dict={x: batch_x, y: batch_y})
-                    print("TEST "+str(total_batch)+", Minibatch Loss= "+str(loss_value)+" , accuracy = "+str(acc_value[0]))
+                print("TEST "+str(total_batch)+", Minibatch Loss= "+str(loss_value)+" , accuracy = "+str(acc_value[0]))
 
             total_batch += 1
     print("-- Optimization Finished!")

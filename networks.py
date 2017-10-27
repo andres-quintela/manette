@@ -1,4 +1,5 @@
 import tensorflow as tf
+from tensorflow.contrib import rnn
 import logging
 import numpy as np
 
@@ -103,6 +104,22 @@ class Operations():
     def max_pooling(self, name, _input, stride=None, padding='VALID'):
         shape = [1,2,2,1]
         return tf.nn.max_pool(_input, shape, strides=shape, padding = padding, name=name)
+
+    def rnn(self, name, _input, n_input, n_steps, n_hidden):
+        # input shape: (batch_size, n_steps, n_input)
+        # Required shape: 'n_steps' tensors list of shape (batch_size, n_input)
+        _input = tf.transpose(_input, [1, 0, 2])
+        _input = tf.reshape(_input, [-1, n_input])
+        _input = tf.split(_input, n_steps, axis=0)
+
+        lstm_cell = rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
+        outputs, states = rnn.static_rnn(lstm_cell, _input, dtype=tf.float32)
+
+        w = tf.Variable(tf.random_normal([n_hidden, n_hidden]))
+        b = tf.Variable(tf.random_normal([n_hidden]))
+
+        # Linear activation, using rnn inner loop last output
+        return w, b, tf.nn.bias_add(tf.matmul(outputs[-1], w), b)
 
 
 class Network(object):
@@ -209,9 +226,13 @@ class LSTMNetwork(Network):
 
         with tf.device(self.device):
             with tf.name_scope(self.name):
+                n_input = 6400
+                n_steps = 4
+                n_hidden = 512
+                n_outputs = 512
+                x = tf.reshape(self.input, [-1, 84, 84, self.depth])
 
-
-                _, _, conv1 = self.op.conv2d('conv1', self.input, 32, 5, self.depth * 4, 1, padding = 'SAME', activation = self.activation)
+                _, _, conv1 = self.op.conv2d('conv1', x, 32, 5, self.depth, 1, padding = 'SAME', activation = self.activation)
                 mp_conv1 = self.op.max_pooling('mp_conv1', conv1)
                 _, _, conv2 = self.op.conv2d('conv2', mp_conv1, 32, 5, 32, 1, padding = 'SAME', activation = self.activation)
                 mp_conv2 = self.op.max_pooling('mp_conv2', conv2)
@@ -219,21 +240,16 @@ class LSTMNetwork(Network):
                 mp_conv3 = self.op.max_pooling('mp_conv3', conv3)
                 _, _, conv4 = self.op.conv2d('conv4', mp_conv3, 64, 3, 64, 1, padding = 'SAME', activation = self.activation)
 
-                print(conv4.shape)
-                print(self.op.flatten(conv4).shape)
-                self.n_units = 6400
-                self.lstm = tf.contrib.rnn.BasicLSTMCell(self.n_units)
-                print(self.lstm.state_size)
-                hidden_state = tf.zeros([32, self.n_units])
-                current_state = tf.zeros([32, self.n_units])
-                state = hidden_state, current_state
-                print(state)
+                print('conv4 : '+ str(conv4.shape))
+                out_conv = self.op.flatten(conv4)
+                print(out_conv.shape)
+                x_lstm = tf.reshape(out_conv, [-1, n_steps, n_input])
 
-                lstm_output, state = self.lstm(self.op.flatten(conv4), state)
-
-                _, _, fc5 = self.op.fc('fc5', lstm_output, 512, activation=self.activation)
-
-                self.output = fc5
+                _, _, out_lstm = self.op.rnn('lstm', x_lstm, n_input, n_steps, n_hidden)
+                print('out lstm : '+str(out_lstm.shape))
+                _, _, fc6 = self.op.fc('fc6', out_lstm, n_outputs, activation=self.activation)
+                print('fc6 : '+str(fc6.shape))
+                self.output = fc6
 
 class NatureNetwork(Network):
 
