@@ -228,8 +228,8 @@ class LSTMNetwork(Network):
             with tf.name_scope(self.name):
                 n_input = 6400
                 n_steps = 4
-                n_hidden = 512
-                n_outputs = 512
+                n_hidden = 256
+                n_outputs = 256
                 x = tf.reshape(self.input, [-1, 84, 84, self.depth])
 
                 _, _, conv1 = self.op.conv2d('conv1', x, 32, 5, self.depth, 1, padding = 'SAME', activation = self.activation)
@@ -249,7 +249,7 @@ class LSTMNetwork(Network):
                 print('out lstm : '+str(out_lstm.shape))
                 _, _, fc6 = self.op.fc('fc6', out_lstm, n_outputs, activation=self.activation)
                 print('fc6 : '+str(fc6.shape))
-                self.output = fc6
+                self.output = out_lstm
 
 class NatureNetwork(Network):
 
