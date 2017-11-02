@@ -6,6 +6,7 @@ from actor_learner import *
 import logging
 from logger_utils import variable_summaries
 import numpy as np
+from scipy.misc import imsave
 
 from emulator_runner import EmulatorRunner
 from exploration_policy import Action
@@ -177,8 +178,134 @@ class PAACLearner(ActorLearner):
 
 
             nest_state_value = self.session.run(
-                self.network.output_layer_v,
-                feed_dict={self.network.input_ph: shared_states})
+                self.network.output_layer_v, feed_dict={self.network.input_ph: shared_states})
+
+
+            # print('shared states : '+str(shared_states.shape))
+            # if True :
+            #     z = np.zeros((84, 84, 3), dtype=np.uint8)
+            #     z[:,:,0], z[:,:,1], z[:,:,2] = shared_states[0,:, :, 0], shared_states[0,:, :, 4], shared_states[0,:, :, 8]
+            #     imsave('img1.jpg', z)
+            #     z[:,:,0], z[:,:,1], z[:,:,2] = shared_states[0,:, :, 1], shared_states[0,:, :, 5], shared_states[0,:, :, 9]
+            #     imsave('img2.jpg', z)
+            #     z[:,:,0], z[:,:,1], z[:,:,2] = shared_states[0,:, :, 2], shared_states[0,:, :, 6], shared_states[0,:, :, 10]
+            #     imsave('img3.jpg', z)
+            #     z[:,:,0], z[:,:,1], z[:,:,2] = shared_states[0,:, :, 3], shared_states[0,:, :, 7], shared_states[0,:, :, 11]
+            #     imsave('img4.jpg', z)
+            #     z[:,:,0], z[:,:,1], z[:,:,2] = shared_states[1,:, :, 0], shared_states[1,:, :, 4], shared_states[1,:, :, 8]
+            #     imsave('img5.jpg', z)
+            #     z[:,:,0], z[:,:,1], z[:,:,2] = shared_states[1,:, :, 1], shared_states[1,:, :, 5], shared_states[1,:, :, 9]
+            #     imsave('img6.jpg', z)
+            #     z[:,:,0], z[:,:,1], z[:,:,2] = shared_states[1,:, :, 2], shared_states[1,:, :, 6], shared_states[1,:, :, 10]
+            #     imsave('img7.jpg', z)
+            #     z[:,:,0], z[:,:,1], z[:,:,2] = shared_states[1,:, :, 3], shared_states[1,:, :, 7], shared_states[1,:, :, 11]
+            #     imsave('img8.jpg', z)
+            #     print(shared_states[0, :, :, 0:3].shape)
+            #     print(shared_states[0, :, :, 0:3])
+            # else :
+            #     z = np.zeros((84, 84), dtype=np.uint8)
+            #     z = shared_states[0, :, :, 0]
+            #     imsave('img1.jpg', z)
+            #     z = shared_states[0, :, :, 1]
+            #     imsave('img2.jpg', z)
+            #     z = shared_states[0, :, :, 2]
+            #     imsave('img3.jpg', z)
+            #     z = shared_states[0, :, :, 3]
+            #     imsave('img4.jpg', z)
+            #     z = shared_states[1, :, :, 0]
+            #     imsave('img5.jpg', z)
+            #     z = shared_states[1, :, :, 1]
+            #     imsave('img6.jpg', z)
+            #     z = shared_states[1, :, :, 2]
+            #     imsave('img7.jpg', z)
+            #     z = shared_states[1, :, :, 3]
+            #     imsave('img8.jpg', z)
+            #     print(shared_states[0, :, :, 0])
+            #
+            #
+            # x = self.session.run(
+            #     self.network.x,
+            #     feed_dict= {self.network.input_ph: shared_states})
+            # print('x : '+str(x.shape))
+            # print(x[0].shape)
+            # print(x[0, :, :, 0])
+            # if True :
+            #     z[:,:,0], z[:,:,1], z[:,:,2] = x[0,:, :, 0], x[0,:, :, 1], x[0,:, :, 2]
+            #     imsave('x1.jpg', z)
+            #     z[:,:,0], z[:,:,1], z[:,:,2] = x[1,:, :, 0], x[1,:, :, 1], x[1,:, :, 2]
+            #     imsave('x2.jpg', z)
+            #     z[:,:,0], z[:,:,1], z[:,:,2] = x[2,:, :, 0], x[2,:, :, 1], x[2,:, :, 2]
+            #     imsave('x3.jpg', z)
+            #     z[:,:,0], z[:,:,1], z[:,:,2] = x[3,:, :, 0], x[3,:, :, 1], x[3,:, :, 2]
+            #     imsave('x4.jpg', z)
+            #     z[:,:,0], z[:,:,1], z[:,:,2] = x[4,:, :, 0], x[4,:, :, 1], x[4,:, :, 2]
+            #     imsave('x5.jpg', z)
+            #     z[:,:,0], z[:,:,1], z[:,:,2] = x[5,:, :, 0], x[5,:, :, 1], x[5,:, :, 2]
+            #     imsave('x6.jpg', z)
+            #     z[:,:,0], z[:,:,1], z[:,:,2] = x[6,:, :, 0], x[6,:, :, 1], x[6,:, :, 2]
+            #     imsave('x7.jpg', z)
+            #     z[:,:,0], z[:,:,1], z[:,:,2] = x[7,:, :, 0], x[7,:, :, 1], x[7,:, :, 2]
+            #     imsave('x8.jpg', z)
+            # else :
+            #     z = np.zeros((84, 84), dtype=np.uint8)
+            #     z = x[0, :, :, 0]
+            #     imsave('x0.jpg', z)
+            #     z = x[1, :, :, 0]
+            #     imsave('x1.jpg', z)
+            #     z = x[2, :, :, 0]
+            #     imsave('x2.jpg', z)
+            #     z = x[3, :, :, 0]
+            #     imsave('x3.jpg', z)
+            #     z = x[4, :, :, 0]
+            #     imsave('x4.jpg', z)
+            #     z = x[5, :, :, 0]
+            #     imsave('x5.jpg', z)
+            #     z = x[6, :, :, 0]
+            #     imsave('x6.jpg', z)
+            #     z = x[7, :, :, 0]
+            #     imsave('x7.jpg', z)
+            #
+            # y = self.session.run(
+            #     self.network.y,
+            #     feed_dict= {self.network.input_ph: shared_states})
+            # print('y : '+str(y.shape))
+            # print(y[0].shape)
+            # print(y[0, 0, :, :])
+            # if True :
+            #     z = y[0, 0, :, :, :]
+            #     imsave('y1.jpg', z)
+            #     z = y[0, 1, :, :, :]
+            #     imsave('y2.jpg', z)
+            #     z = y[0, 2, :, :, :]
+            #     imsave('y3.jpg', z)
+            #     z = y[0, 3, :, :, :]
+            #     imsave('y4.jpg', z)
+            #     z = y[1, 0, :, :, :]
+            #     imsave('y5.jpg', z)
+            #     z = y[1, 1, :, :, :]
+            #     imsave('y6.jpg', z)
+            #     z = y[1, 2, :, :, :]
+            #     imsave('y7.jpg', z)
+            #     z = y[1, 3, :, :, :]
+            #     imsave('y8.jpg', z)
+            # else :
+            #     z = np.zeros((84, 84), dtype=np.uint8)
+            #     z = y[0, 0, :, :]
+            #     imsave('y0.jpg', z)
+            #     z = y[0, 1, :, :]
+            #     imsave('y1.jpg', z)
+            #     z = y[0, 2, :, :]
+            #     imsave('y2.jpg', z)
+            #     z = y[0, 3, :, :]
+            #     imsave('y3.jpg', z)
+            #     z = y[1, 0, :, :]
+            #     imsave('y4.jpg', z)
+            #     z = y[1, 1, :, :]
+            #     imsave('y5.jpg', z)
+            #     z = y[1, 2, :, :]
+            #     imsave('y6.jpg', z)
+            #     z = y[1, 3, :, :]
+            #     imsave('y7.jpg', z)
 
             estimated_return = np.copy(nest_state_value)
 

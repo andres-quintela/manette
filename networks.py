@@ -146,6 +146,7 @@ class Network(object):
                 self.input_ph = tf.placeholder(tf.uint8, [None, 84, 84, self.depth* 4], name='input')
                 self.selected_action_ph = tf.placeholder("float32", [None, self.num_actions], name="selected_action")
                 self.selected_repetition_ph = tf.placeholder("float32", [None, self.total_repetitions], name="selected_repetition")
+                #self.input = tf.scalar_mul(1.0, tf.cast(self.input_ph, tf.float32))
                 self.input = tf.scalar_mul(1.0/255.0, tf.cast(self.input_ph, tf.float32))
 
                 # This class should never be used, must be subclassed
@@ -226,13 +227,28 @@ class LSTMNetwork(Network):
 
         with tf.device(self.device):
             with tf.name_scope(self.name):
+
                 n_input = 6400
                 n_steps = 4
-                n_hidden = 256
+                n_hidden = 64
                 n_outputs = 256
-                x = tf.reshape(self.input, [-1, 84, 84, self.depth])
+                print('input : '+str(self.input.shape))
+                if self.rgb : #input : (?, 84, 84, RRRRGGGGBBBB)
+                    l_rgb = tf.unstack(self.input, axis=3) # [R,R,R,R,G,G,G,G,B,B,B,B]
+                    permutation_list = [[l_rgb[0+i], l_rgb[n_steps+i], l_rgb[2*n_steps+i]] for i in range(n_steps)] # [R,G,B,R,G,B,R,G,B,R,G,B]
+                    l_input = [tf.stack(l, axis=3) for l in permutation_list]
+                    _input = tf.stack(l_input, axis=1) # (?, 4, 84, 84, 3)
+                    _input = tf.reshape(_input, (-1, 84, 84, 3))
+                    #self.y = tf.reshape(_input, (-1, 4, 84, 84, 3))
+                else : #input : (?, 84, 84, 4)
+                    _input = tf.transpose(self.input, [0, 3, 1, 2]) # (?, 4, 84, 84)
+                    _input = tf.reshape(_input, (-1, 84, 84))
+                    #self.y = tf.reshape(_input, (-1, 4, 84, 84))
+                    _input = tf.expand_dims(_input, -1) # (?, 84, 84, 1)
+                self.x = _input
+                print('x shape : '+str(self.x.shape))
 
-                _, _, conv1 = self.op.conv2d('conv1', x, 32, 5, self.depth, 1, padding = 'SAME', activation = self.activation)
+                _, _, conv1 = self.op.conv2d('conv1', _input, 32, 5, self.depth, 1, padding = 'SAME', activation = self.activation)
                 mp_conv1 = self.op.max_pooling('mp_conv1', conv1)
                 _, _, conv2 = self.op.conv2d('conv2', mp_conv1, 32, 5, 32, 1, padding = 'SAME', activation = self.activation)
                 mp_conv2 = self.op.max_pooling('mp_conv2', conv2)
@@ -249,7 +265,7 @@ class LSTMNetwork(Network):
                 print('out lstm : '+str(out_lstm.shape))
                 _, _, fc6 = self.op.fc('fc6', out_lstm, n_outputs, activation=self.activation)
                 print('fc6 : '+str(fc6.shape))
-                self.output = out_lstm
+                self.output = fc6
 
 class NatureNetwork(Network):
 
