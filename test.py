@@ -76,7 +76,7 @@ if __name__ == '__main__':
         while not all(episodes_over):
             actions, repetitions, _, _ = explo_policy.choose_next_actions(network, env_creator.num_actions, states, sess)
             for j, environment in enumerate(environments):
-                macro_action = Action(j, actions[j], repetitions[j])
+                macro_action = Action(explo_policy.tab_rep, j, actions[j], repetitions[j])
                 state, r, episode_over = environment.next(macro_action.current_action)
                 states[j] = state
                 rewards[j] += r

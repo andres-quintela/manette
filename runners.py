@@ -8,13 +8,13 @@ class Runners(object):
 
     NUMPY_TO_C_DTYPE = {np.float32: c_float, np.float64: c_double, np.uint8: c_uint}
 
-    def __init__(self, EmulatorRunner, emulators, workers, variables):
+    def __init__(self, tab_rep, EmulatorRunner, emulators, workers, variables):
         self.variables = [self._get_shared(var) for var in variables]
         self.workers = workers
         self.queues = [Queue() for _ in range(workers)]
         self.barrier = Queue()
 
-        self.runners = [EmulatorRunner(i, emulators, v, self.queues[i], self.barrier) for i, (emulators, v) in
+        self.runners = [EmulatorRunner(tab_rep, i, emulators, v, self.queues[i], self.barrier) for i, (emulators, v) in
                         enumerate(zip(np.split(emulators, workers), zip(*[np.split(var, workers) for var in self.variables])))]
 
     def _get_shared(self, array):

@@ -3,19 +3,21 @@ import tensorflow as tf
 import logging
 
 class Action :
-    def __init__(self, i, a, r):
+    def __init__(self, tab_rep, i, a, r):
+        self.tab_rep = tab_rep
         self.id = i
         self.repeated = False
         self.current_action = 0
         self.nb_repetitions_left = 0
         self.init_from_list(a, r)
 
+
     def __str__(self):
         return "id : "+str(self.id)+", action "+str(self.current_action)+" repeated "+str(self.nb_repetitions_left)+" times."
 
     def init_from_list(self, a, r):
         self.current_action = np.argmax(a)
-        self.nb_repetitions_left = np.argmax(r)
+        self.nb_repetitions_left = self.tab_rep[np.argmax(r)]
         if self.nb_repetitions_left > 0 :
             self.repeated = True
 
@@ -48,7 +50,18 @@ class ExplorationPolicy:
         self.keep_percentage = args.keep_percentage
         self.annealed = args.annealed
         self.annealing_steps = 80000000
-        self.total_repetitions = args.max_repetition
+        self.total_repetitions = args.nb_repetition + 1
+        self.max_repetition = args.max_repetition
+        self.nb_repetition = args.nb_repetition
+        self.tab_rep = self.get_tab_repetitions()
+
+    def get_tab_repetitions(self):
+        res = [0]*(self.nb_repetition+1)
+        res[-1] = self.max_repetition - 1
+        if self.nb_repetition > 0 :
+            for i in range(1, self.nb_repetition):
+                res[i] = int(self.max_repetition/self.nb_repetition) * i - 1
+        return res
 
     def get_epsilon(self):
         if self.global_step <= self.annealing_steps:
