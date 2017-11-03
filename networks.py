@@ -231,7 +231,7 @@ class LSTMNetwork(Network):
                 n_input = 6400
                 n_steps = 4
                 n_hidden = 64
-                n_outputs = 256
+                n_outputs = 512
                 print('input : '+str(self.input.shape))
                 if self.rgb : #input : (?, 84, 84, RRRRGGGGBBBB)
                     l_rgb = tf.unstack(self.input, axis=3) # [R,R,R,R,G,G,G,G,B,B,B,B]
@@ -260,10 +260,13 @@ class LSTMNetwork(Network):
                 out_conv = self.op.flatten(conv4)
                 print(out_conv.shape)
                 x_lstm = tf.reshape(out_conv, [-1, n_steps, n_input])
+                print('x lstm : '+str(x_lstm.shape))
+                x_lstm = tf.reshape(x_lstm, [-1, n_steps* n_input])
+                print('x lstm : '+str(x_lstm.shape))
 
-                _, _, out_lstm = self.op.rnn('lstm', x_lstm, n_input, n_steps, n_hidden)
-                print('out lstm : '+str(out_lstm.shape))
-                _, _, fc6 = self.op.fc('fc6', out_lstm, n_outputs, activation=self.activation)
+                #_, _, out_lstm = self.op.rnn('lstm', x_lstm, n_input, n_steps, n_hidden)
+                #print('out lstm : '+str(out_lstm.shape))
+                _, _, fc6 = self.op.fc('fc6', x_lstm, n_outputs, activation=self.activation)
                 print('fc6 : '+str(fc6.shape))
                 self.output = fc6
 
