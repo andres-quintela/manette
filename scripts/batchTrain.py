@@ -45,11 +45,10 @@ def create_chpt_cmd(args, path):
 
 
 def main(args):
-    pathSrc = "toTrain/gpu"+str(args.gpu)
+    pathSrc = args.folder
     for folder in os.listdir(pathSrc):
         i = datetime.datetime.now()
-        #path = "logs/"+str(i.year)+"-"+str(i.month)+"-"+str(i.day)+"-"+folder
-        path = "/data1/rl/atari/logs/"+str(i.year)+"-"+str(i.month)+"-"+str(i.day)+"-"+folder
+        path = args.destination+str(i.year)+"-"+str(i.month)+"-"+str(i.day)+"-"+folder
         if not os.path.exists(path):
             os.makedirs(path)
         for f in os.listdir(pathSrc+"/"+folder):
@@ -63,10 +62,12 @@ def main(args):
 
 def get_arg_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-gpu', default= 0, type=int,
-                        help='Number of the gpu to be used', dest='gpu')
+    parser.add_argument('-f', default='toTrain', type=str,
+                        help='Folder where to find the JSON files with the training options', dest='folder')
     parser.add_argument('-t', default=1800, type=int,
-                        help='Period of time btw save', dest='time')
+                        help='Period of time btw checkpoints save', dest='time')
+    parser.add_argument('-d', default='logs', type=str,
+                        help='Folder where to save the training information', dest='destination')
     return parser
 
 if __name__ == '__main__':
