@@ -53,22 +53,24 @@ Example of JSON file for Pong, with LSTM network and FiGAR 10 repetitions :
 * ``` -d ``` : Folder where to save the agents.
 * ``` -t ``` : Time (seconds) between each checkpoint save. Default = 1800 (30 min).
 
+## Save checkpoints
+The ```checkpoints.py``` script saves all the checkpoints (the network weights) automatically during the training. You don't have to run it, it is automatically called by ```batchTrain.py```. It is useful for the other scripts and to generate tests and gifs at different times of the training.
+
+In the agent's folder, a new ```checkpoints_saved``` folder will be created, containing a folder for each checkpoint.
+
 ## Resume training
 
 The ```resumeTraining.py``` script allows you to resume the training from the last checkpoint.
 Run : ```python3 script/resumeTraining.py -df logs/test_pong/``` to resume the ```test_pong``` agent.
 Before running the script, you can change the options in the ```args.json``` file, if you want to change the maximum of global steps or the learning rate or something in the exploration policy.
 
+The advantage of this script is that it launches again ```checkpoints.py``` automatically : it's useful if you don't want to loose a checkpoint. Also, you don't have to type again all your training options in the command line.
+
 ## Test All
 The ```testAll.py``` script allows you to test multiple agents.
 Run ```python3 script/testAll.py -f logs/ -tc 50``` to test all the agents stored in the ```logs/``` folder, 50 times each.
 
 **Advice** : use ```nohup python3 script/testAll.py -f logs/ -tc 50 &> test.out``` so that the tests results are written in the ```test.out``` file.
-
-## Save checkpoints
-The ```checkpoints.py``` script saves all the checkpoints (the network weights) automatically during the training. You don't have to run it, it is automatically called by ```batchTrain.py```. It is useful for the other scripts and to generate tests and gifs at different times of the training.
-
-In the agent's folder, a new ```checkpoints_saved``` folder will be created, containing a folder for each checkpoint.
 
 ## Generate gifs
 The ```genGifs.py``` script allows you to generate gifs for multiple agents and to use the checkpoint you want.
