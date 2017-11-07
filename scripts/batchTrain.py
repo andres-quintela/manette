@@ -24,7 +24,7 @@ def create_cmd(data, path):
                 " --annealed_steps "+str(data["annealed_steps"])+
                 " --keep_percentage "+str(data["keep_percentage"])+
                 " --max_repetition "+str(data["max_repetition"])+
-                " --nb_repetition "+str(data["nb_repetition"])+
+                " --nb_choices "+str(data["nb_choices"])+
                 " --checkpoint_interval "+str(data["checkpoint_interval"])+
                 " --activation "+str(data["activation"])+
                 " --alpha_leaky_relu "+str(data["alpha_leaky_relu"]))

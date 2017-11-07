@@ -41,7 +41,7 @@ Example of JSON file for Pong, with LSTM network and FiGAR 10 repetitions :
   "keep_percentage": 0.9,
   "rgb": false,
   "max_repetition": 11,
-  "nb_repetition": 10,
+  "nb_choices": 10,
   "checkpoint_interval": 1000000,
   "activation": "relu",
   "alpha_leaky_relu": 0.1

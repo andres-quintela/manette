@@ -25,7 +25,6 @@ class Action :
         self.nb_repetitions_left -= 1
         if self.nb_repetitions_left == 0 :
             self.repeated = False
-            self.current_action = 0
         return self.current_action
 
     def reset(self):
@@ -50,17 +49,16 @@ class ExplorationPolicy:
         self.keep_percentage = args.keep_percentage
         self.annealed = args.annealed
         self.annealing_steps = 80000000
-        self.total_repetitions = args.nb_repetition + 1
         self.max_repetition = args.max_repetition
-        self.nb_repetition = args.nb_repetition
+        self.nb_choices = args.nb_choices
         self.tab_rep = self.get_tab_repetitions()
 
     def get_tab_repetitions(self):
-        res = [0]*(self.nb_repetition+1)
-        res[-1] = self.max_repetition - 1
-        if self.nb_repetition > 0 :
-            for i in range(1, self.nb_repetition):
-                res[i] = int(self.max_repetition/self.nb_repetition) * i - 1
+        res = [0]*self.nb_choices
+        res[-1] = self.max_repetition
+        if self.nb_choices > 2 :
+            for i in range(1, self.nb_choices-1):
+                res[i] = int(self.max_repetition/(self.nb_choices-1)) * i
         return res
 
     def get_epsilon(self):
@@ -86,7 +84,7 @@ class ExplorationPolicy:
             repetition_indices = self.multinomial_choose(network_output_rep)
 
         new_actions = np.eye(num_actions)[action_indices]
-        new_repetitions = np.eye(self.total_repetitions)[repetition_indices]
+        new_repetitions = np.eye(self.nb_choices)[repetition_indices]
 
         self.global_step += len(network_output_pi)
         if self.annealed : self.epsilon = get_epsilon()

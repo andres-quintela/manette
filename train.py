@@ -60,7 +60,7 @@ def get_network_and_environment_creator(args, explo_policy, random_seed=3):
                     'activation' : args.activation,
                     'alpha_leaky_relu' : args.alpha_leaky_relu,
                     'max_repetition' : args.max_repetition,
-                    'nb_repetition': args.nb_repetition}
+                    'nb_choices': args.nb_choices}
 
     if args.arch == 'PWYX' :
         network = PpwwyyxxPolicyVNetwork
@@ -109,8 +109,8 @@ def get_arg_parser():
     parser.add_argument('--annealed_steps', default=80000000, type=int, help="Nb of global steps during which epsilon will be linearly annealed towards zero", dest="annealed_steps")
     parser.add_argument('--keep_percentage', default=0.9, type=float, help="keep percentage when dropout is used", dest='keep_percentage' )
     parser.add_argument('--rgb', action='store_true', help="If True, RGB images are given to the agent", dest="rgb")
-    parser.add_argument('--max_repetition', default=1, type=int, help="Maximum number of repetition for FiGAR", dest="max_repetition")
-    parser.add_argument('--nb_repetition', default=0, type=int, help="Number of possible repetitions", dest="nb_repetition")
+    parser.add_argument('--max_repetition', default=0, type=int, help="Maximum number of repetition for FiGAR", dest="max_repetition")
+    parser.add_argument('--nb_choices', default=1, type=int, help="Number of possible repetitions", dest="nb_choices")
     parser.add_argument('--checkpoint_interval', default=1000000, type=int, help="Interval of steps btw checkpoints", dest="checkpoint_interval")
     parser.add_argument('--activation', default='relu', type=str, help="activation function for the network", dest="activation")
     parser.add_argument('--alpha_leaky_relu', default=0.1, type=float, help="coef for leaky relu", dest="alpha_leaky_relu")

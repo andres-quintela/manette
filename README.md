@@ -87,7 +87,7 @@ The most useful options for the training are :
 * ```--activation``` : Activation function for the network : ```relu``` or ```leaky_relu```.
 * ```--alpha_leaky_relu``` : Coefficient when using leaky relu.
 
-**To use FiGAR**, the options are ```--max_repetition``` and ```--nb_repetition```. ```max_repetition``` is the maximum number of times that an action can be repeated. ```nb_repetition``` is the number of choices that the agent has, equally distributed from min to max. If put to (1, 0), there is no repetition, you are not using FiGAR. If put to (11, 10), the possible repetitions are [0,1,2,3,4,5,6,7,8,9,10]. If put to (11, 3), the possible repetitions are [0,2,5,10]
+**To use FiGAR**, the options are ```--max_repetition``` and ```--nb_choices```. ```max_repetition``` is the maximum number of times that an action can be repeated. ```nb_choices``` is the number of choices that the agent has, equally distributed from min to max. If put to (0, 1), there is no repetition, you are not using FiGAR (i.e. the possible repetitions are [0]). If put to (10, 11), the possible repetitions are [0,1,2,3,4,5,6,7,8,9,10]. If put to (10, 6), the possible repetitions are [0,2,4,6,8,10]
 
 ## BatchTrain script
 
@@ -125,7 +125,7 @@ Exemple of JSON file for Pong, with LSTM network and FiGAR 10 repetitions :
   "keep_percentage": 0.9,
   "rgb": false,
   "max_repetition": 11,
-  "nb_repetition": 10,
+  "nb_choices": 10,
   "checkpoint_interval": 1000000,
   "activation": "relu",
   "alpha_leaky_relu": 0.1
