@@ -17,30 +17,29 @@ def create_cmd(data, path):
                 " --max_global_steps "+str(data["max_global_steps"])+
                 " --max_local_steps "+str(data["max_local_steps"])+
                 " --arch "+str(data["arch"])+
-                " --single_life_episodes "+str(data["single_life_episodes"])+
                 " -ec "+str(data["emulator_counts"])+
                 " -ew "+str(data["emulator_workers"])+
-                " -rs "+str(data["random_start"])+
-
-                " --egreedy "+str(data["egreedy"])+
                 " --epsilon "+str(data["epsilon"])+
                 " --softmax_temp "+str(data["softmax_temp"])+
-                " --annealed "+str(data["annealed"])+
                 " --annealed_steps "+str(data["annealed_steps"])+
                 " --keep_percentage "+str(data["keep_percentage"])+
-                " --rgb "+str(data["rgb"])+
                 " --max_repetition "+str(data["max_repetition"])+
                 " --nb_repetition "+str(data["nb_repetition"])+
                 " --checkpoint_interval "+str(data["checkpoint_interval"])+
                 " --activation "+str(data["activation"])+
                 " --alpha_leaky_relu "+str(data["alpha_leaky_relu"]))
+    if data["single_life_episodes"] : cmd += " --single_life_episodes"
+    if data["random_start"] : cmd += " --random_start"
+    if data["egreedy"] : cmd += " --egreedy"
+    if data["annealed"] : cmd += " --annealed"
+    if data["rgb"] : cmd += " --rgb"
     return cmd
 
 def create_chpt_cmd(args, path):
     cmd = ("nohup python3 scripts/checkpoints.py "+
                 " -df "+path+"/"
                 " -t "+str(args.time)+
-                " &> nohupLogs/saveCheckpoints"+str(args.gpu)+".out &")
+                " &> nohupLogs/saveCheckpoints.out &")
     return cmd
 
 
@@ -66,7 +65,7 @@ def get_arg_parser():
                         help='Folder where to find the JSON files with the training options', dest='folder')
     parser.add_argument('-t', default=1800, type=int,
                         help='Period of time btw checkpoints save', dest='time')
-    parser.add_argument('-d', default='logs', type=str,
+    parser.add_argument('-d', default='logs/', type=str,
                         help='Folder where to save the training information', dest='destination')
     return parser
 

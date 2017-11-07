@@ -154,7 +154,7 @@ class PAACLearner(ActorLearner):
                     actual_reward = self.rescale_reward(actual_reward)
                     rewards[t, e] = actual_reward
 
-                    emulator_steps[e] += self.tab_rep(np.argmax(new_repetitions[e])) + 1
+                    emulator_steps[e] += self.tab_rep[np.argmax(new_repetitions[e])] + 1
                     self.global_step += 1
 
                     #rempli le tableau pour l'histogramme des actions - repetitions
