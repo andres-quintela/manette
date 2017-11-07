@@ -1,5 +1,5 @@
 import os
-from train import get_network_and_environment_creator, bool_arg
+from train import get_network_and_environment_creator
 import logger_utils
 import argparse
 import numpy as np
