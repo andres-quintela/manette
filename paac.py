@@ -116,6 +116,7 @@ class PAACLearner(ActorLearner):
         start_time = time.time()
 
         while self.global_step < self.max_global_steps:
+            print('step : '+str(self.global_step))
 
             loop_start_time = time.time()
 
@@ -177,8 +178,7 @@ class PAACLearner(ActorLearner):
 
 
             nest_state_value = self.session.run(
-                self.network.output_layer_v,
-                feed_dict={self.network.input_ph: shared_states})
+                self.network.output_layer_v, feed_dict={self.network.input_ph: shared_states})
 
             estimated_return = np.copy(nest_state_value)
 

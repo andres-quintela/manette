@@ -1,6 +1,7 @@
 import numpy as np
 from ale_python_interface import ALEInterface
 from scipy.misc import imresize
+import cv2
 import random
 from environment import BaseEnvironment, FramePool, ObservationPool
 import logging
@@ -33,6 +34,8 @@ class AtariEmulator(BaseEnvironment):
         self.single_life_episodes = args.single_life_episodes
         self.call_on_new_frame = args.visualize
         self.global_step = 0
+
+        self.compteur = 0
 
         # Processed historcal frames that will be fed in to the network
         # (i.e., four 84x84 images)
@@ -108,6 +111,10 @@ class AtariEmulator(BaseEnvironment):
 
     def next(self, action):
         """ Get the next state, reward, and game over signal """
+        #cv2.imwrite('dataset/x/'+str(self.compteur)+'.jpg', self.frame_pool.frame_pool[0])
+        #with open('dataset/y.txt', 'a') as f :
+            #f.write('x/'+str(self.compteur+1)+'.jpg : '+str(action)+'\n')
+        #self.compteur+=1
         reward = self.__action_repeat(action)
         self.observation_pool.new_observation(self.frame_pool.get_processed_frame())
         terminal = self.__is_terminal()

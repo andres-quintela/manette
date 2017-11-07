@@ -1,4 +1,5 @@
 import tensorflow as tf
+from tensorflow.contrib import rnn
 import logging
 import numpy as np
 
@@ -104,6 +105,22 @@ class Operations():
         shape = [1,2,2,1]
         return tf.nn.max_pool(_input, shape, strides=shape, padding = padding, name=name)
 
+    def rnn(self, name, _input, n_input, n_steps, n_hidden):
+        # input shape: (batch_size, n_steps, n_input)
+        # Required shape: 'n_steps' tensors list of shape (batch_size, n_input)
+        _input = tf.transpose(_input, [1, 0, 2])
+        _input = tf.reshape(_input, [-1, n_input])
+        _input = tf.split(_input, n_steps, axis=0)
+
+        lstm_cell = rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
+        outputs, states = rnn.static_rnn(lstm_cell, _input, dtype=tf.float32)
+
+        w = tf.Variable(tf.random_normal([n_hidden, n_hidden]))
+        b = tf.Variable(tf.random_normal([n_hidden]))
+
+        # Linear activation, using rnn inner loop last output
+        return w, b, tf.nn.bias_add(tf.matmul(outputs[-1], w), b)
+
 
 class Network(object):
 
@@ -203,6 +220,43 @@ class PpwwyyxxNetwork(Network):
 
                 self.output = fc5
 
+class LSTMNetwork(Network):
+    def __init__(self, conf):
+        super(LSTMNetwork, self).__init__(conf)
+
+        with tf.device(self.device):
+            with tf.name_scope(self.name):
+
+                n_input = 6400
+                n_steps = 4
+                n_hidden = 64
+                n_outputs = 512
+
+                if self.rgb : #input : (?, 84, 84, RRRRGGGGBBBB)
+                    l_rgb = tf.unstack(self.input, axis=3) # [R,R,R,R,G,G,G,G,B,B,B,B]
+                    permutation_list = [[l_rgb[0+i], l_rgb[n_steps+i], l_rgb[2*n_steps+i]] for i in range(n_steps)] # [R,G,B,R,G,B,R,G,B,R,G,B]
+                    l_input = [tf.stack(l, axis=3) for l in permutation_list]
+                    _input = tf.stack(l_input, axis=1) # (?, 4, 84, 84, 3)
+                    _input = tf.reshape(_input, (-1, 84, 84, 3))
+                else : #input : (?, 84, 84, 4)
+                    _input = tf.transpose(self.input, [0, 3, 1, 2]) # (?, 4, 84, 84)
+                    _input = tf.reshape(_input, (-1, 84, 84))
+                    _input = tf.expand_dims(_input, -1) # (?, 84, 84, 1)
+
+                _, _, conv1 = self.op.conv2d('conv1', _input, 32, 5, self.depth, 1, padding = 'SAME', activation = self.activation)
+                mp_conv1 = self.op.max_pooling('mp_conv1', conv1)
+                _, _, conv2 = self.op.conv2d('conv2', mp_conv1, 32, 5, 32, 1, padding = 'SAME', activation = self.activation)
+                mp_conv2 = self.op.max_pooling('mp_conv2', conv2)
+                _, _, conv3 = self.op.conv2d('conv3', mp_conv2, 64, 4, 32, 1, padding = 'SAME', activation = self.activation)
+                mp_conv3 = self.op.max_pooling('mp_conv3', conv3)
+                _, _, conv4 = self.op.conv2d('conv4', mp_conv3, 64, 3, 64, 1, padding = 'SAME', activation = self.activation)
+
+                out_conv = self.op.flatten(conv4)
+                x_lstm = tf.reshape(out_conv, [-1, n_steps, n_input])
+                _, _, out_lstm = self.op.rnn('lstm', x_lstm, n_input, n_steps, n_hidden)
+                _, _, fc6 = self.op.fc('fc6', out_lstm, n_outputs, activation=self.activation)
+
+                self.output = fc6
 
 class NatureNetwork(Network):
 

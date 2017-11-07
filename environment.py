@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.misc import imsave
 
 class BaseEnvironment(object):
     def get_initial_state(self):
@@ -70,9 +71,9 @@ class ObservationPool(object):
         self.current_observation_index = (self.current_observation_index + 1) % self.pool_size
 
     def get_pooled_observations(self):
-        test = np.copy(self.observation_pool[:, :, :, self.permutation[self.current_observation_index]])
-        res = np.reshape(test, (84, 84, self.depth * 4))
-        return res
+        pooled_obs = np.copy(self.observation_pool[:, :, :, self.permutation[self.current_observation_index]])
+        reshaped_obs = np.reshape(pooled_obs, (84, 84, self.depth * 4))
+        return reshaped_obs
 
     def __shift(self, seq, n):
         n = n % len(seq)

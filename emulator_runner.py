@@ -1,7 +1,6 @@
 from multiprocessing import Process
 from exploration_policy import Action
 
-
 class EmulatorRunner(Process):
 
     def __init__(self, tab_rep, i, emulators, variables, queue, barrier):

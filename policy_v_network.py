@@ -47,7 +47,7 @@ class PolicyVNetwork(Network):
                 self.output_layer_v = tf.reshape(self.output_layer_v, [-1])
 
                 # Advantage critic
-                self.critic_loss = tf.subtract(self.critic_target_ph, self.output_layer_v) ## a changer
+                self.critic_loss = tf.subtract(self.critic_target_ph, self.output_layer_v)
 
                 self.log_output_selected_action = tf.reduce_sum(
                     tf.multiply(self.log_output_layer_pi, self.selected_action_ph),
@@ -87,6 +87,9 @@ class BayesianPolicyVNetwork(PolicyVNetwork, BayesianNetwork):
     pass
 
 class PpwwyyxxPolicyVNetwork(PolicyVNetwork, PpwwyyxxNetwork):
+    pass
+
+class LSTMPolicyNetwork(PolicyVNetwork, LSTMNetwork):
     pass
 
 class NaturePolicyVNetwork(PolicyVNetwork, NatureNetwork):

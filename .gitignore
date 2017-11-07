@@ -10,3 +10,6 @@ nohupLogs/
 *.swp
 *.out
 *.json
+*.png
+*.txt
+*.jpg
