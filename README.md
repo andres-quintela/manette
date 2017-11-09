@@ -35,7 +35,7 @@ When using a more demanding neural network, the training can slow down to 1000 s
 
 ## Visualizing training
 1. Open a new terminal
-2. Run ```tensorboard --logdir=<absolute-path>/paac/logs/test_pong```.
+2. Run ```tensorboard --logdir=<absolute-path>/manette/logs/test_pong```.
 3. In your browser navigate to localhost:6006/
 
 Many graphs are already available (rewards per episode, length of episode, steps per second, loss, ...) and you can easily add yours.

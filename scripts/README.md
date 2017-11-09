@@ -9,6 +9,7 @@
 
 If you are tired of typing multiple options in the command line to use the ```train.py``` file, you can use the ```batchTrain.py``` script.
 Simply write as many JSON files (like the one below) as you want, change all the options you wish and put them all in the same folder, say ```toTrain/experiment1/```.
+If you want, you can have multiple folders with JSON files in  ```toTrain/```, they will also be run sequentially.
 
 Run : ```python3 script/batchTrain -f toTrain/ -d logs/ ```.
 
@@ -61,21 +62,21 @@ In the agent's folder, a new ```checkpoints_saved``` folder will be created, con
 ## Resume training
 
 The ```resumeTraining.py``` script allows you to resume the training from the last checkpoint.
-Run : ```python3 script/resumeTraining.py -df logs/test_pong/``` to resume the ```test_pong``` agent.
+Run : ```python3 script/resumeTraining.py -df logs/DATE-experiment1/``` to resume the ```test_pong``` agent.
 Before running the script, you can change the options in the ```args.json``` file, if you want to change the maximum of global steps or the learning rate or something in the exploration policy.
 
 The advantage of this script is that it launches again ```checkpoints.py``` automatically : it's useful if you don't want to loose a checkpoint. Also, you don't have to type again all your training options in the command line.
 
 ## Test All
 The ```testAll.py``` script allows you to test multiple agents.
-Run ```python3 script/testAll.py -f logs/ -tc 50``` to test all the agents stored in the ```logs/``` folder, 50 times each.
+Run ```python3 script/testAll.py -f logs/DATE-experiment1/ -tc 50``` to test all the agents stored in the ```logs/DATE-experiment1/``` folder, 50 times each.
 
-**Advice** : use ```nohup python3 script/testAll.py -f logs/ -tc 50 &> test.out``` so that the tests results are written in the ```test.out``` file.
+**Advice** : use ```nohup python3 script/testAll.py -f logs/DATE-experiment1/ -tc 50 &> test.out``` so that the tests results are written in the ```test.out``` file.
 
 ## Generate gifs
 The ```genGifs.py``` script allows you to generate gifs for multiple agents and to use the checkpoint you want.
 
-Run ```python3 script/genGifs.py -f logs/``` to generate gifs for all the agents stored in the ```logs/``` folder.
+Run ```python3 script/genGifs.py -f logs/DATE-experiment1``` to generate gifs for all the agents stored in the ```logs/``` folder.
 The gifs will be stored in a ```gifs``` folder in the ```logs/``` folder.
 
 Options :
@@ -88,6 +89,6 @@ Options :
 ## Create Training Video
 The ```createTrainingVideo.py``` script creates a video with gifs from all the checkpoints of the training, so that you can see your agent learning to play.
 
-Run ```python3 script/createTrainingVideo.py -f logs/test_pong``` to generate the training video for the agent in the folder ```logs/test_pong```.
+Run ```python3 script/createTrainingVideo.py -f logs/DATE-experiment1/pong/``` to generate the training video for the agent in the folder ```logs/DATE-experiment1/pong/```.
 
-**Advice** : The script will use ALL the checkpoints in the ```logs/test_pong/checkpoints_saved``` folder. Some checkpoints may have been saved twice. If you don't want to see the agent play twice with the same checkpoint, you should remove the checkpoint's copies from the folder.
+**Advice** : The script will use ALL the checkpoints in the ```logs/DATE-experiment1/pong/checkpoints_saved``` folder. Some checkpoints may have been saved twice. If you don't want to see the agent play twice with the same checkpoint, you should remove the checkpoint's copies from the folder.
