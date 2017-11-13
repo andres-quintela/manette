@@ -145,7 +145,7 @@ class TetrisApp(object):
 
 
 	def new_stone(self):
-		print('NEW STONE')
+		#print('NEW STONE')
 		self.stone = self.next_stone[:]
 		self.next_stone = tetris_shapes[rand(len(tetris_shapes))]
 		self.stone_x = int(cols / 2 - len(self.stone[0])/2)
@@ -163,7 +163,7 @@ class TetrisApp(object):
 		self.score = 0
 		self.lines = 0
 		pygame.time.set_timer(pygame.USEREVENT+1, 1000)
-		self.speed = 4 #nb de frame attendu pour faire descendre un block
+		self.speed = 5 #nb de frame attendu pour faire descendre un block
 		self.speed_counter = 0
 
 		self.gameover = False
@@ -240,7 +240,7 @@ class TetrisApp(object):
 
 	def drop(self, manual):
 		if not self.gameover and not self.paused:
-			self.score += 1 if manual else 0
+			#self.score += 1 if manual else 0
 			self.stone_y += 1
 			if check_collision(self.board,
 			                   self.stone,
@@ -289,7 +289,7 @@ class TetrisApp(object):
 			self.gameover = False
 
 	def getScreen(self, name, rgb=True):
-		pygame.image.save(self.screen, name)
+		#pygame.image.save(self.screen, name)
 		if rgb :
 			img = pygame.surfarray.array3d(self.screen)
 			img = np.transpose(img, (1, 0, 2))
@@ -299,6 +299,7 @@ class TetrisApp(object):
 		return img
 
 	def act(self, action):
+		#print('action : '+str(action))
 		score_before = self.score
 		actions_list = [self.noop, lambda:self.move(-1), lambda:self.move(+1),
 		                lambda:self.drop(True), self.rotate_stone]
@@ -331,6 +332,7 @@ class TetrisApp(object):
 		if self.gameover:
 			self.center_msg("""Game Over!\nYour score: %d
 Press space to continue""" % self.score)
+		#print('score : '+str(self.score))
 		return (score_after - score_before)
 
 

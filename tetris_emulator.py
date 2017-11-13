@@ -9,9 +9,9 @@ import logging
 IMG_SIZE_X = 84
 IMG_SIZE_Y = 84
 NR_IMAGES = 4
-ACTION_REPEAT = 4
+ACTION_REPEAT = 1
 MAX_START_WAIT = 30
-FRAMES_IN_POOL = 2
+FRAMES_IN_POOL = 1
 
 
 class TetrisEmulator(BaseEnvironment):
