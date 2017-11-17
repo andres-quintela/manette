@@ -18,7 +18,6 @@ class ActorLearner(Process):
         self.network_checkpoint_folder = os.path.join(self.debugging_folder, 'checkpoints/')
         self.optimizer_checkpoint_folder = os.path.join(self.debugging_folder, 'optimizer_checkpoints/')
         self.last_saving_step = 0
-        self.summary_writer = tf.summary.FileWriter(os.path.join(self.debugging_folder, 'tf'))
         self.device = args.device
 
         # Reinforcement learning settings
@@ -78,6 +77,7 @@ class ActorLearner(Process):
             config.gpu_options.allow_growth = True
 
         self.session = tf.Session(config=config)
+        self.summary_writer = tf.summary.FileWriter(os.path.join(self.debugging_folder, 'tf'), self.session.graph)
 
         self.network_saver = tf.train.Saver()
 
@@ -93,6 +93,8 @@ class ActorLearner(Process):
         tf.summary.scalar('loss/actor_objective_mean', self.network.actor_objective_mean)
         tf.summary.scalar('loss/actor_advantage_mean', self.network.actor_advantage_mean)
         tf.summary.scalar('loss/log_repetition_mean', self.network.log_repetition_mean)
+        for i in range(len(grads_and_vars)):
+            tf.summary.histogram('grads/grad'+str(i), grads_and_vars[i][0])
 
 
     def save_vars(self, force=False):

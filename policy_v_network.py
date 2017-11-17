@@ -14,7 +14,7 @@ class PolicyVNetwork(Network):
         self.total_repetitions = conf['nb_choices']
 
         with tf.device(conf['device']):
-            with tf.name_scope(self.name):
+            with tf.name_scope('Training'):
 
                 self.critic_target_ph = tf.placeholder("float32", [None], name='target')
                 self.adv_actor_ph = tf.placeholder("float", [None], name='advantage')
