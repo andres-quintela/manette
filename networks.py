@@ -251,6 +251,7 @@ class LSTMNetwork(Network):
                 mp_conv3 = self.op.max_pooling('mp_conv3', conv3)
                 _, _, conv4 = self.op.conv2d('conv4', mp_conv3, 64, 3, 64, 1, padding = 'SAME', activation = self.activation)
 
+                self.first_conv, self.last_conv = conv1, conv4
                 out_conv = self.op.flatten(conv4)
                 x_lstm = tf.reshape(out_conv, [-1, n_steps, n_input])
                 _, _, out_lstm = self.op.rnn('lstm', x_lstm, n_input, n_steps, n_hidden)
