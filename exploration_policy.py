@@ -67,12 +67,7 @@ class ExplorationPolicy:
         else:
             return 0.0
 
-    def choose_next_actions(self, network, num_actions, states, session):
-        network_output_v, network_output_pi, network_output_rep = session.run(
-            [network.output_layer_v,
-             network.output_layer_pi, network.output_layer_rep],
-            feed_dict={network.input_ph: states})
-
+    def choose_next_actions(self, network_output_pi, network_output_rep, num_actions):
         if self.test :
             action_indices = self.argmax_choose(network_output_pi)
             repetition_indices = self.argmax_choose(network_output_rep)
@@ -89,7 +84,7 @@ class ExplorationPolicy:
         self.global_step += len(network_output_pi)
         if self.annealed : self.epsilon = get_epsilon()
 
-        return new_actions, new_repetitions, network_output_v, network_output_pi
+        return new_actions, new_repetitions
 
     def argmax_choose(self, probs):
         """Choose the best actions"""
