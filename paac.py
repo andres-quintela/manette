@@ -4,6 +4,7 @@ from multiprocessing.sharedctypes import RawArray
 from ctypes import c_uint, c_float
 from actor_learner import *
 import logging
+from utils import plot_conv_output
 from logger_utils import variable_summaries
 import numpy as np
 
@@ -176,10 +177,20 @@ class PAACLearner(ActorLearner):
                         emulator_steps[e] = 0
                         actions_sum[e] = np.zeros(self.num_actions)
 
+            #plot output of conv layers
+            if counter % (2048 / self.emulator_counts) == 0:
+                conv1, conv2 = self.session.run(
+                    [self.network.first_conv,self.network.last_conv],
+                    feed_dict= {self.network.input_ph: shared_states, self.network.input_ph: shared_states})
+                img1 = tf.expand_dims(tf.transpose(conv1[0], [2,0,1]), -1)
+                img2 = tf.expand_dims(tf.transpose(conv2[0], [2,0,1]), -1)
+                sum1 = tf.summary.image('first_conv', img1, 10)
+                sum2 = tf.summary.image('last_conv', img2, 10)
+                plot_conv_output(conv1, 'first_Conv_output', 0)
+                plot_conv_output(conv2, 'last_Conv_output', 0)
 
             nest_state_value = self.session.run(
                 self.network.output_layer_v, feed_dict={self.network.input_ph: shared_states})
-
             estimated_return = np.copy(nest_state_value)
 
             for t in reversed(range(max_local_steps)):

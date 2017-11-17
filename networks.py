@@ -17,18 +17,19 @@ class Operations():
         return tf.reshape(_input, [-1,dim], name='_flattened')
 
     def conv2d(self, name, _input, filters, size, channels, stride, padding = 'VALID', init = "torch", activation = "relu"):
-        w = self.conv_weight_variable([size,size, channels,filters],
-                                 name + '_weights', init = init)
-        b = self.conv_bias_variable([filters], size, size, channels,
-                               name + '_biases', init = init)
-        conv = tf.nn.conv2d(_input, w, strides=[1, stride, stride, 1],
-                            padding=padding, name=name + '_convs')
-        if activation == "relu" :
-            out = tf.nn.relu(tf.add(conv, b), name='' + name + '_activations')
-        elif activation == "leaky_relu" :
-            x = tf.add(conv, b)
-            out = tf.maximum(x, self.alpha_leaky_relu * x, name='' + name + '_activations')
-        return w, b, out
+        with tf.name_scope(name):
+            w = self.conv_weight_variable([size,size, channels,filters],
+                                     name + '_weights', init = init)
+            b = self.conv_bias_variable([filters], size, size, channels,
+                                   name + '_biases', init = init)
+            conv = tf.nn.conv2d(_input, w, strides=[1, stride, stride, 1],
+                                padding=padding, name=name + '_convs')
+            if activation == "relu" :
+                out = tf.nn.relu(tf.add(conv, b), name='' + name + '_activations')
+            elif activation == "leaky_relu" :
+                x = tf.add(conv, b)
+                out = tf.maximum(x, self.alpha_leaky_relu * x, name='' + name + '_activations')
+            return w, b, out
 
     def conv_weight_variable(self, shape, name, init = "torch"):
         if init == "glorot_uniform":
@@ -54,18 +55,19 @@ class Operations():
         return tf.Variable(initial, name=name, dtype='float32')
 
     def fc(self, name, _input, output_dim, activation = "relu", init = "torch"):
-        input_dim = _input.get_shape().as_list()[1]
-        w = self.fc_weight_variable([input_dim, output_dim],
-                               name + '_weights', init = init)
-        b = self.fc_bias_variable([output_dim], input_dim,
-                             '' + name + '_biases', init = init)
-        out = tf.add(tf.matmul(_input, w), b, name= name + '_out')
-        if activation == "relu":
-            out = tf.nn.relu(out, name='' + name + '_relu')
-        elif activation == "leaky_relu" :
-            out = tf.maximum(out, self.alpha_leaky_relu * out, name='' + name + '_leakyrelu')
+        with tf.name_scope(name):
+            input_dim = _input.get_shape().as_list()[1]
+            w = self.fc_weight_variable([input_dim, output_dim],
+                                   name + '_weights', init = init)
+            b = self.fc_bias_variable([output_dim], input_dim,
+                                 '' + name + '_biases', init = init)
+            out = tf.add(tf.matmul(_input, w), b, name= name + '_out')
+            if activation == "relu":
+                out = tf.nn.relu(out, name='' + name + '_relu')
+            elif activation == "leaky_relu" :
+                out = tf.maximum(out, self.alpha_leaky_relu * out, name='' + name + '_leakyrelu')
 
-        return w, b, out
+            return w, b, out
 
     def fc_weight_variable(self, shape, name, init="torch"):
         if init == "glorot_uniform":
@@ -87,12 +89,13 @@ class Operations():
         return tf.Variable(initial, name=name, dtype='float32')
 
     def softmax(self, name, _input, output_dim, temp):
-        softmax_temp = tf.constant(temp, dtype=tf.float32)
-        input_dim = _input.get_shape().as_list()[1]
-        w = self.fc_weight_variable([input_dim, output_dim], name + '_weights')
-        b = self.fc_bias_variable([output_dim], input_dim, name + '_biases')
-        out = tf.nn.softmax(tf.div(tf.add(tf.matmul(_input, w), b), softmax_temp), name= name + '_policy')
-        return w, b, out
+        with tf.name_scope(name):
+            softmax_temp = tf.constant(temp, dtype=tf.float32)
+            input_dim = _input.get_shape().as_list()[1]
+            w = self.fc_weight_variable([input_dim, output_dim], name + '_weights')
+            b = self.fc_bias_variable([output_dim], input_dim, name + '_biases')
+            out = tf.nn.softmax(tf.div(tf.add(tf.matmul(_input, w), b), softmax_temp), name= name + '_policy')
+            return w, b, out
 
     def log_softmax(self, name, _input, output_dim):
         input_dim = _input.get_shape().as_list()[1]
@@ -106,20 +109,21 @@ class Operations():
         return tf.nn.max_pool(_input, shape, strides=shape, padding = padding, name=name)
 
     def rnn(self, name, _input, n_input, n_steps, n_hidden):
-        # input shape: (batch_size, n_steps, n_input)
-        # Required shape: 'n_steps' tensors list of shape (batch_size, n_input)
-        _input = tf.transpose(_input, [1, 0, 2])
-        _input = tf.reshape(_input, [-1, n_input])
-        _input = tf.split(_input, n_steps, axis=0)
+        with tf.name_scope(name):
+            # input shape: (batch_size, n_steps, n_input)
+            # Required shape: 'n_steps' tensors list of shape (batch_size, n_input)
+            _input = tf.transpose(_input, [1, 0, 2])
+            _input = tf.reshape(_input, [-1, n_input])
+            _input = tf.split(_input, n_steps, axis=0)
 
-        lstm_cell = rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
-        outputs, states = rnn.static_rnn(lstm_cell, _input, dtype=tf.float32)
+            lstm_cell = rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
+            outputs, states = rnn.static_rnn(lstm_cell, _input, dtype=tf.float32)
 
-        w = tf.Variable(tf.random_normal([n_hidden, n_hidden]))
-        b = tf.Variable(tf.random_normal([n_hidden]))
+            w = tf.Variable(tf.random_normal([n_hidden, n_hidden]))
+            b = tf.Variable(tf.random_normal([n_hidden]))
 
-        # Linear activation, using rnn inner loop last output
-        return w, b, tf.nn.bias_add(tf.matmul(outputs[-1], w), b)
+            # Linear activation, using rnn inner loop last output
+            return w, b, tf.nn.bias_add(tf.matmul(outputs[-1], w), b)
 
 
 class Network(object):
@@ -140,7 +144,7 @@ class Network(object):
         self.total_repetitions = conf['nb_choices']
 
         with tf.device(self.device):
-            with tf.name_scope(self.name):
+            with tf.name_scope('Input'):
                 self.loss_scaling = 5.0
 
                 self.input_ph = tf.placeholder(tf.uint8, [None, 84, 84, self.depth* 4], name='input')
@@ -175,7 +179,7 @@ class NIPSNetwork(Network):
         super(NIPSNetwork, self).__init__(conf)
 
         with tf.device(self.device):
-            with tf.name_scope(self.name):
+            with tf.name_scope('Network'):
                 w_conv1, b_conv1, conv1 = self.op.conv2d('conv1', self.input, 16, 8, self.depth*4, 4, activation = self.activation)
 
                 w_conv2, b_conv2, conv2 = self.op.conv2d('conv2', conv1, 32, 4, 16, 2, activation = self.activation)
@@ -194,7 +198,7 @@ class BayesianNetwork(NIPSNetwork):
         super(BayesianNetwork, self).__init__(conf)
 
         with tf.device(self.device):
-            with tf.name_scope(self.name):
+            with tf.name_scope('Network'):
                 dropout = tf.nn.dropout(self.output, conf["keep_percentage"])
 
                 w_fc4, b_fc4, fc4 = fc('fc4', dropout, 256, activation=self.activation)
@@ -206,7 +210,7 @@ class PpwwyyxxNetwork(Network):
         super(PpwwyyxxNetwork, self).__init__(conf)
 
         with tf.device(self.device):
-            with tf.name_scope(self.name):
+            with tf.name_scope('Network'):
 
                 _, _, conv1 = self.op.conv2d('conv1', self.input, 32, 5, self.depth * 4, 1, padding = 'SAME', activation = self.activation)
                 mp_conv1 = self.op.max_pooling('mp_conv1', conv1)
@@ -225,7 +229,7 @@ class LSTMNetwork(Network):
         super(LSTMNetwork, self).__init__(conf)
 
         with tf.device(self.device):
-            with tf.name_scope(self.name):
+            with tf.name_scope('Network'):
 
                 n_input = 6400
                 n_steps = 4
@@ -251,6 +255,7 @@ class LSTMNetwork(Network):
                 mp_conv3 = self.op.max_pooling('mp_conv3', conv3)
                 _, _, conv4 = self.op.conv2d('conv4', mp_conv3, 64, 3, 64, 1, padding = 'SAME', activation = self.activation)
 
+                self.first_conv, self.last_conv = conv1, conv4
                 out_conv = self.op.flatten(conv4)
                 x_lstm = tf.reshape(out_conv, [-1, n_steps, n_input])
                 _, _, out_lstm = self.op.rnn('lstm', x_lstm, n_input, n_steps, n_hidden)
@@ -264,7 +269,7 @@ class NatureNetwork(Network):
         super(NatureNetwork, self).__init__(conf)
 
         with tf.device(self.device):
-            with tf.name_scope(self.name):
+            with tf.name_scope('Network'):
                 _, _, conv1 = self.op.conv2d('conv1', self.input, 32, 8, self.depth*4, 4, activation = self.activation)
 
                 _, _, conv2 = self.op.conv2d('conv2', conv1, 64, 4, 32, 2, activation = self.activation)
