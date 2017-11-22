@@ -1,5 +1,4 @@
 import tensorflow as tf
-from tensorflow.contrib import rnn
 import logging
 import numpy as np
 
@@ -98,32 +97,16 @@ class Operations():
             return w, b, out
 
     def log_softmax(self, name, _input, output_dim):
-        input_dim = _input.get_shape().as_list()[1]
-        w = self.fc_weight_variable([input_dim, output_dim], name + '_weights')
-        b = self.fc_bias_variable([output_dim], input_dim, name + '_biases')
-        out = tf.nn.log_softmax(tf.add(tf.matmul(_input, w), b), name= name + '_policy')
-        return w, b, out
+        with tf.name_scope(name):
+            input_dim = _input.get_shape().as_list()[1]
+            w = self.fc_weight_variable([input_dim, output_dim], name + '_weights')
+            b = self.fc_bias_variable([output_dim], input_dim, name + '_biases')
+            out = tf.nn.log_softmax(tf.add(tf.matmul(_input, w), b), name= name + '_policy')
+            return w, b, out
 
     def max_pooling(self, name, _input, stride=None, padding='VALID'):
         shape = [1,2,2,1]
         return tf.nn.max_pool(_input, shape, strides=shape, padding = padding, name=name)
-
-    def rnn(self, name, _input, n_input, n_steps, n_hidden):
-        with tf.name_scope(name):
-            # input shape: (batch_size, n_steps, n_input)
-            # Required shape: 'n_steps' tensors list of shape (batch_size, n_input)
-            _input = tf.transpose(_input, [1, 0, 2])
-            _input = tf.reshape(_input, [-1, n_input])
-            _input = tf.split(_input, n_steps, axis=0)
-
-            lstm_cell = rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
-            outputs, states = rnn.static_rnn(lstm_cell, _input, dtype=tf.float32)
-
-            w = tf.Variable(tf.random_normal([n_hidden, n_hidden]))
-            b = tf.Variable(tf.random_normal([n_hidden]))
-
-            # Linear activation, using rnn inner loop last output
-            return w, b, tf.nn.bias_add(tf.matmul(outputs[-1], w), b)
 
 
 class Network(object):
@@ -186,6 +169,8 @@ class NIPSNetwork(Network):
 
                 w_fc3, b_fc3, fc3 = self.op.fc('fc3', self.op.flatten(conv2), 256, activation=self.activation)
 
+                self.convs = [conv1, conv2]
+
                 self.output = fc3
 
 class BayesianNetwork(NIPSNetwork):
@@ -196,7 +181,7 @@ class BayesianNetwork(NIPSNetwork):
             with tf.name_scope('Network'):
                 dropout = tf.nn.dropout(self.output, conf["keep_percentage"])
 
-                w_fc4, b_fc4, fc4 = fc('fc4', dropout, 256, activation=self.activation)
+                w_fc4, b_fc4, fc4 = self.op.fc('fc4', dropout, 256, activation=self.activation)
 
                 self.output = fc4
 
@@ -214,7 +199,9 @@ class PpwwyyxxNetwork(Network):
                 _, _, conv3 = self.op.conv2d('conv3', mp_conv2, 64, 4, 32, 1, padding = 'SAME', activation = self.activation)
                 mp_conv3 = self.op.max_pooling('mp_conv3', conv3)
                 _, _, conv4 = self.op.conv2d('conv4', mp_conv3, 64, 3, 64, 1, padding = 'SAME', activation = self.activation)
-                self.first_conv, self.last_conv = conv1, conv4
+
+                self.convs = [conv1, conv2, conv3, conv4]
+
                 _, _, fc5 = self.op.fc('fc5', self.op.flatten(conv4), 512, activation=self.activation)
 
                 self.output = fc5
@@ -231,6 +218,8 @@ class NatureNetwork(Network):
                 _, _, conv2 = self.op.conv2d('conv2', conv1, 64, 4, 32, 2, activation = self.activation)
 
                 _, _, conv3 = self.op.conv2d('conv3', conv2, 64, 3, 64, 1, activation = self.activation)
+
+                self.convs = [conv1, conv2, conv3]
 
                 _, _, fc4 = self.op.fc('fc4', self.op.flatten(conv3), 512, activation=self.activation)
 

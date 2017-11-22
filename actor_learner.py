@@ -32,7 +32,6 @@ class ActorLearner(Process):
         self.gamma = args.gamma
         self.initial_lr = args.initial_lr
         self.lr_annealing_steps = args.lr_annealing_steps
-        self.learning_rate = tf.placeholder(tf.float32, shape=[])
 
         self.emulator_counts = args.emulator_counts
         self.emulators = np.asarray([environment_creator.create_environment(i)
@@ -40,37 +39,38 @@ class ActorLearner(Process):
 
         self.network = network_creator()
 
-        # Optimizer
-        optimizer_variable_names = 'OptimizerVariables'
-        self.optimizer = tf.train.RMSPropOptimizer(self.learning_rate, decay=args.alpha, epsilon=args.e,
-                                                   name=optimizer_variable_names)
-        grads_and_vars = self.optimizer.compute_gradients(self.network.loss)
-        print('grads_and_vars : '+str(grads_and_vars))
-        self.flat_raw_gradients = tf.concat([tf.reshape(g, [-1]) for g, v in grads_and_vars], axis=0)
+        with tf.name_scope('Optimizer'):
+            self.learning_rate = tf.placeholder(tf.float32, shape=[], name='lr')
+            # Optimizer
+            optimizer_variable_names = 'OptimizerVariables'
+            self.optimizer = tf.train.RMSPropOptimizer(self.learning_rate, decay=args.alpha, epsilon=args.e,
+                                                       name=optimizer_variable_names)
+            grads_and_vars = self.optimizer.compute_gradients(self.network.loss)
+            self.flat_raw_gradients = tf.concat([tf.reshape(g, [-1]) for g, v in grads_and_vars], axis=0)
 
-        # This is not really an operation, but a list of gradient Tensors.
-        # When calling run() on it, the value of those Tensors
-        # (i.e., of the gradients) will be calculated
-        if args.clip_norm_type == 'ignore':
-            # Unclipped gradients
-            global_norm = tf.global_norm([g for g, v in grads_and_vars], name='global_norm')
-        elif args.clip_norm_type == 'global':
-            # Clip network grads by network norm
-            gradients_n_norm = tf.clip_by_global_norm(
-                [g for g, v in grads_and_vars], args.clip_norm)
-            global_norm = tf.identity(gradients_n_norm[1], name='global_norm')
-            grads_and_vars = list(zip(gradients_n_norm[0], [v for g, v in grads_and_vars]))
-        elif args.clip_norm_type == 'local':
-            # Clip layer grads by layer norm
-            gradients = [tf.clip_by_norm(
-                g, args.clip_norm) for g in grads_and_vars]
-            grads_and_vars = list(zip(gradients, [v for g, v in grads_and_vars]))
-            global_norm = tf.global_norm([g for g, v in grads_and_vars], name='global_norm')
-        else:
-            raise Exception('Norm type not recognized')
-        self.flat_clipped_gradients = tf.concat([tf.reshape(g, [-1]) for g, v in grads_and_vars], axis=0)
+            # This is not really an operation, but a list of gradient Tensors.
+            # When calling run() on it, the value of those Tensors
+            # (i.e., of the gradients) will be calculated
+            if args.clip_norm_type == 'ignore':
+                # Unclipped gradients
+                global_norm = tf.global_norm([g for g, v in grads_and_vars], name='global_norm')
+            elif args.clip_norm_type == 'global':
+                # Clip network grads by network norm
+                gradients_n_norm = tf.clip_by_global_norm(
+                    [g for g, v in grads_and_vars], args.clip_norm)
+                global_norm = tf.identity(gradients_n_norm[1], name='global_norm')
+                grads_and_vars = list(zip(gradients_n_norm[0], [v for g, v in grads_and_vars]))
+            elif args.clip_norm_type == 'local':
+                # Clip layer grads by layer norm
+                gradients = [tf.clip_by_norm(
+                    g, args.clip_norm) for g in grads_and_vars]
+                grads_and_vars = list(zip(gradients, [v for g, v in grads_and_vars]))
+                global_norm = tf.global_norm([g for g, v in grads_and_vars], name='global_norm')
+            else:
+                raise Exception('Norm type not recognized')
+            self.flat_clipped_gradients = tf.concat([tf.reshape(g, [-1]) for g, v in grads_and_vars], axis=0)
 
-        self.train_step = self.optimizer.apply_gradients(grads_and_vars)
+            self.train_step = self.optimizer.apply_gradients(grads_and_vars)
 
         config = tf.ConfigProto(allow_soft_placement = True)
         if 'gpu' in self.device:
