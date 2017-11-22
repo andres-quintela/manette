@@ -11,10 +11,10 @@ class PolicyVNetwork(Network):
         self.entropy_regularisation_strength = conf['entropy_regularisation_strength']
         self.softmax_temp = conf['softmax_temp']
         self.op = Operations(conf)
-        self.total_repetitions = conf['max_repetition']
+        self.total_repetitions = conf['nb_choices']
 
         with tf.device(conf['device']):
-            with tf.name_scope(self.name):
+            with tf.name_scope('Training'):
 
                 self.critic_target_ph = tf.placeholder("float32", [None], name='target')
                 self.adv_actor_ph = tf.placeholder("float", [None], name='advantage')
@@ -47,7 +47,7 @@ class PolicyVNetwork(Network):
                 self.output_layer_v = tf.reshape(self.output_layer_v, [-1])
 
                 # Advantage critic
-                self.critic_loss = tf.subtract(self.critic_target_ph, self.output_layer_v) ## a changer
+                self.critic_loss = tf.subtract(self.critic_target_ph, self.output_layer_v)
 
                 self.log_output_selected_action = tf.reduce_sum(
                     tf.multiply(self.log_output_layer_pi, self.selected_action_ph),

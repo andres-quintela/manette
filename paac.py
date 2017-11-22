@@ -4,9 +4,9 @@ from multiprocessing.sharedctypes import RawArray
 from ctypes import c_uint, c_float
 from actor_learner import *
 import logging
+from utils import plot_conv_output, Reshaper
 from logger_utils import variable_summaries
 import numpy as np
-from scipy.misc import imsave
 
 from emulator_runner import EmulatorRunner
 from exploration_policy import Action
@@ -17,7 +17,10 @@ class PAACLearner(ActorLearner):
     def __init__(self, network_creator, environment_creator, explo_policy, args):
         super(PAACLearner, self).__init__(network_creator, environment_creator, explo_policy, args)
         self.workers = args.emulator_workers
-        self.total_repetitions = args.max_repetition
+        self.total_repetitions = args.nb_choices
+        self.tab_rep = explo_policy.tab_rep
+        self.lstm_bool = (args.arch == 'LSTM')
+        self.depth = 3 if args.rgb else 1
 
         #add the parameters to tensorboard
         sess = tf.InteractiveSession()
@@ -75,6 +78,24 @@ class PAACLearner(ActorLearner):
             self.summary_writer.add_summary(summary, self.global_step)
             self.summary_writer.flush()
 
+    def update_memory(self, memory, shared_states):
+        print('l1')
+        res = np.roll(memory, 1, axis=1)
+        print('l2')
+        res[:, 0, :, :, :] = shared_states
+        return res
+
+    def get_flat_memories(self, memory):
+        print('fl1')
+        mem = np.zeros([self.max_local_steps, self.emulator_counts, self.n_steps]+list(memory.shape)[-3:])
+        print('fl2')
+        for t in range(self.max_local_steps):
+            temp = self.max_local_steps-t-1
+            mem[t] = memory[:,temp:temp+self.n_steps, :, :, : ]
+        print('fl3')
+        res = mem.reshape([self.max_local_steps * self.emulator_counts, self.n_steps,memory.shape[-3],memory.shape[-2],memory.shape[-1]])
+        return res
+
 
     def train(self):
         """ Main actor learner loop for parallel advantage actor critic learning."""
@@ -94,9 +115,20 @@ class PAACLearner(ActorLearner):
                      (np.zeros((self.emulator_counts, self.num_actions), dtype=np.float32)),
                      (np.zeros((self.emulator_counts, self.total_repetitions), dtype=np.float32))]
 
-        self.runners = Runners(EmulatorRunner, self.emulators, self.workers, variables)
+        self.runners = Runners(self.tab_rep, EmulatorRunner, self.emulators, self.workers, variables)
         self.runners.start()
         shared_states, shared_rewards, shared_episode_over, shared_actions, shared_rep = self.runners.get_shared_variables()
+        if self.lstm_bool :
+            self.n_steps = 5
+            memory_length = self.n_steps + self.max_local_steps - 1
+            memory = np.zeros(([self.emulator_counts, memory_length]+list(shared_states.shape)[1:]), dtype=np.float32)
+            reshaper = Reshaper(self.device, self.n_steps, self.emulator_counts, self.depth, self.max_local_steps)
+            print(reshaper)
+            print(reshaper.output_update)
+            print('memory : '+str(memory.shape))
+            for e in range(self.emulator_counts) :
+                memory[e, 0, :, :, :] = shared_states[e]
+
 
         summaries_op = tf.summary.merge_all()
 
@@ -115,19 +147,41 @@ class PAACLearner(ActorLearner):
 
         start_time = time.time()
 
+        time_labels = ['choose_actions','update_memory','update_things','nest_state_value','flat_memories','train']
+        time_measures = [[] for i in time_labels]
+
         while self.global_step < self.max_global_steps:
             print('step : '+str(self.global_step))
+            if len(time_measures[-1]) > 0:
+                mean_time = [np.mean(time_measures[i]) for i in range(len(time_labels))]
+                print(time_labels)
+                print(mean_time)
 
             loop_start_time = time.time()
-
             total_action_rep = np.zeros((self.num_actions, self.total_repetitions))
-
             nb_actions = 0
 
             max_local_steps = self.max_local_steps
             for t in range(max_local_steps):
+                print('local step : '+str(t))
 
-                new_actions, new_repetitions, readouts_v_t, readouts_pi_t = self.explo_policy.choose_next_actions(self.network, self.num_actions, shared_states, self.session)
+                #Choose actions and repetitions for each emulator
+                s_time = time.time()
+                if not self.lstm_bool :
+                    readouts_v_t, readouts_pi_t, readouts_rep_t = self.session.run(
+                        [self.network.output_layer_v, self.network.output_layer_pi, self.network.output_layer_rep],
+                        feed_dict={self.network.input_ph: shared_states})
+                    new_actions, new_repetitions = self.explo_policy.choose_next_actions(readouts_pi_t, readouts_rep_t, self.num_actions)
+                else :
+                    print('session run')
+                    print(memory[:,:self.n_steps, :, :, :].shape)
+                    readouts_v_t, readouts_pi_t, readouts_rep_t = self.session.run(
+                        [self.network.output_layer_v, self.network.output_layer_pi, self.network.output_layer_rep],
+                        feed_dict={self.network.memory_ph: memory[:,:self.n_steps, :, :, :]})
+                    print('explo policy')
+                    new_actions, new_repetitions = self.explo_policy.choose_next_actions(readouts_pi_t, readouts_rep_t, self.num_actions)
+                    print('end choose actions')
+                time_measures[0].append(time.time()-s_time)
 
                 actions_sum += new_actions
 
@@ -148,14 +202,24 @@ class PAACLearner(ActorLearner):
                 self.runners.wait_updated()
                 # Done updating all environments, have new states, rewards and is_over
 
+                s_time = time.time()
+                if self.lstm_bool :
+                    print('update memory')
+                    new_memory = self.session.run(reshaper.output_update, feed_dict={reshaper.input_ph : memory, reshaper.states_ph : shared_states})
+                    memory = np.array(new_memory)
+                    #memory = self.update_memory(memory, shared_states)
+                time_measures[1].append(time.time()-s_time)
+                    
                 episodes_over_masks[t] = 1.0 - shared_episode_over.astype(np.float32)
 
+                print('update things')
+                s_time = time.time()
                 for e, (actual_reward, episode_over) in enumerate(zip(shared_rewards, shared_episode_over)):
                     total_episode_rewards[e] += actual_reward
                     actual_reward = self.rescale_reward(actual_reward)
                     rewards[t, e] = actual_reward
 
-                    emulator_steps[e] += np.argmax(new_repetitions[e]) + 1
+                    emulator_steps[e] += self.tab_rep[np.argmax(new_repetitions[e])] + 1
                     self.global_step += 1
 
                     #rempli le tableau pour l'histogramme des actions - repetitions
@@ -174,164 +238,84 @@ class PAACLearner(ActorLearner):
                         self.summary_writer.flush()
                         total_episode_rewards[e] = 0
                         emulator_steps[e] = 0
+                        if self.lstm_bool :
+                            print('game over, memory[:, e, :, :, :] shape : '+str(memory[:, e, :, :, :].shape))
+                            memory[e] = np.zeros(([memory_length]+list(shared_states.shape)[1:]), dtype=np.float32)
                         actions_sum[e] = np.zeros(self.num_actions)
 
+                time_measures[2].append(time.time()-s_time)
+                
+            #plot output of conv layers
+            if not self.lstm_bool :
+                if counter % (2048 / self.emulator_counts) == 0:
+                    if not self.lstm_bool :
+                        conv1, conv2 = self.session.run(
+                            [self.network.first_conv,self.network.last_conv],
+                            feed_dict= {self.network.input_ph: shared_states})
+                    else :
+                        conv1, conv2 = self.session.run(
+                            [self.network.first_conv, self.network.last_conv],
+                            feed_dict= {self.network.memory_ph: memory[:,:self.n_steps,:,:,:]})
+                    img1 = tf.expand_dims(tf.transpose(conv1[0], [2,0,1]), -1)
+                    img2 = tf.expand_dims(tf.transpose(conv2[0], [2,0,1]), -1)
+                    sum1 = tf.summary.image('first_conv', img1, 1)
+                    sum2 = tf.summary.image('last_conv', img2, 1)
+                    real_sum1 = self.session.run(sum1)
+                    real_sum2 = self.session.run(sum2)
+                    self.summary_writer.add_summary(real_sum1)
+                    self.summary_writer.add_summary(real_sum2)
+                    self.summary_writer.flush()
 
-            nest_state_value = self.session.run(
-                self.network.output_layer_v, feed_dict={self.network.input_ph: shared_states})
+            s_time=time.time()
+            
+            if self.lstm_bool :
+                nest_state_value = self.session.run(
+                     self.network.output_layer_v, feed_dict={self.network.memory_ph: memory[:,:self.n_steps,:,:,:] })
+            else :
+                nest_state_value = self.session.run(
+                    self.network.output_layer_v, feed_dict={self.network.input_ph: shared_states})
 
-
-            # print('shared states : '+str(shared_states.shape))
-            # if True :
-            #     z = np.zeros((84, 84, 3), dtype=np.uint8)
-            #     z[:,:,0], z[:,:,1], z[:,:,2] = shared_states[0,:, :, 0], shared_states[0,:, :, 4], shared_states[0,:, :, 8]
-            #     imsave('img1.jpg', z)
-            #     z[:,:,0], z[:,:,1], z[:,:,2] = shared_states[0,:, :, 1], shared_states[0,:, :, 5], shared_states[0,:, :, 9]
-            #     imsave('img2.jpg', z)
-            #     z[:,:,0], z[:,:,1], z[:,:,2] = shared_states[0,:, :, 2], shared_states[0,:, :, 6], shared_states[0,:, :, 10]
-            #     imsave('img3.jpg', z)
-            #     z[:,:,0], z[:,:,1], z[:,:,2] = shared_states[0,:, :, 3], shared_states[0,:, :, 7], shared_states[0,:, :, 11]
-            #     imsave('img4.jpg', z)
-            #     z[:,:,0], z[:,:,1], z[:,:,2] = shared_states[1,:, :, 0], shared_states[1,:, :, 4], shared_states[1,:, :, 8]
-            #     imsave('img5.jpg', z)
-            #     z[:,:,0], z[:,:,1], z[:,:,2] = shared_states[1,:, :, 1], shared_states[1,:, :, 5], shared_states[1,:, :, 9]
-            #     imsave('img6.jpg', z)
-            #     z[:,:,0], z[:,:,1], z[:,:,2] = shared_states[1,:, :, 2], shared_states[1,:, :, 6], shared_states[1,:, :, 10]
-            #     imsave('img7.jpg', z)
-            #     z[:,:,0], z[:,:,1], z[:,:,2] = shared_states[1,:, :, 3], shared_states[1,:, :, 7], shared_states[1,:, :, 11]
-            #     imsave('img8.jpg', z)
-            #     print(shared_states[0, :, :, 0:3].shape)
-            #     print(shared_states[0, :, :, 0:3])
-            # else :
-            #     z = np.zeros((84, 84), dtype=np.uint8)
-            #     z = shared_states[0, :, :, 0]
-            #     imsave('img1.jpg', z)
-            #     z = shared_states[0, :, :, 1]
-            #     imsave('img2.jpg', z)
-            #     z = shared_states[0, :, :, 2]
-            #     imsave('img3.jpg', z)
-            #     z = shared_states[0, :, :, 3]
-            #     imsave('img4.jpg', z)
-            #     z = shared_states[1, :, :, 0]
-            #     imsave('img5.jpg', z)
-            #     z = shared_states[1, :, :, 1]
-            #     imsave('img6.jpg', z)
-            #     z = shared_states[1, :, :, 2]
-            #     imsave('img7.jpg', z)
-            #     z = shared_states[1, :, :, 3]
-            #     imsave('img8.jpg', z)
-            #     print(shared_states[0, :, :, 0])
-            #
-            #
-            # x = self.session.run(
-            #     self.network.x,
-            #     feed_dict= {self.network.input_ph: shared_states})
-            # print('x : '+str(x.shape))
-            # print(x[0].shape)
-            # print(x[0, :, :, 0])
-            # if True :
-            #     z[:,:,0], z[:,:,1], z[:,:,2] = x[0,:, :, 0], x[0,:, :, 1], x[0,:, :, 2]
-            #     imsave('x1.jpg', z)
-            #     z[:,:,0], z[:,:,1], z[:,:,2] = x[1,:, :, 0], x[1,:, :, 1], x[1,:, :, 2]
-            #     imsave('x2.jpg', z)
-            #     z[:,:,0], z[:,:,1], z[:,:,2] = x[2,:, :, 0], x[2,:, :, 1], x[2,:, :, 2]
-            #     imsave('x3.jpg', z)
-            #     z[:,:,0], z[:,:,1], z[:,:,2] = x[3,:, :, 0], x[3,:, :, 1], x[3,:, :, 2]
-            #     imsave('x4.jpg', z)
-            #     z[:,:,0], z[:,:,1], z[:,:,2] = x[4,:, :, 0], x[4,:, :, 1], x[4,:, :, 2]
-            #     imsave('x5.jpg', z)
-            #     z[:,:,0], z[:,:,1], z[:,:,2] = x[5,:, :, 0], x[5,:, :, 1], x[5,:, :, 2]
-            #     imsave('x6.jpg', z)
-            #     z[:,:,0], z[:,:,1], z[:,:,2] = x[6,:, :, 0], x[6,:, :, 1], x[6,:, :, 2]
-            #     imsave('x7.jpg', z)
-            #     z[:,:,0], z[:,:,1], z[:,:,2] = x[7,:, :, 0], x[7,:, :, 1], x[7,:, :, 2]
-            #     imsave('x8.jpg', z)
-            # else :
-            #     z = np.zeros((84, 84), dtype=np.uint8)
-            #     z = x[0, :, :, 0]
-            #     imsave('x0.jpg', z)
-            #     z = x[1, :, :, 0]
-            #     imsave('x1.jpg', z)
-            #     z = x[2, :, :, 0]
-            #     imsave('x2.jpg', z)
-            #     z = x[3, :, :, 0]
-            #     imsave('x3.jpg', z)
-            #     z = x[4, :, :, 0]
-            #     imsave('x4.jpg', z)
-            #     z = x[5, :, :, 0]
-            #     imsave('x5.jpg', z)
-            #     z = x[6, :, :, 0]
-            #     imsave('x6.jpg', z)
-            #     z = x[7, :, :, 0]
-            #     imsave('x7.jpg', z)
-            #
-            # y = self.session.run(
-            #     self.network.y,
-            #     feed_dict= {self.network.input_ph: shared_states})
-            # print('y : '+str(y.shape))
-            # print(y[0].shape)
-            # print(y[0, 0, :, :])
-            # if True :
-            #     z = y[0, 0, :, :, :]
-            #     imsave('y1.jpg', z)
-            #     z = y[0, 1, :, :, :]
-            #     imsave('y2.jpg', z)
-            #     z = y[0, 2, :, :, :]
-            #     imsave('y3.jpg', z)
-            #     z = y[0, 3, :, :, :]
-            #     imsave('y4.jpg', z)
-            #     z = y[1, 0, :, :, :]
-            #     imsave('y5.jpg', z)
-            #     z = y[1, 1, :, :, :]
-            #     imsave('y6.jpg', z)
-            #     z = y[1, 2, :, :, :]
-            #     imsave('y7.jpg', z)
-            #     z = y[1, 3, :, :, :]
-            #     imsave('y8.jpg', z)
-            # else :
-            #     z = np.zeros((84, 84), dtype=np.uint8)
-            #     z = y[0, 0, :, :]
-            #     imsave('y0.jpg', z)
-            #     z = y[0, 1, :, :]
-            #     imsave('y1.jpg', z)
-            #     z = y[0, 2, :, :]
-            #     imsave('y2.jpg', z)
-            #     z = y[0, 3, :, :]
-            #     imsave('y3.jpg', z)
-            #     z = y[1, 0, :, :]
-            #     imsave('y4.jpg', z)
-            #     z = y[1, 1, :, :]
-            #     imsave('y5.jpg', z)
-            #     z = y[1, 2, :, :]
-            #     imsave('y6.jpg', z)
-            #     z = y[1, 3, :, :]
-            #     imsave('y7.jpg', z)
-
+            time_measures[3].append(time.time()-s_time)
             estimated_return = np.copy(nest_state_value)
+            #estimated_return = np.copy(readouts_v_t)
 
             for t in reversed(range(max_local_steps)):
                 estimated_return = rewards[t] + self.gamma * estimated_return * episodes_over_masks[t]
                 y_batch[t] = np.copy(estimated_return)
                 adv_batch[t] = estimated_return - values[t]
 
-            flat_states = states.reshape([self.max_local_steps * self.emulator_counts] + list(shared_states.shape)[1:])
+            s_time=time.time()
+            if self.lstm_bool :
+                print('flat memories')
+                flat_memories = self.get_flat_memories(memory)
+                flat_states = flat_memories.reshape([self.max_local_steps * self.emulator_counts, self.n_steps] + list(shared_states.shape)[1:])
+            else :
+                flat_states = states.reshape([self.max_local_steps * self.emulator_counts] + list(shared_states.shape)[1:])
             flat_y_batch = y_batch.reshape(-1)
             flat_adv_batch = adv_batch.reshape(-1)
             flat_actions = actions.reshape(max_local_steps * self.emulator_counts, self.num_actions)
             flat_rep = repetitions.reshape(max_local_steps * self.emulator_counts, self.total_repetitions)
 
             lr = self.get_lr()
-            feed_dict = {self.network.input_ph: flat_states,
-                         self.network.critic_target_ph: flat_y_batch,
+            feed_dict = {self.network.critic_target_ph: flat_y_batch,
                          self.network.selected_action_ph: flat_actions,
                          self.network.selected_repetition_ph: flat_rep,
                          self.network.adv_actor_ph: flat_adv_batch,
                          self.learning_rate: lr}
 
+            if self.lstm_bool :
+                feed_dict[self.network.memory_ph] = flat_states
+            else :
+                feed_dict[self.network.input_ph] = flat_states
+            time_measures[4].append(time.time()-s_time)
+            
+            print('session run train')
+            s_time=time.time()
             _, summaries = self.session.run(
                 [self.train_step, summaries_op],
                 feed_dict=feed_dict)
             self.summary_writer.add_summary(summaries, self.global_step)
+            time_measures[5].append(time.time()-s_time)
 
             param_summary = tf.Summary(value=[
                 tf.Summary.Value(tag='parameters/lr', simple_value=lr)
@@ -342,14 +326,12 @@ class PAACLearner(ActorLearner):
             self.log_values(total_rewards, 'rewards_per_episode')
             self.log_values(total_steps, 'steps_per_episode')
 
-            #ajout de l'histogramme des actions
+            #ajout de l'histogramme des actions /repetitions
             nb_a = [ sum(a) for a in total_action_rep]
-            total_action_rep_trans = np.transpose(total_action_rep)
-            nb_r = [ sum(r) for r in total_action_rep_trans ]
+            nb_r = [ sum(r) for r in np.transpose(total_action_rep) ]
             histo_a, histo_r = [], []
             for i in range(self.num_actions) : histo_a += [i]*int(nb_a[i])
-            for i in range(self.total_repetitions) : histo_r += [i]*int(nb_r[i])
-
+            for i in range(self.total_repetitions) : histo_r += [self.tab_rep[i]+1]*int(nb_r[i])
             self.log_histogram('actions', np.array(histo_a), self.global_step)
             self.log_histogram('repetitions', np.array(histo_r), self.global_step)
 

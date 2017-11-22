@@ -3,19 +3,21 @@ import tensorflow as tf
 import logging
 
 class Action :
-    def __init__(self, i, a, r):
+    def __init__(self, tab_rep, i, a, r):
+        self.tab_rep = tab_rep
         self.id = i
         self.repeated = False
         self.current_action = 0
         self.nb_repetitions_left = 0
         self.init_from_list(a, r)
 
+
     def __str__(self):
         return "id : "+str(self.id)+", action "+str(self.current_action)+" repeated "+str(self.nb_repetitions_left)+" times."
 
     def init_from_list(self, a, r):
         self.current_action = np.argmax(a)
-        self.nb_repetitions_left = np.argmax(r)
+        self.nb_repetitions_left = self.tab_rep[np.argmax(r)]
         if self.nb_repetitions_left > 0 :
             self.repeated = True
 
@@ -23,7 +25,6 @@ class Action :
         self.nb_repetitions_left -= 1
         if self.nb_repetitions_left == 0 :
             self.repeated = False
-            self.current_action = 0
         return self.current_action
 
     def reset(self):
@@ -48,7 +49,17 @@ class ExplorationPolicy:
         self.keep_percentage = args.keep_percentage
         self.annealed = args.annealed
         self.annealing_steps = 80000000
-        self.total_repetitions = args.max_repetition
+        self.max_repetition = args.max_repetition
+        self.nb_choices = args.nb_choices
+        self.tab_rep = self.get_tab_repetitions()
+
+    def get_tab_repetitions(self):
+        res = [0]*self.nb_choices
+        res[-1] = self.max_repetition
+        if self.nb_choices > 2 :
+            for i in range(1, self.nb_choices-1):
+                res[i] = int(self.max_repetition/(self.nb_choices-1)) * i
+        return res
 
     def get_epsilon(self):
         if self.global_step <= self.annealing_steps:
@@ -56,12 +67,7 @@ class ExplorationPolicy:
         else:
             return 0.0
 
-    def choose_next_actions(self, network, num_actions, states, session):
-        network_output_v, network_output_pi, network_output_rep = session.run(
-            [network.output_layer_v,
-             network.output_layer_pi, network.output_layer_rep],
-            feed_dict={network.input_ph: states})
-
+    def choose_next_actions(self, network_output_pi, network_output_rep, num_actions):
         if self.test :
             action_indices = self.argmax_choose(network_output_pi)
             repetition_indices = self.argmax_choose(network_output_rep)
@@ -73,12 +79,12 @@ class ExplorationPolicy:
             repetition_indices = self.multinomial_choose(network_output_rep)
 
         new_actions = np.eye(num_actions)[action_indices]
-        new_repetitions = np.eye(self.total_repetitions)[repetition_indices]
+        new_repetitions = np.eye(self.nb_choices)[repetition_indices]
 
         self.global_step += len(network_output_pi)
         if self.annealed : self.epsilon = get_epsilon()
 
-        return new_actions, new_repetitions, network_output_v, network_output_pi
+        return new_actions, new_repetitions
 
     def argmax_choose(self, probs):
         """Choose the best actions"""

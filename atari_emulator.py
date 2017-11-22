@@ -1,6 +1,6 @@
 import numpy as np
 from ale_python_interface import ALEInterface
-from scipy.misc import imresize, imsave
+from scipy.misc import imresize
 import cv2
 import random
 from environment import BaseEnvironment, FramePool, ObservationPool
@@ -96,10 +96,6 @@ class AtariEmulator(BaseEnvironment):
         for i in range(FRAMES_IN_POOL):
             reward += self.ale.act(self.legal_actions[a])
             img = self.__get_screen_image()
-            # print('DEPTH : '+str(self.depth))
-            # print('img : '+str(img.shape))
-            # #truc = np.array(img[:,:,0])
-            # imsave('actionrepeat.jpg', img)
             self.frame_pool.new_frame(img)
         return reward
 
@@ -125,15 +121,6 @@ class AtariEmulator(BaseEnvironment):
         self.lives = self.ale.lives()
         observation = self.observation_pool.get_pooled_observations()
         self.global_step += 1
-        # z = np.zeros((84, 84, 3), dtype=np.uint8)
-        # z[:,:,0], z[:,:,1], z[:,:,2] = observation[:, :, 0], observation[:, :, 4], observation[:, :, 8]
-        # imsave('opnext1.jpg', z)
-        # z[:,:,0], z[:,:,1], z[:,:,2] = observation[:, :, 1], observation[:, :, 5], observation[:, :, 9]
-        # imsave('opnext2.jpg', z)
-        # z[:,:,0], z[:,:,1], z[:,:,2] = observation[:, :, 2], observation[:, :, 6], observation[:, :, 10]
-        # imsave('opnext3.jpg', z)
-        # z[:,:,0], z[:,:,1], z[:,:,2] = observation[:, :, 3], observation[:, :, 7], observation[:, :, 11]
-        # imsave('opnext4.jpg', z)
         return observation, reward, terminal
 
     def __is_terminal(self):

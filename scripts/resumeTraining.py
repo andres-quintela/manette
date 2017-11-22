@@ -17,22 +17,22 @@ def create_cmd(data, path):
                 " --max_global_steps "+str(data["max_global_steps"])+
                 " --max_local_steps "+str(data["max_local_steps"])+
                 " --arch "+str(data["arch"])+
-                " --single_life_episodes "+str(data["single_life_episodes"])+
                 " -ec "+str(data["emulator_counts"])+
                 " -ew "+str(data["emulator_workers"])+
-                " -rs "+str(data["random_start"])+
-
-                " --egreedy "+str(data["egreedy"])+
                 " --epsilon "+str(data["epsilon"])+
                 " --softmax_temp "+str(data["softmax_temp"])+
-                " --annealed "+str(data["annealed"])+
                 " --annealed_steps "+str(data["annealed_steps"])+
                 " --keep_percentage "+str(data["keep_percentage"])+
-                " --rgb "+str(data["rgb"])+
                 " --max_repetition "+str(data["max_repetition"])+
+                " --nb_choices "+str(data["nb_choices"])+
                 " --checkpoint_interval "+str(data["checkpoint_interval"])+
                 " --activation "+str(data["activation"])+
                 " --alpha_leaky_relu "+str(data["alpha_leaky_relu"]))
+    if data["single_life_episodes"] : cmd += " --single_life_episodes"
+    if data["random_start"] : cmd += " --random_start"
+    if data["egreedy"] : cmd += " --egreedy"
+    if data["annealed"] : cmd += " --annealed"
+    if data["rgb"] : cmd += " --rgb"
     return cmd
 
 def create_chpt_cmd(args, path):

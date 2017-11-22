@@ -12,20 +12,11 @@ from policy_v_network import NaturePolicyVNetwork, NIPSPolicyVNetwork, BayesianP
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 
-def bool_arg(string):
-    value = string.lower()
-    if value == 'true':
-        return True
-    elif value == 'false':
-        return False
-    else:
-        raise argparse.ArgumentTypeError("Expected True or False, but got {}".format(string))
-
-
 def main(args):
     logging.debug('Configuration: {}'.format(args))
 
     explo_policy = ExplorationPolicy(args)
+    print('Repetition table : '+str(explo_policy.tab_rep))
 
     network_creator, env_creator = get_network_and_environment_creator(args, explo_policy)
 
@@ -68,7 +59,8 @@ def get_network_and_environment_creator(args, explo_policy, random_seed=3):
                     'rgb' : args.rgb,
                     'activation' : args.activation,
                     'alpha_leaky_relu' : args.alpha_leaky_relu,
-                    'max_repetition' : args.max_repetition}
+                    'max_repetition' : args.max_repetition,
+                    'nb_choices': args.nb_choices}
 
     if args.arch == 'PWYX' :
         network = PpwwyyxxPolicyVNetwork
@@ -94,7 +86,7 @@ def get_arg_parser():
     parser.add_argument('-g', default='pong', help='Name of game', dest='game')
     parser.add_argument('-d', '--device', default='/gpu:0', type=str, help="Device to be used ('/cpu:0', '/gpu:0', '/gpu:1',...)", dest="device")
     parser.add_argument('--rom_path', default='./atari_roms', help='Directory where the game roms are located (needed for ALE environment)', dest="rom_path")
-    parser.add_argument('-v', '--visualize', default=False, type=bool_arg, help="0: no visualization of emulator; 1: all emulators, for all actors, are visualized; 2: only 1 emulator (for one of the actors) is visualized", dest="visualize")
+    parser.add_argument('-v', '--visualize', default=0, type=int, help="0: no visualization of emulator; 1: all emulators, for all actors, are visualized; 2: only 1 emulator (for one of the actors) is visualized", dest="visualize")
     parser.add_argument('--e', default=0.1, type=float, help="Epsilon for the Rmsprop and Adam optimizers", dest="e")
     parser.add_argument('--alpha', default=0.99, type=float, help="Discount factor for the history/coming gradient, for the Rmsprop optimizer", dest="alpha")
     parser.add_argument('-lr', '--initial_lr', default=0.0224, type=float, help="Initial value for the learning rate. Default = 0.0224", dest="initial_lr")
@@ -105,21 +97,22 @@ def get_arg_parser():
     parser.add_argument('--gamma', default=0.99, type=float, help="Discount factor", dest="gamma")
     parser.add_argument('--max_global_steps', default=80000000, type=int, help="Max. number of training steps", dest="max_global_steps")
     parser.add_argument('--max_local_steps', default=5, type=int, help="Number of steps to gain experience from before every update.", dest="max_local_steps")
-    parser.add_argument('--arch', default='PWYX', help="Which network architecture to use: from the NIPS or NATURE paper, or PWYX, or BAYESIAN ie dropout", dest="arch")
-    parser.add_argument('--single_life_episodes', default=False, type=bool_arg, help="If True, training episodes will be terminated when a life is lost (for games)", dest="single_life_episodes")
+    parser.add_argument('--arch', default='PWYX', help="Which network architecture to use: from the NIPS or NATURE paper, or PWYX, or LSTM, or BAYESIAN ie dropout", dest="arch")
+    parser.add_argument('--single_life_episodes', action='store_true', help="If True, training episodes will be terminated when a life is lost (for games)", dest="single_life_episodes")
     parser.add_argument('-ec', '--emulator_counts', default=32, type=int, help="The amount of emulators per agent. Default is 32.", dest="emulator_counts")
     parser.add_argument('-ew', '--emulator_workers', default=8, type=int, help="The amount of emulator workers per agent. Default is 8.", dest="emulator_workers")
     parser.add_argument('-df', '--debugging_folder', default='logs/', type=str, help="Folder where to save the debugging information.", dest="debugging_folder")
-    parser.add_argument('-rs', '--random_start', default=True, type=bool_arg, help="Whether or not to start with 30 noops for each env. Default True", dest="random_start")
+    parser.add_argument('-rs', '--random_start', action='store_true', help="Whether or not to start with 30 noops for each env. Default True", dest="random_start")
 
-    parser.add_argument('--egreedy', default=False, type=bool_arg, help="True if e-greedy policy is used to  choose actions", dest="egreedy")
+    parser.add_argument('--egreedy', action='store_true', help="If True, e-greedy policy is used to  choose actions", dest="egreedy")
     parser.add_argument('--epsilon', default=0.05, type=float, help="Epsilon for the egreedy policy", dest='epsilon')
     parser.add_argument('--softmax_temp', default=1.0, type=float, help="Softmax temperature for the Boltzmann action policy", dest='softmax_temp' )
-    parser.add_argument('--annealed', default=False, type=bool_arg, help="True if the parameters for explo_policy are annealed toward zero", dest="annealed")
+    parser.add_argument('--annealed', action='store_true', help="If True, the parameters for explo_policy are annealed toward zero", dest="annealed")
     parser.add_argument('--annealed_steps', default=80000000, type=int, help="Nb of global steps during which epsilon will be linearly annealed towards zero", dest="annealed_steps")
     parser.add_argument('--keep_percentage', default=0.9, type=float, help="keep percentage when dropout is used", dest='keep_percentage' )
-    parser.add_argument('--rgb', default=False, type=bool_arg, help="True if RGB images are given to the agent", dest="rgb")
-    parser.add_argument('--max_repetition', default=1, type=int, help="Maximum number of repetition for FiGAR", dest="max_repetition")
+    parser.add_argument('--rgb', action='store_true', help="If True, RGB images are given to the agent", dest="rgb")
+    parser.add_argument('--max_repetition', default=0, type=int, help="Maximum number of repetition for FiGAR", dest="max_repetition")
+    parser.add_argument('--nb_choices', default=1, type=int, help="Number of possible repetitions", dest="nb_choices")
     parser.add_argument('--checkpoint_interval', default=1000000, type=int, help="Interval of steps btw checkpoints", dest="checkpoint_interval")
     parser.add_argument('--activation', default='relu', type=str, help="activation function for the network", dest="activation")
     parser.add_argument('--alpha_leaky_relu', default=0.1, type=float, help="coef for leaky relu", dest="alpha_leaky_relu")

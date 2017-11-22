@@ -29,7 +29,7 @@ def main(args):
         if args.checkpoint == 0 :
             pathSrc = args.folder+f
         else :
-            pathSrc = args.folder+f+"checkpoints_saved/"+str(args.checkpoint)+"/"
+            pathSrc = args.folder+f+"/checkpoints_saved/"+str(args.checkpoint)+"/"
         subprocess.call(create_cmd(args, f, pathSrc), shell = True)
 
 def get_arg_parser():
