@@ -45,6 +45,7 @@ class ActorLearner(Process):
         self.optimizer = tf.train.RMSPropOptimizer(self.learning_rate, decay=args.alpha, epsilon=args.e,
                                                    name=optimizer_variable_names)
         grads_and_vars = self.optimizer.compute_gradients(self.network.loss)
+        print('grads_and_vars : '+str(grads_and_vars))
         self.flat_raw_gradients = tf.concat([tf.reshape(g, [-1]) for g, v in grads_and_vars], axis=0)
 
         # This is not really an operation, but a list of gradient Tensors.
@@ -94,7 +95,7 @@ class ActorLearner(Process):
         tf.summary.scalar('loss/actor_advantage_mean', self.network.actor_advantage_mean)
         tf.summary.scalar('loss/log_repetition_mean', self.network.log_repetition_mean)
         for i in range(len(grads_and_vars)):
-            tf.summary.histogram('grads/grad'+str(i), grads_and_vars[i][0])
+            tf.summary.histogram('grads/grad-'+grads_and_vars[i][1].name[:-2], grads_and_vars[i][0])
 
 
     def save_vars(self, force=False):

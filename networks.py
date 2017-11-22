@@ -186,11 +186,6 @@ class NIPSNetwork(Network):
 
                 w_fc3, b_fc3, fc3 = self.op.fc('fc3', self.op.flatten(conv2), 256, activation=self.activation)
 
-                tf.summary.histogram("w_conv1", w_conv1)
-                tf.summary.histogram("w_conv2", w_conv2)
-                tf.summary.histogram("b_conv1", b_conv1)
-                tf.summary.histogram("b_conv2", b_conv2)
-
                 self.output = fc3
 
 class BayesianNetwork(NIPSNetwork):
@@ -219,7 +214,7 @@ class PpwwyyxxNetwork(Network):
                 _, _, conv3 = self.op.conv2d('conv3', mp_conv2, 64, 4, 32, 1, padding = 'SAME', activation = self.activation)
                 mp_conv3 = self.op.max_pooling('mp_conv3', conv3)
                 _, _, conv4 = self.op.conv2d('conv4', mp_conv3, 64, 3, 64, 1, padding = 'SAME', activation = self.activation)
-
+                self.first_conv, self.last_conv = conv1, conv4
                 _, _, fc5 = self.op.fc('fc5', self.op.flatten(conv4), 512, activation=self.activation)
 
                 self.output = fc5
@@ -232,22 +227,15 @@ class LSTMNetwork(Network):
             with tf.name_scope('Network'):
 
                 n_input = 6400
-                n_steps = 4
-                n_hidden = 64
-                n_outputs = 512
+                n_steps = 5
+                n_hidden = 32
+                n_outputs = 128
 
-                if self.rgb : #input : (?, 84, 84, RRRRGGGGBBBB)
-                    l_rgb = tf.unstack(self.input, axis=3) # [R,R,R,R,G,G,G,G,B,B,B,B]
-                    permutation_list = [[l_rgb[0+i], l_rgb[n_steps+i], l_rgb[2*n_steps+i]] for i in range(n_steps)] # [R,G,B,R,G,B,R,G,B,R,G,B]
-                    l_input = [tf.stack(l, axis=3) for l in permutation_list]
-                    _input = tf.stack(l_input, axis=1) # (?, 4, 84, 84, 3)
-                    _input = tf.reshape(_input, (-1, 84, 84, 3))
-                else : #input : (?, 84, 84, 4)
-                    _input = tf.transpose(self.input, [0, 3, 1, 2]) # (?, 4, 84, 84)
-                    _input = tf.reshape(_input, (-1, 84, 84))
-                    _input = tf.expand_dims(_input, -1) # (?, 84, 84, 1)
+                self.memory_ph = tf.placeholder(tf.uint8, [None, n_steps, 84, 84, self.depth* 4], name='input_memory')
+                _input = tf.scalar_mul(1.0/255.0, tf.cast(self.memory_ph, tf.float32))
+                _input = tf.reshape(_input, (-1, 84, 84, self.depth*4))
 
-                _, _, conv1 = self.op.conv2d('conv1', _input, 32, 5, self.depth, 1, padding = 'SAME', activation = self.activation)
+                _, _, conv1 = self.op.conv2d('conv1', _input, 32, 5, self.depth * 4, 1, padding = 'SAME', activation = self.activation)
                 mp_conv1 = self.op.max_pooling('mp_conv1', conv1)
                 _, _, conv2 = self.op.conv2d('conv2', mp_conv1, 32, 5, 32, 1, padding = 'SAME', activation = self.activation)
                 mp_conv2 = self.op.max_pooling('mp_conv2', conv2)
@@ -256,9 +244,10 @@ class LSTMNetwork(Network):
                 _, _, conv4 = self.op.conv2d('conv4', mp_conv3, 64, 3, 64, 1, padding = 'SAME', activation = self.activation)
 
                 self.first_conv, self.last_conv = conv1, conv4
-                out_conv = self.op.flatten(conv4)
-                x_lstm = tf.reshape(out_conv, [-1, n_steps, n_input])
-                _, _, out_lstm = self.op.rnn('lstm', x_lstm, n_input, n_steps, n_hidden)
+
+                self.out_conv = self.op.flatten(conv4)
+                input_lstm = tf.reshape(self.out_conv, (-1, n_steps, n_input))
+                _, _, out_lstm = self.op.rnn('lstm', input_lstm, n_input, n_steps, n_hidden)
                 _, _, fc6 = self.op.fc('fc6', out_lstm, n_outputs, activation=self.activation)
 
                 self.output = fc6
