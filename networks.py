@@ -227,11 +227,15 @@ class LSTMNetwork(Network):
             with tf.name_scope('Network'):
 
                 n_input = 6400
-                n_steps = 32
-                n_hidden = 128
-                n_outputs = 512
+                n_steps = 5
+                n_hidden = 32
+                n_outputs = 128
 
-                _, _, conv1 = self.op.conv2d('conv1', self.input, 32, 5, self.depth * 4, 1, padding = 'SAME', activation = self.activation)
+                self.memory_ph = tf.placeholder(tf.uint8, [None, n_steps, 84, 84, self.depth* 4], name='input_memory')
+                _input = tf.scalar_mul(1.0/255.0, tf.cast(self.memory_ph, tf.float32))
+                _input = tf.reshape(_input, (-1, 84, 84, self.depth*4))
+
+                _, _, conv1 = self.op.conv2d('conv1', _input, 32, 5, self.depth * 4, 1, padding = 'SAME', activation = self.activation)
                 mp_conv1 = self.op.max_pooling('mp_conv1', conv1)
                 _, _, conv2 = self.op.conv2d('conv2', mp_conv1, 32, 5, 32, 1, padding = 'SAME', activation = self.activation)
                 mp_conv2 = self.op.max_pooling('mp_conv2', conv2)
