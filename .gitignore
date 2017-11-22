@@ -3,13 +3,10 @@
 .idea/*
 logs/
 gifs/
+toTrain/
 nohupLogs/
 *.py#
 *.#
 *.save
 *.swp
 *.out
-*.json
-*.png
-*.txt
-*.jpg

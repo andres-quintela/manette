@@ -35,7 +35,7 @@ When using a more demanding neural network, the training can slow down to 1000 s
 
 ## Visualizing training
 1. Open a new terminal
-2. Run ```tensorboard --logdir=<absolute-path>/manette/logs/test_pong```.
+2. Run ```tensorboard --logdir=<absolute-path>/manette/logs```.
 3. In your browser navigate to localhost:6006/
 
 Many graphs are already available (rewards per episode, length of episode, steps per second, loss, ...) and you can easily add yours.
@@ -66,19 +66,19 @@ These models can be used as starting points for training on the same game, other
 # Training options
 
 The most useful options for the training are :
-* ```-g``` : Name of the Atari 2600 game you want to play. All the games in the ```atari_roms``` are available.
-* ```-df``` : Debugging folder, where the information is saved for each game (checkpoints, tensorboard graphs, ...)
+* ```-g``` : Name of the Atari 2600 game you want to play. All the games in ```atari_roms``` are available.
+* ```-df``` : Destination folder, where the information is saved for each game (checkpoints, tensorboard graphs, ...)
 * ```-lr``` : Initial value for the learning rate. Default = 0.224.
 * ```-lra``` : Number of global steps during which the learning rate will be linearly annealed towards zero.
 * ```--entropy``` : Strength of the entropy regularization term. Default = 0.02. Should be increased when using FiGAR.
 * ```--max_global_steps``` : Maximum number of training steps. 80 million steps are enough for most games.
 * ```--max_local_steps``` : Number of steps to gain experience from before every update. 5 is good.
-* ```--arch``` : Which network architecture to use : NIPS, NATURE, PWYX, BAYESIAN, LSTM. See below for descriptions.
+* ```--arch``` : Which network architecture to use : NIPS, NATURE, PWYX, BAYESIAN. See below for descriptions.
 * ```-ec``` : Emulator counts. Number of emulator playing simultaneously. Default = 32.
 * ```-ew``` : Emulator workers. Number of threads that computes the emulators' steps. Default = 8 : each thread computes for 4 emulators.
 * ```--egreedy``` : Whether to use an e-greedy policy to choose the actions or not.
 * ```--epsilon``` : If using an e-greedy policy, the epsilon coefficient. Default = 0.05 .
-* ```--softmax_temp``` : Softmax temperature for the Boltzmann action choice policy.
+* ```--softmax_temp``` : Softmax temperature for the Boltzmann action choice policy. Default = 1.
 * ```--annealed``` :  Whether to anneal the epsilon towards zero or not for e-greedy policy.
 * ```--annealed_steps``` : Number of global steps before epsilon is annealed.
 * ```--keep_percentage``` : When the Bayesian/Dropout network is used, keep percentage. Default = 0.9 .
@@ -98,7 +98,7 @@ Run : ```python3 script/batchTrain -f toTrain/ -d logs/ ```.
 
 All your JSON files will be loaded and trained, one after the other, with the right options, and saved in ```logs/DATE-experiment1/```.
 
-Exemple of JSON file for Pong, with LSTM network and FiGAR 10 repetitions :
+Exemple of JSON file for Pong, with PWYX network and FiGAR 10 repetitions :
 ```
 {
   "game": "pong",
@@ -109,7 +109,7 @@ Exemple of JSON file for Pong, with LSTM network and FiGAR 10 repetitions :
   "gamma": 0.99,
   "alpha": 0.99,
   "entropy_regularisation_strength": 0.02,
-  "arch": "LSTM",
+  "arch": "PWYX",
   "emulator_workers": 8,
   "emulator_counts": 32,
   "clip_norm_type": "global",
@@ -144,9 +144,8 @@ The codebase currently contains five neural network architectures :
 * NATURE : the architecture from [Human-level control through deep reinforcement learning](https://www.nature.com/nature/journal/v518/n7540/full/nature14236.html).
 * BAYESIAN : the NIPS network with a dropout layer to improve the exploration policy. See this paper about [Dropout as a Bayesian Approximation](https://arxiv.org/abs/1506.02142).
 * PWYX : a bigger convolutionnal network with max pooling, inspired by [ppwwyyxx's work](https://github.com/ppwwyyxx/tensorpack/tree/master/examples/A3C-Gym).
-* LSTM : the PWYX network with an LSTM cell.
 
-**When using FIGAR**, it is better to choose a bigger network like PWYX or LSTM.
+**When using FIGAR**, it is better to choose a bigger network like PWYX.
 
 To create a new architecture follow the pattern demonstrated in the other networks.
 Then create a new class that inherits from both the ```PolicyVNetwork``` and```YourNetwork```. For example:  ```NewArchitecturePolicyVNetwork(PolicyVNetwork, YourNetwork)```. Then use this class in ```train.py```.

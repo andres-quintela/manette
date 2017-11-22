@@ -15,7 +15,7 @@ Run : ```python3 script/batchTrain -f toTrain/ -d logs/ ```.
 
 All your JSON files will be loaded and trained, one after the other, with the right options, and saved in ```logs/DATE-experiment1/```.
 
-Example of JSON file for Pong, with LSTM network and FiGAR 10 repetitions :
+Example of JSON file for Pong, with PWYX network and FiGAR 10 repetitions :
 ```
 {
   "game": "pong",
@@ -26,7 +26,7 @@ Example of JSON file for Pong, with LSTM network and FiGAR 10 repetitions :
   "gamma": 0.99,
   "alpha": 0.99,
   "entropy_regularisation_strength": 0.02,
-  "arch": "LSTM",
+  "arch": "PWYX",
   "emulator_workers": 8,
   "emulator_counts": 32,
   "clip_norm_type": "global",

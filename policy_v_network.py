@@ -89,8 +89,5 @@ class BayesianPolicyVNetwork(PolicyVNetwork, BayesianNetwork):
 class PpwwyyxxPolicyVNetwork(PolicyVNetwork, PpwwyyxxNetwork):
     pass
 
-class LSTMPolicyNetwork(PolicyVNetwork, LSTMNetwork):
-    pass
-
 class NaturePolicyVNetwork(PolicyVNetwork, NatureNetwork):
     pass
