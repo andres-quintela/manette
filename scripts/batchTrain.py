@@ -17,39 +17,38 @@ def create_cmd(data, path):
                 " --max_global_steps "+str(data["max_global_steps"])+
                 " --max_local_steps "+str(data["max_local_steps"])+
                 " --arch "+str(data["arch"])+
-                " --single_life_episodes "+str(data["single_life_episodes"])+
                 " -ec "+str(data["emulator_counts"])+
                 " -ew "+str(data["emulator_workers"])+
-                " -rs "+str(data["random_start"])+
-
-                " --egreedy "+str(data["egreedy"])+
                 " --epsilon "+str(data["epsilon"])+
                 " --softmax_temp "+str(data["softmax_temp"])+
-                " --annealed "+str(data["annealed"])+
+                " --annealed_steps "+str(data["annealed_steps"])+
                 " --keep_percentage "+str(data["keep_percentage"])+
-                " --rgb "+str(data["rgb"])+
-                " --random_actions "+str(data["random_actions"])+
-                " --nb_actions "+str(data["nb_actions"])+
-                " --oxygen_greedy "+str(data["oxygen_greedy"])+
-                " --proba_oxygen "+str(data["proba_oxygen"])+
-                " --nb_up_actions "+str(data["nb_up_actions"])+
                 " --emulator_name "+str(data["emulator_name"]))
+                " --max_repetition "+str(data["max_repetition"])+
+                " --nb_choices "+str(data["nb_choices"])+
+                " --checkpoint_interval "+str(data["checkpoint_interval"])+
+                " --activation "+str(data["activation"])+
+                " --alpha_leaky_relu "+str(data["alpha_leaky_relu"]))
+    if data["single_life_episodes"] : cmd += " --single_life_episodes"
+    if data["random_start"] : cmd += " --random_start"
+    if data["egreedy"] : cmd += " --egreedy"
+    if data["annealed"] : cmd += " --annealed"
+    if data["rgb"] : cmd += " --rgb"
     return cmd
 
 def create_chpt_cmd(args, path):
     cmd = ("nohup python3 scripts/checkpoints.py "+
                 " -df "+path+"/"
                 " -t "+str(args.time)+
-                " &> nohupLogs/saveCheckpoints"+str(args.gpu)+".out &")
+                " &> nohupLogs/saveCheckpoints.out &")
     return cmd
 
 
 def main(args):
-    pathSrc = "toTrain/gpu"+str(args.gpu)
+    pathSrc = args.folder
     for folder in os.listdir(pathSrc):
         i = datetime.datetime.now()
-        #path = "logs/"+str(i.year)+"-"+str(i.month)+"-"+str(i.day)+"-"+folder
-        path = "/data1/rl/atari/logs/tensorboard/"+str(i.year)+"-"+str(i.month)+"-"+str(i.day)+"-"+folder
+        path = args.destination+str(i.year)+"-"+str(i.month)+"-"+str(i.day)+"-"+folder
         if not os.path.exists(path):
             os.makedirs(path)
         for f in os.listdir(pathSrc+"/"+folder):
@@ -63,10 +62,12 @@ def main(args):
 
 def get_arg_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-gpu', default= 0, type=int,
-                        help='Number of the gpu to be used', dest='gpu')
+    parser.add_argument('-f', default='toTrain', type=str,
+                        help='Folder where to find the JSON files with the training options', dest='folder')
     parser.add_argument('-t', default=1800, type=int,
-                        help='Period of time btw save', dest='time')
+                        help='Period of time btw checkpoints save', dest='time')
+    parser.add_argument('-d', default='logs/', type=str,
+                        help='Folder where to save the training information', dest='destination')
     return parser
 
 if __name__ == '__main__':

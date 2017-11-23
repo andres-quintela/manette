@@ -3,6 +3,7 @@
 .idea/*
 logs/
 gifs/
+toTrain/
 nohupLogs/
 *.py#
 *.#

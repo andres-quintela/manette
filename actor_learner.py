@@ -12,27 +12,28 @@ class ActorLearner(Process):
 
         super(ActorLearner, self).__init__()
 
-        self.explo_policy = explo_policy
-
-        self.global_step = 0
-
-        self.max_local_steps = args.max_local_steps
-        self.num_actions = args.num_actions
-        self.initial_lr = args.initial_lr
-        self.lr_annealing_steps = args.lr_annealing_steps
-        self.emulator_counts = args.emulator_counts
-        self.device = args.device
+        # Folder and debug settings
+        self.checkpoint_interval = args.checkpoint_interval
         self.debugging_folder = args.debugging_folder
         self.network_checkpoint_folder = os.path.join(self.debugging_folder, 'checkpoints/')
         self.optimizer_checkpoint_folder = os.path.join(self.debugging_folder, 'optimizer_checkpoints/')
         self.last_saving_step = 0
-        self.summary_writer = tf.summary.FileWriter(os.path.join(self.debugging_folder, 'tf'))
+        self.device = args.device
 
-        self.learning_rate = tf.placeholder(tf.float32, shape=[])
-        optimizer_variable_names = 'OptimizerVariables'
-        self.optimizer = tf.train.RMSPropOptimizer(self.learning_rate, decay=args.alpha, epsilon=args.e,
-                                                   name=optimizer_variable_names)
+        # Reinforcement learning settings
+        self.game = args.game
+        self.global_step = 0
+        self.max_global_steps = args.max_global_steps
+        self.max_local_steps = args.max_local_steps
+        self.num_actions = args.num_actions
 
+        self.explo_policy = explo_policy
+
+        self.gamma = args.gamma
+        self.initial_lr = args.initial_lr
+        self.lr_annealing_steps = args.lr_annealing_steps
+
+        self.emulator_counts = args.emulator_counts
         self.emulators = np.asarray([environment_creator.create_environment(i)
                                      for i in range(self.emulator_counts)])
         self.max_global_steps = args.max_global_steps
@@ -43,7 +44,6 @@ class ActorLearner(Process):
         self.emulator_name = args.emulator_name
         if self.emulator_name == "GYM" :
             with open("gym_game_info.json", 'r') as d :
-                data = json.load(d)
                 self.game_info  = data[self.game]
                 self.checkpoint_interval = self.game_info["interval_checkpoint"]
         else :
@@ -51,32 +51,39 @@ class ActorLearner(Process):
 
         # Optimizer
         grads_and_vars = self.optimizer.compute_gradients(self.network.loss)
+                data = json.load(d)
+        with tf.name_scope('Optimizer'):
+            self.learning_rate = tf.placeholder(tf.float32, shape=[], name='lr')
+            # Optimizer
+            optimizer_variable_names = 'OptimizerVariables'
+            self.optimizer = tf.train.RMSPropOptimizer(self.learning_rate, decay=args.alpha, epsilon=args.e,
+                                                       name=optimizer_variable_names)
+            grads_and_vars = self.optimizer.compute_gradients(self.network.loss)
+            self.flat_raw_gradients = tf.concat([tf.reshape(g, [-1]) for g, v in grads_and_vars], axis=0)
 
-        self.flat_raw_gradients = tf.concat([tf.reshape(g, [-1]) for g, v in grads_and_vars], axis=0)
+            # This is not really an operation, but a list of gradient Tensors.
+            # When calling run() on it, the value of those Tensors
+            # (i.e., of the gradients) will be calculated
+            if args.clip_norm_type == 'ignore':
+                # Unclipped gradients
+                global_norm = tf.global_norm([g for g, v in grads_and_vars], name='global_norm')
+            elif args.clip_norm_type == 'global':
+                # Clip network grads by network norm
+                gradients_n_norm = tf.clip_by_global_norm(
+                    [g for g, v in grads_and_vars], args.clip_norm)
+                global_norm = tf.identity(gradients_n_norm[1], name='global_norm')
+                grads_and_vars = list(zip(gradients_n_norm[0], [v for g, v in grads_and_vars]))
+            elif args.clip_norm_type == 'local':
+                # Clip layer grads by layer norm
+                gradients = [tf.clip_by_norm(
+                    g, args.clip_norm) for g in grads_and_vars]
+                grads_and_vars = list(zip(gradients, [v for g, v in grads_and_vars]))
+                global_norm = tf.global_norm([g for g, v in grads_and_vars], name='global_norm')
+            else:
+                raise Exception('Norm type not recognized')
+            self.flat_clipped_gradients = tf.concat([tf.reshape(g, [-1]) for g, v in grads_and_vars], axis=0)
 
-        # This is not really an operation, but a list of gradient Tensors.
-        # When calling run() on it, the value of those Tensors
-        # (i.e., of the gradients) will be calculated
-        if args.clip_norm_type == 'ignore':
-            # Unclipped gradients
-            global_norm = tf.global_norm([g for g, v in grads_and_vars], name='global_norm')
-        elif args.clip_norm_type == 'global':
-            # Clip network grads by network norm
-            gradients_n_norm = tf.clip_by_global_norm(
-                [g for g, v in grads_and_vars], args.clip_norm)
-            global_norm = tf.identity(gradients_n_norm[1], name='global_norm')
-            grads_and_vars = list(zip(gradients_n_norm[0], [v for g, v in grads_and_vars]))
-        elif args.clip_norm_type == 'local':
-            # Clip layer grads by layer norm
-            gradients = [tf.clip_by_norm(
-                g, args.clip_norm) for g in grads_and_vars]
-            grads_and_vars = list(zip(gradients, [v for g, v in grads_and_vars]))
-            global_norm = tf.global_norm([g for g, v in grads_and_vars], name='global_norm')
-        else:
-            raise Exception('Norm type not recognized')
-        self.flat_clipped_gradients = tf.concat([tf.reshape(g, [-1]) for g, v in grads_and_vars], axis=0)
-
-        self.train_step = self.optimizer.apply_gradients(grads_and_vars)
+            self.train_step = self.optimizer.apply_gradients(grads_and_vars)
 
         config = tf.ConfigProto(allow_soft_placement = True)
         if 'gpu' in self.device:
@@ -84,6 +91,7 @@ class ActorLearner(Process):
             config.gpu_options.allow_growth = True
 
         self.session = tf.Session(config=config)
+        self.summary_writer = tf.summary.FileWriter(os.path.join(self.debugging_folder, 'tf'), self.session.graph)
 
         self.network_saver = tf.train.Saver()
 
@@ -96,6 +104,12 @@ class ActorLearner(Process):
         tf.summary.scalar('global_norm', global_norm)
         tf.summary.scalar('loss/loss', self.network.loss)
         tf.summary.scalar('loss/critic_loss_mean', self.network.critic_loss_mean)
+        tf.summary.scalar('loss/actor_objective_mean', self.network.actor_objective_mean)
+        tf.summary.scalar('loss/actor_advantage_mean', self.network.actor_advantage_mean)
+        tf.summary.scalar('loss/log_repetition_mean', self.network.log_repetition_mean)
+        for i in range(len(grads_and_vars)):
+            tf.summary.histogram('grads/grad-'+grads_and_vars[i][1].name[:-2], grads_and_vars[i][0])
+
 
     def save_vars(self, force=False):
         if force or self.global_step - self.last_saving_step >= self.checkpoint_interval:

@@ -4,8 +4,6 @@ import datetime
 import json
 import subprocess
 
-#on considere que le fichier .json a eventuellement été modifié
-
 def create_cmd(data, path):
     cmd = ("python3 train.py -g "+data["game"]+" -df "+path+"/"+
                 " --e "+str(data["e"])+
@@ -19,26 +17,23 @@ def create_cmd(data, path):
                 " --max_global_steps "+str(data["max_global_steps"])+
                 " --max_local_steps "+str(data["max_local_steps"])+
                 " --arch "+str(data["arch"])+
-                " --single_life_episodes "+str(data["single_life_episodes"])+
                 " -ec "+str(data["emulator_counts"])+
                 " -ew "+str(data["emulator_workers"])+
-                " -rs "+str(data["random_start"])+
-
-                " --egreedy "+str(data["egreedy"])+
                 " --epsilon "+str(data["epsilon"])+
                 " --softmax_temp "+str(data["softmax_temp"])+
-                " --use_dropout "+str(data["use_dropout"])+
-                " --annealed "+str(data["annealed"])+
+                " --annealed_steps "+str(data["annealed_steps"])+
                 " --keep_percentage "+str(data["keep_percentage"])+
-                " --pwyx_net "+str(data["pwyx_net"])+
-                " --play_in_colours "+str(data["play_in_colours"])+
-                " --entropy_ann_steps "+str(data["entropy_ann_steps"])+
-                " --random_actions "+str(data["random_actions"])+
-                " --nb_actions "+str(data["nb_actions"])+
-                " --oxygen_greedy "+str(data["oxygen_greedy"])+
-                " --proba_oxygen "+str(data["proba_oxygen"])+
-                " --nb_up_actions "+str(data["nb_up_actions"])+
                 " --emulator_name "+str(data["emulator_name"])))
+                " --max_repetition "+str(data["max_repetition"])+
+                " --nb_choices "+str(data["nb_choices"])+
+                " --checkpoint_interval "+str(data["checkpoint_interval"])+
+                " --activation "+str(data["activation"])+
+                " --alpha_leaky_relu "+str(data["alpha_leaky_relu"]))
+    if data["single_life_episodes"] : cmd += " --single_life_episodes"
+    if data["random_start"] : cmd += " --random_start"
+    if data["egreedy"] : cmd += " --egreedy"
+    if data["annealed"] : cmd += " --annealed"
+    if data["rgb"] : cmd += " --rgb"
     return cmd
 
 def create_chpt_cmd(args, path):
@@ -55,8 +50,6 @@ def main(args):
         subprocess.call(create_chpt_cmd(args, args.debugging_folder), shell = True)
         subprocess.call(create_cmd(data, args.debugging_folder), shell = True)
         subprocess.call(("touch "+args.debugging_folder+"/checkpoints_saved/STOP"), shell = True)
-
-
 
 def get_arg_parser():
     parser = argparse.ArgumentParser()

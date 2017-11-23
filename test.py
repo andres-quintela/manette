@@ -1,5 +1,5 @@
 import os
-from train import get_network_and_environment_creator, bool_arg
+from train import get_network_and_environment_creator
 import logger_utils
 import argparse
 import numpy as np
@@ -7,12 +7,10 @@ import time
 import tensorflow as tf
 import random
 from paac import PAACLearner
-from exploration_policy import ExplorationPolicy
-
+from exploration_policy import ExplorationPolicy, Action
 
 def get_save_frame(name):
     import imageio
-
     writer = imageio.get_writer(name + '.gif', fps=30)
 
     def get_frame(frame):
@@ -48,7 +46,7 @@ if __name__ == '__main__':
     rng = np.random.RandomState(int(time.time()))
     args.random_seed = rng.randint(1000)
 
-    explo_policy = ExplorationPolicy(args)
+    explo_policy = ExplorationPolicy(args, test = True)
     network_creator, env_creator = get_network_and_environment_creator(args, explo_policy)
     network = network_creator()
     saver = tf.train.Saver()
@@ -70,18 +68,25 @@ if __name__ == '__main__':
         if args.noops != 0:
             for i, environment in enumerate(environments):
                 for _ in range(random.randint(0, args.noops)):
-                    state, _, _ = environment.next(environment.get_noop())
+                    state, _, _ = environment.next(0)
                     states[i] = state
 
         episodes_over = np.zeros(args.test_count, dtype=np.bool)
         rewards = np.zeros(args.test_count, dtype=np.float32)
         while not all(episodes_over):
-            actions, _, _ = PAACLearner.choose_next_actions(network, env_creator.num_actions, states, sess)
+            actions, repetitions, _, _ = explo_policy.choose_next_actions(network, env_creator.num_actions, states, sess)
             for j, environment in enumerate(environments):
-                state, r, episode_over = environment.next(actions[j])
+                macro_action = Action(explo_policy.tab_rep, j, actions[j], repetitions[j])
+                state, r, episode_over = environment.next(macro_action.current_action)
                 states[j] = state
                 rewards[j] += r
                 episodes_over[j] = episode_over
+                while macro_action.is_repeated() and not episode_over :
+                    state, r, episode_over = environment.next(macro_action.repeat())
+                    states[j] = state
+                    rewards[j] += r
+                    episodes_over[j] = episode_over
+                macro_action.reset()
 
         print('Performed {} tests for {}.'.format(args.test_count, args.game))
         print('Mean: {0:.2f}'.format(np.mean(rewards)))

@@ -10,7 +10,8 @@ def create_cmd(args, f):
 
 def main(args):
     for f in os.listdir(args.folder):
-        subprocess.call(create_cmd(args, f), shell = True)
+        if f != 'gifs':
+            subprocess.call(create_cmd(args, f), shell = True)
 
 def get_arg_parser():
     parser = argparse.ArgumentParser()
