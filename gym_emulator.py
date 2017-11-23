@@ -32,8 +32,6 @@ class GymEmulator(BaseEnvironment):
         self.random_start = args.random_start
         self.single_life_episodes = args.single_life_episodes
         self.call_on_new_frame = args.visualize
-        self.random_actions = args.random_actions
-        self.nb_actions = args.nb_actions
         self.global_step = 0
 
         # Processed historcal frames that will be fed in to the network
@@ -65,6 +63,7 @@ class GymEmulator(BaseEnvironment):
         :return: the current frame
         """
         im = self.gym_env.render(mode='rgb_array')
+        print('SCREEN : '+str(im.shape))
         if self.rgb : self.rgb_screen = im
         else : self.gray_screen = self.rgb_to_gray(im)
 
@@ -80,12 +79,10 @@ class GymEmulator(BaseEnvironment):
 
     def __new_game(self):
         """ Restart game """
+        print('new game')
         self.gym_env.reset()
-        if self.random_actions > self.global_step :
-            for _ in range(self.nb_actions):
-                random_action = random.randint(0, len(self.legal_actions)-1)
-                self.gym_env.step(self.legal_actions[random_action])
-        elif self.random_start:
+        if self.random_start:
+            print('random start')
             wait = random.randint(0, MAX_START_WAIT)
             for _ in range(wait):
                 self.gym_env.step(self.legal_actions[0])
@@ -122,6 +119,7 @@ class GymEmulator(BaseEnvironment):
 
     def get_initial_state(self):
         """ Get the initial state """
+        print('get initial state')
         self.__new_game()
         for step in range(NR_IMAGES):
             _ , episode_over = self.__action_repeat(0)
@@ -132,6 +130,7 @@ class GymEmulator(BaseEnvironment):
 
     def next(self, action):
         """ Get the next state, reward, and game over signal """
+        print('next')
         reward, episode_over = self.__action_repeat(np.argmax(action))
         self.observation_pool.new_observation(self.frame_pool.get_processed_frame())
         observation = self.observation_pool.get_pooled_observations()

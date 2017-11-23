@@ -44,14 +44,12 @@ class ActorLearner(Process):
         self.emulator_name = args.emulator_name
         if self.emulator_name == "GYM" :
             with open("gym_game_info.json", 'r') as d :
+                data = json.load(d)
                 self.game_info  = data[self.game]
                 self.checkpoint_interval = self.game_info["interval_checkpoint"]
         else :
             self.checkpoint_interval = 1000000
 
-        # Optimizer
-        grads_and_vars = self.optimizer.compute_gradients(self.network.loss)
-                data = json.load(d)
         with tf.name_scope('Optimizer'):
             self.learning_rate = tf.placeholder(tf.float32, shape=[], name='lr')
             # Optimizer

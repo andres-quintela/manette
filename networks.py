@@ -125,12 +125,13 @@ class Network(object):
         if self.rgb : self.depth = 3
         self.op = Operations(conf)
         self.total_repetitions = conf['nb_choices']
+        self.NB_IMAGES = 4
 
         with tf.device(self.device):
             with tf.name_scope('Input'):
                 self.loss_scaling = 5.0
 
-                self.input_ph = tf.placeholder(tf.uint8, [None, 84, 84, self.depth* 4], name='input')
+                self.input_ph = tf.placeholder(tf.uint8, [None, 84, 84, self.depth* self.NB_IMAGES], name='input')
                 self.selected_action_ph = tf.placeholder("float32", [None, self.num_actions], name="selected_action")
                 self.selected_repetition_ph = tf.placeholder("float32", [None, self.total_repetitions], name="selected_repetition")
                 self.input = tf.scalar_mul(1.0/255.0, tf.cast(self.input_ph, tf.float32))
@@ -163,7 +164,7 @@ class NIPSNetwork(Network):
 
         with tf.device(self.device):
             with tf.name_scope('Network'):
-                w_conv1, b_conv1, conv1 = self.op.conv2d('conv1', self.input, 16, 8, self.depth*4, 4, activation = self.activation)
+                w_conv1, b_conv1, conv1 = self.op.conv2d('conv1', self.input, 16, 8, self.depth*self.NB_IMAGES, 4, activation = self.activation)
 
                 w_conv2, b_conv2, conv2 = self.op.conv2d('conv2', conv1, 32, 4, 16, 2, activation = self.activation)
 
@@ -192,7 +193,7 @@ class PpwwyyxxNetwork(Network):
         with tf.device(self.device):
             with tf.name_scope('Network'):
 
-                _, _, conv1 = self.op.conv2d('conv1', self.input, 32, 5, self.depth * 4, 1, padding = 'SAME', activation = self.activation)
+                _, _, conv1 = self.op.conv2d('conv1', self.input, 32, 5, self.depth * self.NB_IMAGES, 1, padding = 'SAME', activation = self.activation)
                 mp_conv1 = self.op.max_pooling('mp_conv1', conv1)
                 _, _, conv2 = self.op.conv2d('conv2', mp_conv1, 32, 5, 32, 1, padding = 'SAME', activation = self.activation)
                 mp_conv2 = self.op.max_pooling('mp_conv2', conv2)
@@ -213,7 +214,7 @@ class NatureNetwork(Network):
 
         with tf.device(self.device):
             with tf.name_scope('Network'):
-                _, _, conv1 = self.op.conv2d('conv1', self.input, 32, 8, self.depth*4, 4, activation = self.activation)
+                _, _, conv1 = self.op.conv2d('conv1', self.input, 32, 8, self.depth*self.NB_IMAGES, 4, activation = self.activation)
 
                 _, _, conv2 = self.op.conv2d('conv2', conv1, 64, 4, 32, 2, activation = self.activation)
 

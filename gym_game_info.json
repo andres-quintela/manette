@@ -1,16 +1,4 @@
 {
-  "Breakout-v0" : {
-    "screen_width" : 160,
-    "screen_height" : 210,
-    "crop" : false,
-    "interval_checkpoint" : 1000000
-  },
-  "Pong-v0" : {
-    "screen_width" : 160,
-    "screen_height" : 210,
-    "crop" : false,
-    "interval_checkpoint" : 1000000
-  },
   "FlappyBird-v0" : {
     "screen_width" : 288,
     "screen_height" : 512,
@@ -18,5 +6,25 @@
     "crop_width" : 288,
     "crop_height" : 410,
     "interval_checkpoint" : 100000
+  },
+  "CartPole-v0" : {
+    "screen_width" : 600,
+    "screen_height" : 400,
+    "crop" : false,
+    "interval_checkpoint" : 100000,
+    "nb_actions" : "WTF"
+  },
+  "MountainCar-v0" : {
+    "screen_width" : 600,
+    "screen_height" : 400,
+    "crop" : false,
+    "interval_checkpoint" : 100000,
+    "nb_actions" : "WTF"
+  },
+  "Catcher-v0" : {
+    "screen_width" : 64,
+    "screen_height" : 64,
+    "crop" : false,
+    "interval_checkpoint" : 100000
   }
-}
+  }

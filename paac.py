@@ -122,8 +122,6 @@ class PAACLearner(ActorLearner):
             total_action_rep = np.zeros((self.num_actions, self.total_repetitions))
             nb_actions = 0
 
-            print("step : "+str(self.global_step))
-
             max_local_steps = self.max_local_steps
             for t in range(max_local_steps):
 
@@ -133,6 +131,7 @@ class PAACLearner(ActorLearner):
                     feed_dict={self.network.input_ph: shared_states})
                 new_actions, new_repetitions = self.explo_policy.choose_next_actions(readouts_pi_t, readouts_rep_t, self.num_actions)
 
+                print('action : '+str(new_actions))
                 actions_sum += new_actions
 
                 for e in range(self.emulator_counts) :
@@ -166,8 +165,11 @@ class PAACLearner(ActorLearner):
                     a = np.argmax(new_actions[e])
                     r = np.argmax(new_repetitions[e])
                     total_action_rep[a][r] += 1
+                    print('score : '+str(total_episode_rewards[e]))
 
                     if episode_over:
+                        print('GAME OVER')
+                        print('score : '+str(total_episode_rewards[e]))
                         total_rewards.append(total_episode_rewards[e])
                         total_steps.append(emulator_steps[e])
                         episode_summary = tf.Summary(value=[

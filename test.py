@@ -74,7 +74,10 @@ if __name__ == '__main__':
         episodes_over = np.zeros(args.test_count, dtype=np.bool)
         rewards = np.zeros(args.test_count, dtype=np.float32)
         while not all(episodes_over):
-            actions, repetitions, _, _ = explo_policy.choose_next_actions(network, env_creator.num_actions, states, sess)
+            readouts_v_t, readouts_pi_t, readouts_rep_t = sess.run(
+                [network.output_layer_v, network.output_layer_pi, network.output_layer_rep],
+                feed_dict={network.input_ph: states})
+            actions, repetitions = explo_policy.choose_next_actions(readouts_pi_t, readouts_rep_t, env_creator.num_actions)
             for j, environment in enumerate(environments):
                 macro_action = Action(explo_policy.tab_rep, j, actions[j], repetitions[j])
                 state, r, episode_over = environment.next(macro_action.current_action)

@@ -72,7 +72,7 @@ class ObservationPool(object):
 
     def get_pooled_observations(self):
         pooled_obs = np.copy(self.observation_pool[:, :, :, self.permutation[self.current_observation_index]])
-        reshaped_obs = np.reshape(pooled_obs, (84, 84, self.depth * 4))
+        reshaped_obs = np.reshape(pooled_obs, (84, 84, self.depth * self.pool_size))
         return reshaped_obs
 
     def __shift(self, seq, n):
