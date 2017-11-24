@@ -13,7 +13,7 @@ IMG_SIZE_X = 84
 IMG_SIZE_Y = 84
 NR_IMAGES = 4
 ACTION_REPEAT = 4
-MAX_START_WAIT = 30
+MAX_START_WAIT = 20
 FRAMES_IN_POOL = 2
 
 class GymEmulator(BaseEnvironment):
@@ -63,7 +63,7 @@ class GymEmulator(BaseEnvironment):
         :return: the current frame
         """
         im = self.gym_env.render(mode='rgb_array')
-        print('SCREEN : '+str(im.shape))
+        #print('SCREEN : '+str(im.shape))
         if self.rgb : self.rgb_screen = im
         else : self.gray_screen = self.rgb_to_gray(im)
 
