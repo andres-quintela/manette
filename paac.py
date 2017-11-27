@@ -123,8 +123,6 @@ class PAACLearner(ActorLearner):
             memory_length = self.n_steps + self.max_local_steps - 1
             memory = np.zeros(([self.emulator_counts, memory_length]+list(shared_states.shape)[1:]), dtype=np.float32)
             reshaper = Reshaper(self.device, self.n_steps, self.emulator_counts, self.depth, self.max_local_steps)
-            print(reshaper)
-            print(reshaper.output_update)
             print('memory : '+str(memory.shape))
             for e in range(self.emulator_counts) :
                 memory[e, 0, :, :, :] = shared_states[e]
@@ -174,7 +172,6 @@ class PAACLearner(ActorLearner):
                     new_actions, new_repetitions = self.explo_policy.choose_next_actions(readouts_pi_t, readouts_rep_t, self.num_actions)
                 else :
                     print('session run')
-                    print(memory[:,:self.n_steps, :, :, :].shape)
                     readouts_v_t, readouts_pi_t, readouts_rep_t = self.session.run(
                         [self.network.output_layer_v, self.network.output_layer_pi, self.network.output_layer_rep],
                         feed_dict={self.network.memory_ph: memory[:,:self.n_steps, :, :, :]})
@@ -209,7 +206,7 @@ class PAACLearner(ActorLearner):
                     memory = np.array(new_memory)
                     #memory = self.update_memory(memory, shared_states)
                 time_measures[1].append(time.time()-s_time)
-                    
+
                 episodes_over_masks[t] = 1.0 - shared_episode_over.astype(np.float32)
 
                 print('update things')
@@ -244,7 +241,7 @@ class PAACLearner(ActorLearner):
                         actions_sum[e] = np.zeros(self.num_actions)
 
                 time_measures[2].append(time.time()-s_time)
-                
+
             #plot output of conv layers
             if not self.lstm_bool :
                 if counter % (2048 / self.emulator_counts) == 0:
@@ -267,7 +264,7 @@ class PAACLearner(ActorLearner):
                     self.summary_writer.flush()
 
             s_time=time.time()
-            
+
             if self.lstm_bool :
                 nest_state_value = self.session.run(
                      self.network.output_layer_v, feed_dict={self.network.memory_ph: memory[:,:self.n_steps,:,:,:] })
@@ -308,7 +305,7 @@ class PAACLearner(ActorLearner):
             else :
                 feed_dict[self.network.input_ph] = flat_states
             time_measures[4].append(time.time()-s_time)
-            
+
             print('session run train')
             s_time=time.time()
             _, summaries = self.session.run(

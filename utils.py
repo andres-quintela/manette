@@ -14,17 +14,15 @@ class Reshaper():
 
         with tf.device(device):
             self.input_ph = tf.placeholder(tf.int32, [emulator_count, n_steps + max_local_steps- 1, 84, 84, depth*4], name='input')
-            
+
             with tf.name_scope('Updater'):
                 self.states_ph = tf.placeholder(tf.int32, [emulator_count, 84, 84, depth*4], name='new_states')
                 states = tf.expand_dims(self.states_ph, 1)
-                print('states : '+str(states.shape))
-                print('input : '+str(self.input_ph[:,:-1,:,:,:]))
                 self.output_update = tf.concat([states, self.input_ph[:,:-1,:,:,:]], axis=1)
 
             with tf.name_scope('Flater'):
                 self.output_flat = 0
-                
+
 
 
 def get_grid_dim(x):
