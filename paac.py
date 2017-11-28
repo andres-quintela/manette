@@ -202,9 +202,9 @@ class PAACLearner(ActorLearner):
                 s_time = time.time()
                 if self.lstm_bool :
                     print('update memory')
-                    new_memory = self.session.run(reshaper.output_update, feed_dict={reshaper.input_ph : memory, reshaper.states_ph : shared_states})
-                    memory = np.array(new_memory)
-                    #memory = self.update_memory(memory, shared_states)
+                    #new_memory = self.session.run(reshaper.output_update, feed_dict={reshaper.input_ph : memory, reshaper.states_ph : shared_states})
+                    #memory = np.array(new_memory)
+                    memory = self.update_memory(memory, shared_states)
                 time_measures[1].append(time.time()-s_time)
 
                 episodes_over_masks[t] = 1.0 - shared_episode_over.astype(np.float32)
@@ -236,7 +236,6 @@ class PAACLearner(ActorLearner):
                         total_episode_rewards[e] = 0
                         emulator_steps[e] = 0
                         if self.lstm_bool :
-                            print('game over, memory[:, e, :, :, :] shape : '+str(memory[:, e, :, :, :].shape))
                             memory[e] = np.zeros(([memory_length]+list(shared_states.shape)[1:]), dtype=np.float32)
                         actions_sum[e] = np.zeros(self.num_actions)
 
