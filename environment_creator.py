@@ -8,7 +8,7 @@ class EnvironmentCreator(object):
         Creates an object from which new environments can be created
         :param args:
         """
-        if args.game == 'tetris' :
+        if args.game.lower() == 'tetris' :
             from tetris_emulator import TetrisEmulator
             self.num_actions = 5
             self.create_environment = lambda i: TetrisEmulator(i, args)

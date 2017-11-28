@@ -3,6 +3,10 @@ This repository contains an open source implementation of the PAAC algorithm pre
 
 PAAC is a conceptually simple advantage actor-critic algorithm designed to run efficiently on a GPU, offering A3C like performance in under 12 hours of training. When adding FiGAR, the agent can explore more possibilities and achieve higher scores with a better motion control.
 
+# Branch : Other Games !
+
+This experimental branch contains other games that you can play with. Feel free to add yours and have fun !
+
 ![breakout gif](readme_files/Breakout-FiGAR10.gif "Breakout")
 ![mspacman gif](readme_files/MsPacman-FiGAR10.gif "MsPacman")
 ![space invaders gif](readme_files/Space_Invaders-FiGAR10.gif "Space Invaders")
@@ -17,21 +21,20 @@ PAAC is a conceptually simple advantage actor-critic algorithm designed to run e
 * cython (pip3 package)
 * scikit-image (pip3 package)
 * python3-tk
+* [Open AI Gym](https://github.com/openai/gym)
 
 # Training the agent
 To train an agent to play Pong, for example, run : ```python3 train.py -g pong -df logs/test_pong```.
 
-For Pong, the agent will begin to learn after about 4 million steps, and will learn an optimal policy after about 15 million steps.
-
-![pong learning graph](readme_files/Pong_learning.png "Pong")
-
 Training can be stopped (using Ctrl+c) and then resumed by running ```python3 train.py -g pong -df logs/test_pong```.
 
-On a setup with an [Intel i7-4790k](http://ark.intel.com/products/80807/Intel-Core-i7-4790K-Processor-8M-Cache-up-to-4_40-GHz) CPU and an [Nvidia GTX 980 Ti](http://www.geforce.com/hardware/desktop-gpus/geforce-gtx-980-ti) GPU with default settings and NIPS neural network (see below), you can expect around 3000 timesteps (global steps) per second.
-Training for 80 million timesteps requires under 8 hours.
+## Training with other games
+Just change the name of the game that you want to play, with the ```-g``` option.
 
-When using a more demanding neural network, the training can slow down to 1000 steps per second and if you add FiGAR it can go down to 300 steps per second.
-
+Currently these games are available :
+* All the Atari games
+* Some Open AI Gym games : FlappyBird-v0, CartPole-v0, MountainCar-v0, Catcher-v0, MonsterKong-v0, RaycastMaze-v0, Snake-v0 .
+* Tetris ! You can even play the game yourself by running ```python3 tetris.py```.
 
 ## Visualizing training
 1. Open a new terminal
@@ -40,17 +43,8 @@ When using a more demanding neural network, the training can slow down to 1000 s
 
 Many graphs are already available (rewards per episode, length of episode, steps per second, loss, ...) and you can easily add yours.
 
-
 # Testing the agent
 To test the performance of a trained agent run ```python3 test.py -f logs/test_pong -tc 5```.
-Output:
-```
-Performed 5 tests for pong.
-Mean: 19.70
-Min: 17.00
-Max: 21.00
-Std: 0.97
-```
 
 ## Generating gifs
 Gifs can be generated from stored network weights. For example a gif of the agent playing breakout can be generated with
@@ -58,10 +52,6 @@ Gifs can be generated from stored network weights. For example a gif of the agen
 python3 test.py -f pretrained/breakout/ -gn breakout
 ```
 This may take a few minutes.
-
-## Pretrained models
-Pretrained models for some games can be found [here](pretrained).
-These models can be used as starting points for training on the same game, other games, or to generate gifs.
 
 # Training options
 
