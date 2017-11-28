@@ -23,7 +23,6 @@ def create_cmd(data, path):
                 " --softmax_temp "+str(data["softmax_temp"])+
                 " --annealed_steps "+str(data["annealed_steps"])+
                 " --keep_percentage "+str(data["keep_percentage"])+
-                " --emulator_name "+str(data["emulator_name"])))
                 " --max_repetition "+str(data["max_repetition"])+
                 " --nb_choices "+str(data["nb_choices"])+
                 " --checkpoint_interval "+str(data["checkpoint_interval"])+

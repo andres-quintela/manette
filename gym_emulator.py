@@ -79,10 +79,8 @@ class GymEmulator(BaseEnvironment):
 
     def __new_game(self):
         """ Restart game """
-        print('new game')
         self.gym_env.reset()
         if self.random_start:
-            print('random start')
             wait = random.randint(0, MAX_START_WAIT)
             for _ in range(wait):
                 self.gym_env.step(self.legal_actions[0])
@@ -119,7 +117,6 @@ class GymEmulator(BaseEnvironment):
 
     def get_initial_state(self):
         """ Get the initial state """
-        print('get initial state')
         self.__new_game()
         for step in range(NR_IMAGES):
             _ , episode_over = self.__action_repeat(0)
@@ -130,7 +127,6 @@ class GymEmulator(BaseEnvironment):
 
     def next(self, action):
         """ Get the next state, reward, and game over signal """
-        print('next')
         reward, episode_over = self.__action_repeat(np.argmax(action))
         self.observation_pool.new_observation(self.frame_pool.get_processed_frame())
         observation = self.observation_pool.get_pooled_observations()

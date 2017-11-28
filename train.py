@@ -114,7 +114,6 @@ def get_arg_parser():
     parser.add_argument('--checkpoint_interval', default=1000000, type=int, help="Interval of steps btw checkpoints", dest="checkpoint_interval")
     parser.add_argument('--activation', default='relu', type=str, help="activation function for the network", dest="activation")
     parser.add_argument('--alpha_leaky_relu', default=0.1, type=float, help="coef for leaky relu", dest="alpha_leaky_relu")
-    parser.add_argument('--emulator_name', default='ALE', type=str, help="Name of the emulator to use : ALE or GYM", dest="emulator_name")
 
     return parser
 

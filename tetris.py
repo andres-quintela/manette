@@ -240,7 +240,7 @@ class TetrisApp(object):
 
 	def drop(self, manual):
 		if not self.gameover and not self.paused:
-			#self.score += 1 if manual else 0
+			#self.score += 1 if manual else 0   #give a point each time we hit 'drop'
 			self.stone_y += 1
 			if check_collision(self.board,
 			                   self.stone,
@@ -381,15 +381,12 @@ Press space to continue""" % self.score)
 
 			for event in pygame.event.get():
 				if event.type == pygame.USEREVENT+1:
-					print('userevent')
 					self.drop(False)
 				elif event.type == pygame.QUIT:
 					self.quit()
 				elif event.type == pygame.KEYDOWN:
-					print('keydown')
 					for key in key_actions:
-						if event.key == eval("pygame.K_"
-						+key):
+						if event.key == eval("pygame.K_"+key):
 							key_actions[key]()
 
 			dont_burn_my_cpu.tick(maxfps)
