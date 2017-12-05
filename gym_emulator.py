@@ -12,7 +12,7 @@ import json
 IMG_SIZE_X = 84
 IMG_SIZE_Y = 84
 NR_IMAGES = 4
-ACTION_REPEAT = 4
+ACTION_REPEAT = 2
 MAX_START_WAIT = 20
 FRAMES_IN_POOL = 2
 
@@ -39,11 +39,8 @@ class GymEmulator(BaseEnvironment):
         self.rgb = args.rgb
         self.depth = 1
         if self.rgb : self.depth = 3
-        #self.observation_pool = ObservationPool(np.zeros((IMG_SIZE_X, IMG_SIZE_Y, NR_IMAGES), dtype=np.uint8), self.rgb)
         self.rgb_screen = np.zeros((self.screen_height, self.screen_width, 3), dtype=np.uint8)
         self.gray_screen = np.zeros((self.screen_height, self.screen_width,1), dtype=np.uint8)
-        #self.frame_pool = FramePool(np.empty((2, self.screen_height,self.screen_width), dtype=np.uint8),
-        #                            self.__process_frame_pool)
         self.frame_pool = FramePool(np.empty((2, self.screen_height,self.screen_width, self.depth), dtype=np.uint8),
                                         self.__process_frame_pool)
         self.observation_pool = ObservationPool(np.zeros((IMG_SIZE_X, IMG_SIZE_Y, self.depth, NR_IMAGES), dtype=np.uint8), self.rgb)
@@ -127,7 +124,7 @@ class GymEmulator(BaseEnvironment):
 
     def next(self, action):
         """ Get the next state, reward, and game over signal """
-        reward, episode_over = self.__action_repeat(np.argmax(action))
+        reward, episode_over = self.__action_repeat(action)
         self.observation_pool.new_observation(self.frame_pool.get_processed_frame())
         observation = self.observation_pool.get_pooled_observations()
         self.global_step += 1
