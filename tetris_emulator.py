@@ -46,12 +46,11 @@ class TetrisEmulator(BaseEnvironment):
 
     def __get_screen_image(self):
         """ Get the current frame luminance. Return: the current frame """
-        fucking_name = 'img'+str(self.compteur)+'.jpg'
-        self.gray_screen = self.tetris.getScreen(fucking_name, rgb=False)
+        self.gray_screen = self.tetris.getScreen(rgb=False)
         if self.rgb :
-            self.rgb_screen = self.tetris.getScreen(fucking_name)
+            self.rgb_screen = self.tetris.getScreen()
         if self.call_on_new_frame:
-            self.rgb_screen = self.tetris.getScreen(fucking_name)
+            self.rgb_screen = self.tetris.getScreen()
             self.on_new_frame(self.rgb_screen)
         self.compteur += 1
         if self.rgb :
@@ -74,7 +73,7 @@ class TetrisEmulator(BaseEnvironment):
         """ Preprocess frame pool """
         img = np.amax(frame_pool, axis=0)
         if not self.rgb :
-            img = np.reshape(img, (210, 160))
+            img = np.reshape(img, (self.screen_height, self.screen_width))
         img = imresize(img, (84, 84), interp='nearest')
         img = img.astype(np.uint8)
         if not self.rgb :
@@ -90,10 +89,8 @@ class TetrisEmulator(BaseEnvironment):
         for i in range(FRAMES_IN_POOL):
             reward += self.tetris.act(a)
             img = self.__get_screen_image()
-            # print('DEPTH : '+str(self.depth))
-            # print('img : '+str(img.shape))
-            # #truc = np.array(img[:,:,0])
-            # imsave('actionrepeat.jpg', img)
+            if not self.rgb :
+                img = np.reshape(img, (self.screen_height, self.screen_width, 1))
             self.frame_pool.new_frame(img)
         return reward
 

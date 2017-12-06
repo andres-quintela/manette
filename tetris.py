@@ -240,7 +240,7 @@ class TetrisApp(object):
 
 	def drop(self, manual):
 		if not self.gameover and not self.paused:
-			#self.score += 1 if manual else 0   #give a point each time we hit 'drop'
+			self.score += 1 if manual else 0   #give a point each time we hit 'drop'
 			self.stone_y += 1
 			if check_collision(self.board,
 			                   self.stone,
@@ -288,8 +288,7 @@ class TetrisApp(object):
 			self.init_game()
 			self.gameover = False
 
-	def getScreen(self, name, rgb=True):
-		#pygame.image.save(self.screen, name)
+	def getScreen(self, rgb=True):
 		if rgb :
 			img = pygame.surfarray.array3d(self.screen)
 			img = np.transpose(img, (1, 0, 2))
