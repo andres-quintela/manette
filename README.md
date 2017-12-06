@@ -7,11 +7,11 @@ PAAC is a conceptually simple advantage actor-critic algorithm designed to run e
 
 This experimental branch contains other games that you can play with. Feel free to add yours and have fun !
 
-![breakout gif](readme_files/Breakout-FiGAR10.gif "Breakout")
-![mspacman gif](readme_files/MsPacman-FiGAR10.gif "MsPacman")
-![space invaders gif](readme_files/Space_Invaders-FiGAR10.gif "Space Invaders")
-![seaquest gif](readme_files/Seaquest-FiGAR10.gif "Seaquest")
-![pong gif](readme_files/Pong-FiGAR10-LSTM.gif "Pong")
+![catcher gif](readme_files/Catcher.gif "Catcher")
+![flappyBird gif](readme_files/FlappyBird.gif "FlappyBird")
+![monsterKong gif](readme_files/MonsterKong.gif "MonsterKong")
+![snake gif](readme_files/Snake.gif "Snake")
+![tetris gif](readme_files/Tetris.gif "Tetris")
 
 
 # Requirements
