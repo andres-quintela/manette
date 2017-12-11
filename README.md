@@ -3,11 +3,11 @@ This repository contains an open source implementation of the PAAC algorithm pre
 
 PAAC is a conceptually simple advantage actor-critic algorithm designed to run efficiently on a GPU, offering A3C like performance in under 12 hours of training. When adding FiGAR, the agent can explore more possibilities and achieve higher scores with a better motion control.
 
-![breakout gif](readme_files/Breakout-FiGAR10.gif "Breakout")
-![mspacman gif](readme_files/MsPacman-FiGAR10.gif "MsPacman")
-![space invaders gif](readme_files/Space_Invaders-FiGAR10.gif "Space Invaders")
-![seaquest gif](readme_files/Seaquest-FiGAR10.gif "Seaquest")
-![pong gif](readme_files/Pong-FiGAR10-LSTM.gif "Pong")
+![breakout gif](readme_files/Breakout.gif "Breakout")
+![mspacman gif](readme_files/MsPacman.gif "MsPacman")
+![space invaders gif](readme_files/Space_Invaders.gif "Space Invaders")
+![seaquest gif](readme_files/Seaquest.gif "Seaquest")
+![pong gif](readme_files/Pong.gif "Pong")
 
 
 # Requirements
