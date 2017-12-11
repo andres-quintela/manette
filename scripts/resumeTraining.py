@@ -5,7 +5,7 @@ import json
 import subprocess
 
 def create_cmd(data, path):
-    cmd = ("python3 train.py -g "+data["game"]+" -df "+path+"/"+
+    cmd = ("python3 train.py -g "+data["game"]+" -df "+path+
                 " --e "+str(data["e"])+
                 " --alpha "+str(data["alpha"])+
                 " -lr "+str(data["initial_lr"])+
