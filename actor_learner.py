@@ -88,14 +88,14 @@ class ActorLearner(Process):
         # Summaries
         variable_summaries(self.flat_raw_gradients, 'raw_gradients')
         variable_summaries(self.flat_clipped_gradients, 'clipped_gradients')
-        tf.summary.scalar('global_norm', global_norm)
+        #tf.summary.scalar('global_norm', global_norm)
         tf.summary.scalar('loss/loss', self.network.loss)
-        tf.summary.scalar('loss/critic_loss_mean', self.network.critic_loss_mean)
-        tf.summary.scalar('loss/actor_objective_mean', self.network.actor_objective_mean)
-        tf.summary.scalar('loss/actor_advantage_mean', self.network.actor_advantage_mean)
-        tf.summary.scalar('loss/log_repetition_mean', self.network.log_repetition_mean)
-        for i in range(len(grads_and_vars)):
-            tf.summary.histogram('grads/grad-'+grads_and_vars[i][1].name[:-2], grads_and_vars[i][0])
+        #tf.summary.scalar('loss/critic_loss_mean', self.network.critic_loss_mean)
+        #tf.summary.scalar('loss/actor_objective_mean', self.network.actor_objective_mean)
+        #tf.summary.scalar('loss/actor_advantage_mean', self.network.actor_advantage_mean)
+        #tf.summary.scalar('loss/log_repetition_mean', self.network.log_repetition_mean)
+        #for i in range(len(grads_and_vars)):
+        #    tf.summary.histogram('grads/grad-'+grads_and_vars[i][1].name[:-2], grads_and_vars[i][0])
 
 
     def save_vars(self, force=False):

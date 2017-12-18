@@ -78,23 +78,11 @@ class PAACLearner(ActorLearner):
             self.summary_writer.add_summary(summary, self.global_step)
             self.summary_writer.flush()
 
-    def update_memory(self, memory, shared_states):
-        print('l1')
-        res = np.roll(memory, 1, axis=1)
-        print('l2')
-        res[:, 0, :, :, :] = shared_states
-        return res
-
-    def get_flat_memories(self, memory):
-        print('fl1')
-        mem = np.zeros([self.max_local_steps, self.emulator_counts, self.n_steps]+list(memory.shape)[-3:])
-        print('fl2')
-        for t in range(self.max_local_steps):
-            temp = self.max_local_steps-t-1
-            mem[t] = memory[:,temp:temp+self.n_steps, :, :, : ]
-        print('fl3')
-        res = mem.reshape([self.max_local_steps * self.emulator_counts, self.n_steps,memory.shape[-3],memory.shape[-2],memory.shape[-1]])
-        return res
+    def update_memory(self, memory, shared_states, whole_memory, t):
+        whole_memory[t] = memory
+        memory[:, :-1, :, :, :] = memory[:, 1:, :, :, :]
+        memory[:, -1, :, :, :] = shared_states
+        return memory, whole_memory
 
 
     def train(self):
@@ -120,12 +108,10 @@ class PAACLearner(ActorLearner):
         shared_states, shared_rewards, shared_episode_over, shared_actions, shared_rep = self.runners.get_shared_variables()
         if self.lstm_bool :
             self.n_steps = 5
-            memory_length = self.n_steps + self.max_local_steps - 1
-            memory = np.zeros(([self.emulator_counts, memory_length]+list(shared_states.shape)[1:]), dtype=np.float32)
-            reshaper = Reshaper(self.device, self.n_steps, self.emulator_counts, self.depth, self.max_local_steps)
-            print('memory : '+str(memory.shape))
+            memory = np.zeros(([self.emulator_counts, self.n_steps]+list(shared_states.shape)[1:]), dtype=np.uint8)
+            whole_memory = np.zeros(([self.max_local_steps, self.emulator_counts, self.n_steps]+list(shared_states.shape)[1:]), dtype=np.uint8)
             for e in range(self.emulator_counts) :
-                memory[e, 0, :, :, :] = shared_states[e]
+                memory[e, -1, :, :, :] = shared_states[e] 
 
 
         summaries_op = tf.summary.merge_all()
@@ -145,40 +131,28 @@ class PAACLearner(ActorLearner):
 
         start_time = time.time()
 
-        time_labels = ['choose_actions','update_memory','update_things','nest_state_value','flat_memories','train']
-        time_measures = [[] for i in time_labels]
-
         while self.global_step < self.max_global_steps:
             print('step : '+str(self.global_step))
-            if len(time_measures[-1]) > 0:
-                mean_time = [np.mean(time_measures[i]) for i in range(len(time_labels))]
-                print(time_labels)
-                print(mean_time)
-
+                
             loop_start_time = time.time()
             total_action_rep = np.zeros((self.num_actions, self.total_repetitions))
             nb_actions = 0
 
+
             max_local_steps = self.max_local_steps
             for t in range(max_local_steps):
-                print('local step : '+str(t))
 
                 #Choose actions and repetitions for each emulator
-                s_time = time.time()
                 if not self.lstm_bool :
                     readouts_v_t, readouts_pi_t, readouts_rep_t = self.session.run(
                         [self.network.output_layer_v, self.network.output_layer_pi, self.network.output_layer_rep],
                         feed_dict={self.network.input_ph: shared_states})
                     new_actions, new_repetitions = self.explo_policy.choose_next_actions(readouts_pi_t, readouts_rep_t, self.num_actions)
                 else :
-                    print('session run')
                     readouts_v_t, readouts_pi_t, readouts_rep_t = self.session.run(
                         [self.network.output_layer_v, self.network.output_layer_pi, self.network.output_layer_rep],
-                        feed_dict={self.network.memory_ph: memory[:,:self.n_steps, :, :, :]})
-                    print('explo policy')
+                        feed_dict={self.network.memory_ph: memory})
                     new_actions, new_repetitions = self.explo_policy.choose_next_actions(readouts_pi_t, readouts_rep_t, self.num_actions)
-                    print('end choose actions')
-                time_measures[0].append(time.time()-s_time)
 
                 actions_sum += new_actions
 
@@ -199,18 +173,11 @@ class PAACLearner(ActorLearner):
                 self.runners.wait_updated()
                 # Done updating all environments, have new states, rewards and is_over
 
-                s_time = time.time()
                 if self.lstm_bool :
-                    print('update memory')
-                    new_memory = self.session.run(reshaper.output_update, feed_dict={reshaper.input_ph : memory, reshaper.states_ph : shared_states})
-                    memory = np.array(new_memory)
-                    #memory = self.update_memory(memory, shared_states)
-                time_measures[1].append(time.time()-s_time)
+                    memory, whole_memory = self.update_memory(memory, shared_states, whole_memory, t)
 
                 episodes_over_masks[t] = 1.0 - shared_episode_over.astype(np.float32)
 
-                print('update things')
-                s_time = time.time()
                 for e, (actual_reward, episode_over) in enumerate(zip(shared_rewards, shared_episode_over)):
                     total_episode_rewards[e] += actual_reward
                     actual_reward = self.rescale_reward(actual_reward)
@@ -236,56 +203,48 @@ class PAACLearner(ActorLearner):
                         total_episode_rewards[e] = 0
                         emulator_steps[e] = 0
                         if self.lstm_bool :
-                            print('game over, memory[:, e, :, :, :] shape : '+str(memory[:, e, :, :, :].shape))
-                            memory[e] = np.zeros(([memory_length]+list(shared_states.shape)[1:]), dtype=np.float32)
+                            memory[e] = np.zeros(([self.n_steps]+list(shared_states.shape)[1:]), dtype=np.float32)
                         actions_sum[e] = np.zeros(self.num_actions)
 
-                time_measures[2].append(time.time()-s_time)
 
             #plot output of conv layers
-            if not self.lstm_bool :
-                if counter % (2048 / self.emulator_counts) == 0:
-                    if not self.lstm_bool :
-                        conv1, conv2 = self.session.run(
-                            [self.network.first_conv,self.network.last_conv],
-                            feed_dict= {self.network.input_ph: shared_states})
-                    else :
-                        conv1, conv2 = self.session.run(
-                            [self.network.first_conv, self.network.last_conv],
-                            feed_dict= {self.network.memory_ph: memory[:,:self.n_steps,:,:,:]})
-                    img1 = tf.expand_dims(tf.transpose(conv1[0], [2,0,1]), -1)
-                    img2 = tf.expand_dims(tf.transpose(conv2[0], [2,0,1]), -1)
-                    sum1 = tf.summary.image('first_conv', img1, 1)
-                    sum2 = tf.summary.image('last_conv', img2, 1)
-                    real_sum1 = self.session.run(sum1)
-                    real_sum2 = self.session.run(sum2)
-                    self.summary_writer.add_summary(real_sum1)
-                    self.summary_writer.add_summary(real_sum2)
-                    self.summary_writer.flush()
+            #if not self.lstm_bool :
+            #    if counter % (2048 / self.emulator_counts) == 0:
+            #        if not self.lstm_bool :
+            #            conv1, conv2 = self.session.run(
+            #                [self.network.first_conv,self.network.last_conv],
+            #                feed_dict= {self.network.input_ph: shared_states})
+            #        else :
+            #            conv1, conv2 = self.session.run(
+            #                [self.network.first_conv, self.network.last_conv],
+            #                feed_dict= {self.network.memory_ph: memory[:,:self.n_steps,:,:,:]})
+            #        img1 = tf.expand_dims(tf.transpose(conv1[0], [2,0,1]), -1)
+            #        img2 = tf.expand_dims(tf.transpose(conv2[0], [2,0,1]), -1)
+            #        sum1 = tf.summary.image('first_conv', img1, 1)
+            #        sum2 = tf.summary.image('last_conv', img2, 1)
+            #        real_sum1 = self.session.run(sum1)
+            #        real_sum2 = self.session.run(sum2)
+            #        self.summary_writer.add_summary(real_sum1)
+            #        self.summary_writer.add_summary(real_sum2)
+            #        self.summary_writer.flush()
 
-            s_time=time.time()
 
             if self.lstm_bool :
                 nest_state_value = self.session.run(
-                     self.network.output_layer_v, feed_dict={self.network.memory_ph: memory[:,:self.n_steps,:,:,:] })
+                     self.network.output_layer_v, feed_dict={self.network.memory_ph: memory })
             else :
                 nest_state_value = self.session.run(
                     self.network.output_layer_v, feed_dict={self.network.input_ph: shared_states})
 
-            time_measures[3].append(time.time()-s_time)
             estimated_return = np.copy(nest_state_value)
-            #estimated_return = np.copy(readouts_v_t)
 
             for t in reversed(range(max_local_steps)):
                 estimated_return = rewards[t] + self.gamma * estimated_return * episodes_over_masks[t]
                 y_batch[t] = np.copy(estimated_return)
                 adv_batch[t] = estimated_return - values[t]
 
-            s_time=time.time()
             if self.lstm_bool :
-                print('flat memories')
-                flat_memories = self.get_flat_memories(memory)
-                flat_states = flat_memories.reshape([self.max_local_steps * self.emulator_counts, self.n_steps] + list(shared_states.shape)[1:])
+                flat_states = whole_memory.reshape([self.max_local_steps * self.emulator_counts, self.n_steps] + list(shared_states.shape)[1:])
             else :
                 flat_states = states.reshape([self.max_local_steps * self.emulator_counts] + list(shared_states.shape)[1:])
             flat_y_batch = y_batch.reshape(-1)
@@ -304,15 +263,11 @@ class PAACLearner(ActorLearner):
                 feed_dict[self.network.memory_ph] = flat_states
             else :
                 feed_dict[self.network.input_ph] = flat_states
-            time_measures[4].append(time.time()-s_time)
 
-            print('session run train')
-            s_time=time.time()
             _, summaries = self.session.run(
                 [self.train_step, summaries_op],
                 feed_dict=feed_dict)
             self.summary_writer.add_summary(summaries, self.global_step)
-            time_measures[5].append(time.time()-s_time)
 
             param_summary = tf.Summary(value=[
                 tf.Summary.Value(tag='parameters/lr', simple_value=lr)
@@ -357,3 +312,6 @@ class PAACLearner(ActorLearner):
     def cleanup(self):
         super(PAACLearner, self).cleanup()
         self.runners.stop()
+
+
+    
