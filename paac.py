@@ -203,7 +203,8 @@ class PAACLearner(ActorLearner):
                         total_episode_rewards[e] = 0
                         emulator_steps[e] = 0
                         if self.lstm_bool :
-                            memory[e] = np.zeros(([self.n_steps]+list(shared_states.shape)[1:]), dtype=np.float32)
+                            memory[e] = np.zeros(([self.n_steps]+list(shared_states.shape)[1:]), dtype=np.uint8)
+                            
                         actions_sum[e] = np.zeros(self.num_actions)
 
 
