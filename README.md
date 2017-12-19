@@ -145,7 +145,11 @@ The codebase currently contains five neural network architectures :
 * BAYESIAN : the NIPS network with a dropout layer to improve the exploration policy. See this paper about [Dropout as a Bayesian Approximation](https://arxiv.org/abs/1506.02142).
 * PWYX : a bigger convolutionnal network with max pooling, inspired by [ppwwyyxx's work](https://github.com/ppwwyyxx/tensorpack/tree/master/examples/A3C-Gym).
 
-**When using FIGAR**, it is better to choose a bigger network like PWYX.
-
 To create a new architecture follow the pattern demonstrated in the other networks.
 Then create a new class that inherits from both the ```PolicyVNetwork``` and```YourNetwork```. For example:  ```NewArchitecturePolicyVNetwork(PolicyVNetwork, YourNetwork)```. Then use this class in ```train.py```.
+
+## Other games
+
+## Advice
+* **When using FIGAR**, it is better to choose a bigger network like PWYX.
+* The **entropy regularization strength** (ERS) is an important parameter. It should stay between 0.01 and 0.1 .  If you notice that your agent's score is stuck and can't improve, try increasing the ERS. On the contrary, if the score seams unstable (often falling down to zero without reason) or the standard deviation of the score is high, try decreasing the ERS. As an example, for PAAC default, I use ERS=0.02, and for FiGAR 10 , ERS = 0.05.
