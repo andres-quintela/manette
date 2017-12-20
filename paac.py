@@ -177,7 +177,7 @@ class PAACLearner(ActorLearner):
                         emulator_steps[e] = 0
                         actions_sum[e] = np.zeros(self.num_actions)
 
-            #plot output of conv layers
+            ##plot output of conv layers
             # with tf.name_scope('Summary_ConvNet'):
             #     if self.global_step % (10000*self.emulator_counts*self.max_local_steps) == 0:
             #         convs = self.session.run(self.network.convs,

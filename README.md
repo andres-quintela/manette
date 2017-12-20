@@ -9,14 +9,6 @@ PAAC is a conceptually simple advantage actor-critic algorithm designed to run e
 ![seaquest gif](readme_files/Seaquest.gif "Seaquest")
 ![pong gif](readme_files/Pong.gif "Pong")
 
-This experimental branch contains other games that you can play with. Feel free to add yours and have fun !
-
-![catcher gif](readme_files/Catcher.gif "Catcher")
-![flappyBird gif](readme_files/FlappyBird.gif "FlappyBird")
-![monsterKong gif](readme_files/MonsterKong.gif "MonsterKong")
-![snake gif](readme_files/Snake.gif "Snake")
-![tetris gif](readme_files/Tetris.gif "Tetris")
-
 
 # Requirements
 * Python 3.4+
@@ -25,24 +17,15 @@ This experimental branch contains other games that you can play with. Feel free 
 * cython (pip3 package)
 * scikit-image (pip3 package)
 * python3-tk
-* [Open AI Gym](https://github.com/openai/gym)
 
 # Training the agent
-To train an agent to play Pong, for example, run : ```python3 train.py -g pong -df logs/test_pong```.
+To train an agent to play Pong, for example, run : ```python3 train.py -g pong -df logs/test_pong/```.
 
-Training can be stopped (using Ctrl+c) and then resumed by running ```python3 train.py -g pong -df logs/test_pong```.
-
-## Training with other games
-Just change the name of the game that you want to play, with the ```-g``` option.
-
-Currently these games are available :
-* All the Atari games
-* Some Open AI Gym games : FlappyBird-v0, CartPole-v0, MountainCar-v0, Catcher-v0, MonsterKong-v0, RaycastMaze-v0, Snake-v0 .
-* Tetris ! You can even play the game yourself by running ```python3 tetris.py```.
+Training can be stopped (using Ctrl+c) and then resumed by running ```python3 train.py -g pong -df logs/test_pong/```.
 
 ## Visualizing training
 1. Open a new terminal
-2. Run ```tensorboard --logdir=<absolute-path>/manette/logs```.
+2. Run ```tensorboard --logdir=<absolute-path>/manette/logs/```.
 3. In your browser navigate to localhost:6006/
 
 Many graphs are already available (rewards per episode, length of episode, steps per second, loss, ...) and you can easily add yours.
@@ -128,7 +111,7 @@ Exemple of JSON file for Pong, with PWYX network and FiGAR 10 repetitions :
 
 ## Other scripts
 
-Some other scripts can also simplify your life (ex. test all the agents, create many gifs, ...).
+Some other scripts can also simplify your life (ex. test all the agents, create gifs for all the agents, ...).
 You can find them in the ```script``` folder. The ```script/README.md``` contains explanations on how to use them.
 
 
@@ -143,6 +126,22 @@ To create a new architecture follow the pattern demonstrated in the other networ
 Then create a new class that inherits from both the ```PolicyVNetwork``` and```YourNetwork```. For example:  ```NewArchitecturePolicyVNetwork(PolicyVNetwork, YourNetwork)```. Then use this class in ```train.py```.
 
 ## Other games
+Some other games are also available. Feel free to add yours and have fun !
+
+![catcher gif](readme_files/Catcher.gif "Catcher")
+![flappyBird gif](readme_files/FlappyBird.gif "FlappyBird")
+![monsterKong gif](readme_files/MonsterKong.gif "MonsterKong")
+![snake gif](readme_files/Snake.gif "Snake")
+![tetris gif](readme_files/Tetris.gif "Tetris")
+
+Currently these games are available :
+* All the **Atari** games
+* Some **Open AI Gym** games : FlappyBird-v0, CartPole-v0, MountainCar-v0, Catcher-v0, MonsterKong-v0, RaycastMaze-v0, Snake-v0 . **Requirements** : [Open AI Gym](https://github.com/openai/gym) and [gym-ple](https://github.com/lusob/gym-ple)
+* **Tetris** ! You can even play the game yourself by running ```python3 tetris.py```.
+
+Just change the name of the game that you want to play, with the ```-g``` option.
+
+Ex : ```python3 train.py -g tetris -df logs/test_tetris/```.
 
 ## Advice
 * **When using FIGAR**, it is better to choose a bigger network like PWYX.
