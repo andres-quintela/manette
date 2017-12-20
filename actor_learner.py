@@ -88,8 +88,8 @@ class ActorLearner(Process):
 
         # Summaries
         variable_summaries(self.flat_raw_gradients, 'raw_gradients')
-        variable_summaries(self.flat_clipped_gradients, 'clipped_gradients')
-        #tf.summary.scalar('global_norm', global_norm)
+        # variable_summaries(self.flat_clipped_gradients, 'clipped_gradients')
+        # tf.summary.scalar('global_norm', global_norm)
         # tf.summary.scalar('loss/loss', self.network.loss)
         # tf.summary.scalar('loss/critic_loss_mean', self.network.critic_loss_mean)
         # tf.summary.scalar('loss/actor_objective_mean', self.network.actor_objective_mean)
