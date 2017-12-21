@@ -95,7 +95,7 @@ def get_arg_parser():
     parser.add_argument('--gamma', default=0.99, type=float, help="Discount factor", dest="gamma")
     parser.add_argument('--max_global_steps', default=80000000, type=int, help="Max. number of training steps", dest="max_global_steps")
     parser.add_argument('--max_local_steps', default=5, type=int, help="Number of steps to gain experience from before every update.", dest="max_local_steps")
-    parser.add_argument('--arch', default='PWYX', help="Which network architecture to use: from the NIPS or NATURE paper, or PWYX, or LSTM, or BAYESIAN ie dropout", dest="arch")
+    parser.add_argument('--arch', default='NIPS', help="Which network architecture to use: from the NIPS or NATURE paper, or PWYX, or LSTM, or BAYESIAN ie dropout", dest="arch")
     parser.add_argument('--single_life_episodes', action='store_true', help="If True, training episodes will be terminated when a life is lost (for games)", dest="single_life_episodes")
     parser.add_argument('-ec', '--emulator_counts', default=32, type=int, help="The amount of emulators per agent. Default is 32.", dest="emulator_counts")
     parser.add_argument('-ew', '--emulator_workers', default=8, type=int, help="The amount of emulator workers per agent. Default is 8.", dest="emulator_workers")

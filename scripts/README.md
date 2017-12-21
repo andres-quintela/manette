@@ -3,7 +3,7 @@
 1. Open a new shell
 2. For CUDA users, run ``` export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64 ``` and ``` export CUDA_VISIBLE_DEVICES=0 ``` to choose the GPU to use.
 3. Choose your script
-4. Use nohup so that the script can continue to run when you are deconnected and the info printed out in the shell can be logged in a file : ``` nohup python3 script/NAME_SCRIPT OPTIONS &> NAME_FILE.out & ```
+4. Use nohup so that the script can continue to run when you are disconnected and the info printed out in the shell can be logged in a file : ``` nohup python3 script/NAME_SCRIPT OPTIONS &> NAME_FILE.out & ```
 
 ## BatchTrain
 

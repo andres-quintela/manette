@@ -19,38 +19,19 @@ PAAC is a conceptually simple advantage actor-critic algorithm designed to run e
 * python3-tk
 
 # Training the agent
-To train an agent to play Pong, for example, run : ```python3 train.py -g pong -df logs/test_pong```.
+To train an agent to play Pong, for example, run : ```python3 train.py -g pong -df logs/test_pong/```.
 
-For Pong, the agent will begin to learn after about 4 million steps, and will learn an optimal policy after about 15 million steps.
-
-![pong learning graph](readme_files/Pong_learning.png "Pong")
-
-Training can be stopped (using Ctrl+c) and then resumed by running ```python3 train.py -g pong -df logs/test_pong```.
-
-On a setup with an [Intel i7-4790k](http://ark.intel.com/products/80807/Intel-Core-i7-4790K-Processor-8M-Cache-up-to-4_40-GHz) CPU and an [Nvidia GTX 980 Ti](http://www.geforce.com/hardware/desktop-gpus/geforce-gtx-980-ti) GPU with default settings and NIPS neural network (see below), you can expect around 3000 timesteps (global steps) per second.
-Training for 80 million timesteps requires under 8 hours.
-
-When using a more demanding neural network, the training can slow down to 1000 steps per second and if you add FiGAR it can go down to 300 steps per second.
-
+Training can be stopped (using Ctrl+c) and then resumed by running ```python3 train.py -g pong -df logs/test_pong/```.
 
 ## Visualizing training
 1. Open a new terminal
-2. Run ```tensorboard --logdir=<absolute-path>/manette/logs```.
+2. Run ```tensorboard --logdir=<absolute-path>/manette/logs/```.
 3. In your browser navigate to localhost:6006/
 
 Many graphs are already available (rewards per episode, length of episode, steps per second, loss, ...) and you can easily add yours.
 
-
 # Testing the agent
 To test the performance of a trained agent run ```python3 test.py -f logs/test_pong -tc 5```.
-Output:
-```
-Performed 5 tests for pong.
-Mean: 19.70
-Min: 17.00
-Max: 21.00
-Std: 0.97
-```
 
 ## Generating gifs
 Gifs can be generated from stored network weights. For example a gif of the agent playing breakout can be generated with
@@ -58,10 +39,6 @@ Gifs can be generated from stored network weights. For example a gif of the agen
 python3 test.py -f pretrained/breakout/ -gn breakout
 ```
 This may take a few minutes.
-
-## Pretrained models
-Pretrained models for some games can be found [here](pretrained).
-These models can be used as starting points for training on the same game, other games, or to generate gifs.
 
 # Training options
 
@@ -134,7 +111,7 @@ Exemple of JSON file for Pong, with PWYX network and FiGAR 10 repetitions :
 
 ## Other scripts
 
-Some other scripts can also simplify your life (ex. test all the agents, create many gifs, ...).
+Some other scripts can also simplify your life (ex. test all the agents, create gifs for all the agents, ...).
 You can find them in the ```script``` folder. The ```script/README.md``` contains explanations on how to use them.
 
 
@@ -149,7 +126,24 @@ To create a new architecture follow the pattern demonstrated in the other networ
 Then create a new class that inherits from both the ```PolicyVNetwork``` and```YourNetwork```. For example:  ```NewArchitecturePolicyVNetwork(PolicyVNetwork, YourNetwork)```. Then use this class in ```train.py```.
 
 ## Other games
+Some other games are also available. Feel free to add yours and have fun !
+
+![catcher gif](readme_files/Catcher.gif "Catcher")
+![flappyBird gif](readme_files/FlappyBird.gif "FlappyBird")
+![monsterKong gif](readme_files/MonsterKong.gif "MonsterKong")
+![snake gif](readme_files/Snake.gif "Snake")
+![tetris gif](readme_files/Tetris.gif "Tetris")
+
+Currently these games are available :
+* All the **Atari** games
+* Some **Open AI Gym** games : FlappyBird-v0, CartPole-v0, MountainCar-v0, Catcher-v0, MonsterKong-v0, RaycastMaze-v0, Snake-v0 . **Requirements** : [Open AI Gym](https://github.com/openai/gym) and [gym-ple](https://github.com/lusob/gym-ple)
+* **Tetris** ! You can even play the game yourself by running ```python3 tetris.py```.
+
+Just change the name of the game that you want to play, with the ```-g``` option.
+
+Ex : ```python3 train.py -g tetris -df logs/test_tetris/```.
 
 ## Advice
 * **When using FIGAR**, it is better to choose a bigger network like PWYX.
 * The **entropy regularization strength** (ERS) is an important parameter. It should stay between 0.01 and 0.1 .  If you notice that your agent's score is stuck and can't improve, try increasing the ERS. On the contrary, if the score seams unstable (often falling down to zero without reason) or the standard deviation of the score is high, try decreasing the ERS. As an example, for PAAC default, I use ERS=0.02, and for FiGAR 10 , ERS = 0.05.
+* When training some other (non Atari) games, you might need to put the ```random_start``` option to ```false``` or the agent migth die before even starting to play...

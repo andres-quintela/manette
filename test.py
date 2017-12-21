@@ -46,7 +46,7 @@ if __name__ == '__main__':
     rng = np.random.RandomState(int(time.time()))
     args.random_seed = rng.randint(1000)
 
-    explo_policy = ExplorationPolicy(args, test = True)
+    explo_policy = ExplorationPolicy(args, test = False)
     network_creator, env_creator = get_network_and_environment_creator(args, explo_policy)
     network = network_creator()
     saver = tf.train.Saver()

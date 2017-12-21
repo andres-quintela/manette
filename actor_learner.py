@@ -4,7 +4,7 @@ import tensorflow as tf
 import logging
 from logger_utils import variable_summaries
 import os
-
+import json
 
 class ActorLearner(Process):
 
@@ -36,7 +36,8 @@ class ActorLearner(Process):
         self.emulator_counts = args.emulator_counts
         self.emulators = np.asarray([environment_creator.create_environment(i)
                                      for i in range(self.emulator_counts)])
-
+        self.max_global_steps = args.max_global_steps
+        self.gamma = args.gamma
         self.network = network_creator()
 
         with tf.name_scope('Optimizer'):

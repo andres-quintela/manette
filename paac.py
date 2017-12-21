@@ -116,7 +116,6 @@ class PAACLearner(ActorLearner):
         start_time = time.time()
 
         while self.global_step < self.max_global_steps:
-            print('step : '+str(self.global_step))
 
             loop_start_time = time.time()
             total_action_rep = np.zeros((self.num_actions, self.total_repetitions))
@@ -178,16 +177,16 @@ class PAACLearner(ActorLearner):
                         emulator_steps[e] = 0
                         actions_sum[e] = np.zeros(self.num_actions)
 
-            #plot output of conv layers
-            #with tf.name_scope('Summary_ConvNet'):
-            #    if self.global_step % (1000*self.emulator_counts*self.max_local_steps) == 0:
-            #        convs = self.session.run(self.network.convs,
-            #            feed_dict= {self.network.input_ph: [shared_states[0]]})
-            #        imgs = [np.array([utils.plot_conv_output(conv)]) for conv in convs]
-            #        sums = [tf.summary.image('conv'+str(i), imgs[i], 1) for i in range(len(imgs))]
-            #        real_sums = self.session.run(sums)
-            #        for s in real_sums : self.summary_writer.add_summary(s, self.global_step)
-            #        self.summary_writer.flush()
+            ##plot output of conv layers
+            # with tf.name_scope('Summary_ConvNet'):
+            #     if self.global_step % (10000*self.emulator_counts*self.max_local_steps) == 0:
+            #         convs = self.session.run(self.network.convs,
+            #             feed_dict= {self.network.input_ph: [shared_states[0]]})
+            #         imgs = [np.array([utils.plot_conv_output(conv)]) for conv in convs]
+            #         sums = [tf.summary.image('conv'+str(i), imgs[i], 1) for i in range(len(imgs))]
+            #         real_sums = self.session.run(sums)
+            #         for s in real_sums : self.summary_writer.add_summary(s, self.global_step)
+            #         self.summary_writer.flush()
 
             nest_state_value = self.session.run(
                 self.network.output_layer_v, feed_dict={self.network.input_ph: shared_states})
