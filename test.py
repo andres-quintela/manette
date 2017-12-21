@@ -18,6 +18,12 @@ def get_save_frame(name):
 
     return get_frame
 
+def update_memory(memory, states):
+    memory[:, :-1, :, :, :] = memory[:, 1:, :, :, :]
+    memory[:, -1, :, :, :] = states
+    return memory
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--folder', type=str, help="Folder where to save the debugging information.", dest="folder", required=True)
@@ -65,19 +71,30 @@ if __name__ == '__main__':
         checkpoints_ = os.path.join(df, 'checkpoints')
         network.init(checkpoints_, saver, sess)
         states = np.asarray([environment.get_initial_state() for environment in environments])
+        
         if args.noops != 0:
             for i, environment in enumerate(environments):
                 for _ in range(random.randint(0, args.noops)):
                     state, _, _ = environment.next(0)
                     states[i] = state
-
+        if args.arch == 'LSTM':
+            n_steps = 5
+            memory = np.zeros(([args.test_count, n_steps]+list(states.shape)[1:]), dtype=np.uint8)
+            for e in range(args.test_count):
+                memory[e, -1, :, :, :] = states[e]
+            
         episodes_over = np.zeros(args.test_count, dtype=np.bool)
         rewards = np.zeros(args.test_count, dtype=np.float32)
         while not all(episodes_over):
-            readouts_pi_t, readouts_rep_t = sess.run(
-                [network.output_layer_pi, network.output_layer_rep],
-                feed_dict={network.input_ph: states})
-            actions, repetitions  = explo_policy.choose_next_actions(readouts_pi_t, readouts_rep_t, env_creator.num_actions)
+            if args.arch == 'LSTM' :
+                readouts_pi_t, readouts_rep_t = sess.run(
+                    [network.output_layer_pi, network.output_layer_rep],
+                    feed_dict={network.memory_ph: memory})
+            else :
+                readouts_pi_t, readouts_rep_t = sess.run(
+                    [network.output_layer_pi, network.output_layer_rep],
+                    feed_dict={network.input_ph: states})
+            actions, repetitions = explo_policy.choose_next_actions(readouts_pi_t, readouts_rep_t, env_creator.num_actions)
             for j, environment in enumerate(environments):
                 macro_action = Action(explo_policy.tab_rep, j, actions[j], repetitions[j])
                 state, r, episode_over = environment.next(macro_action.current_action)
@@ -90,6 +107,7 @@ if __name__ == '__main__':
                     rewards[j] += r
                     episodes_over[j] = episode_over
                 macro_action.reset()
+            memory = update_memory(memory, states)
 
         print('Performed {} tests for {}.'.format(args.test_count, args.game))
         print('Mean: {0:.2f}'.format(np.mean(rewards)))
