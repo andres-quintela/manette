@@ -50,7 +50,7 @@ The most useful options for the training are :
 * ```--entropy``` : Strength of the entropy regularization term. Default = 0.02. Should be increased when using FiGAR.
 * ```--max_global_steps``` : Maximum number of training steps. 80 million steps are enough for most games.
 * ```--max_local_steps``` : Number of steps to gain experience from before every update. 5 is good.
-* ```--arch``` : Which network architecture to use : NIPS, NATURE, PWYX, BAYESIAN. See below for descriptions.
+* ```--arch``` : Which network architecture to use : NIPS, NATURE, PWYX, LSTM, BAYESIAN. See below for descriptions.
 * ```-ec``` : Emulator counts. Number of emulator playing simultaneously. Default = 32.
 * ```-ew``` : Emulator workers. Number of threads that computes the emulators' steps. Default = 8 : each thread computes for 4 emulators.
 * ```--egreedy``` : Whether to use an e-greedy policy to choose the actions or not.
