@@ -3,11 +3,11 @@ This repository contains an open source implementation of the PAAC algorithm pre
 
 PAAC is a conceptually simple advantage actor-critic algorithm designed to run efficiently on a GPU, offering A3C like performance in under 12 hours of training. When adding FiGAR, the agent can explore more possibilities and achieve higher scores with a better motion control.
 
-![breakout gif](readme_files/Breakout-FiGAR10.gif "Breakout")
-![mspacman gif](readme_files/MsPacman-FiGAR10.gif "MsPacman")
-![space invaders gif](readme_files/Space_Invaders-FiGAR10.gif "Space Invaders")
-![seaquest gif](readme_files/Seaquest-FiGAR10.gif "Seaquest")
-![pong gif](readme_files/Pong-FiGAR10-LSTM.gif "Pong")
+![breakout gif](readme_files/Breakout.gif "Breakout")
+![mspacman gif](readme_files/MsPacman.gif "MsPacman")
+![space invaders gif](readme_files/Space_Invaders.gif "Space Invaders")
+![seaquest gif](readme_files/Seaquest.gif "Seaquest")
+![pong gif](readme_files/Pong.gif "Pong")
 
 
 # Requirements
@@ -19,38 +19,19 @@ PAAC is a conceptually simple advantage actor-critic algorithm designed to run e
 * python3-tk
 
 # Training the agent
-To train an agent to play Pong, for example, run : ```python3 train.py -g pong -df logs/test_pong```.
+To train an agent to play Pong, for example, run : ```python3 train.py -g pong -df logs/test_pong/```.
 
-For Pong, the agent will begin to learn after about 4 million steps, and will learn an optimal policy after about 15 million steps.
-
-![pong learning graph](readme_files/Pong_learning.png "Pong")
-
-Training can be stopped (using Ctrl+c) and then resumed by running ```python3 train.py -g pong -df logs/test_pong```.
-
-On a setup with an [Intel i7-4790k](http://ark.intel.com/products/80807/Intel-Core-i7-4790K-Processor-8M-Cache-up-to-4_40-GHz) CPU and an [Nvidia GTX 980 Ti](http://www.geforce.com/hardware/desktop-gpus/geforce-gtx-980-ti) GPU with default settings and NIPS neural network (see below), you can expect around 3000 timesteps (global steps) per second.
-Training for 80 million timesteps requires under 8 hours.
-
-When using a more demanding neural network, the training can slow down to 1000 steps per second and if you add FiGAR it can go down to 300 steps per second.
-
+Training can be stopped (using Ctrl+c) and then resumed by running ```python3 train.py -g pong -df logs/test_pong/```.
 
 ## Visualizing training
 1. Open a new terminal
-2. Run ```tensorboard --logdir=<absolute-path>/manette/logs/test_pong```.
+2. Run ```tensorboard --logdir=<absolute-path>/manette/logs/```.
 3. In your browser navigate to localhost:6006/
 
 Many graphs are already available (rewards per episode, length of episode, steps per second, loss, ...) and you can easily add yours.
 
-
 # Testing the agent
 To test the performance of a trained agent run ```python3 test.py -f logs/test_pong -tc 5```.
-Output:
-```
-Performed 5 tests for pong.
-Mean: 19.70
-Min: 17.00
-Max: 21.00
-Std: 0.97
-```
 
 ## Generating gifs
 Gifs can be generated from stored network weights. For example a gif of the agent playing breakout can be generated with
@@ -59,26 +40,22 @@ python3 test.py -f pretrained/breakout/ -gn breakout
 ```
 This may take a few minutes.
 
-## Pretrained models
-Pretrained models for some games can be found [here](pretrained).
-These models can be used as starting points for training on the same game, other games, or to generate gifs.
-
 # Training options
 
 The most useful options for the training are :
-* ```-g``` : Name of the Atari 2600 game you want to play. All the games in the ```atari_roms``` are available.
-* ```-df``` : Debugging folder, where the information is saved for each game (checkpoints, tensorboard graphs, ...)
+* ```-g``` : Name of the Atari 2600 game you want to play. All the games in ```atari_roms``` are available.
+* ```-df``` : Destination folder, where the information is saved for each game (checkpoints, tensorboard graphs, ...)
 * ```-lr``` : Initial value for the learning rate. Default = 0.224.
 * ```-lra``` : Number of global steps during which the learning rate will be linearly annealed towards zero.
 * ```--entropy``` : Strength of the entropy regularization term. Default = 0.02. Should be increased when using FiGAR.
 * ```--max_global_steps``` : Maximum number of training steps. 80 million steps are enough for most games.
 * ```--max_local_steps``` : Number of steps to gain experience from before every update. 5 is good.
-* ```--arch``` : Which network architecture to use : NIPS, NATURE, PWYX, BAYESIAN, LSTM. See below for descriptions.
+* ```--arch``` : Which network architecture to use : NIPS, NATURE, PWYX, BAYESIAN. See below for descriptions.
 * ```-ec``` : Emulator counts. Number of emulator playing simultaneously. Default = 32.
 * ```-ew``` : Emulator workers. Number of threads that computes the emulators' steps. Default = 8 : each thread computes for 4 emulators.
 * ```--egreedy``` : Whether to use an e-greedy policy to choose the actions or not.
 * ```--epsilon``` : If using an e-greedy policy, the epsilon coefficient. Default = 0.05 .
-* ```--softmax_temp``` : Softmax temperature for the Boltzmann action choice policy.
+* ```--softmax_temp``` : Softmax temperature for the Boltzmann action choice policy. Default = 1.
 * ```--annealed``` :  Whether to anneal the epsilon towards zero or not for e-greedy policy.
 * ```--annealed_steps``` : Number of global steps before epsilon is annealed.
 * ```--keep_percentage``` : When the Bayesian/Dropout network is used, keep percentage. Default = 0.9 .
@@ -98,7 +75,7 @@ Run : ```python3 script/batchTrain -f toTrain/ -d logs/ ```.
 
 All your JSON files will be loaded and trained, one after the other, with the right options, and saved in ```logs/DATE-experiment1/```.
 
-Exemple of JSON file for Pong, with LSTM network and FiGAR 10 repetitions :
+Exemple of JSON file for Pong, with PWYX network and FiGAR 10 repetitions :
 ```
 {
   "game": "pong",
@@ -109,7 +86,7 @@ Exemple of JSON file for Pong, with LSTM network and FiGAR 10 repetitions :
   "gamma": 0.99,
   "alpha": 0.99,
   "entropy_regularisation_strength": 0.02,
-  "arch": "LSTM",
+  "arch": "PWYX",
   "emulator_workers": 8,
   "emulator_counts": 32,
   "clip_norm_type": "global",
@@ -134,7 +111,7 @@ Exemple of JSON file for Pong, with LSTM network and FiGAR 10 repetitions :
 
 ## Other scripts
 
-Some other scripts can also simplify your life (ex. test all the agents, create many gifs, ...).
+Some other scripts can also simplify your life (ex. test all the agents, create gifs for all the agents, ...).
 You can find them in the ```script``` folder. The ```script/README.md``` contains explanations on how to use them.
 
 
@@ -144,9 +121,29 @@ The codebase currently contains five neural network architectures :
 * NATURE : the architecture from [Human-level control through deep reinforcement learning](https://www.nature.com/nature/journal/v518/n7540/full/nature14236.html).
 * BAYESIAN : the NIPS network with a dropout layer to improve the exploration policy. See this paper about [Dropout as a Bayesian Approximation](https://arxiv.org/abs/1506.02142).
 * PWYX : a bigger convolutionnal network with max pooling, inspired by [ppwwyyxx's work](https://github.com/ppwwyyxx/tensorpack/tree/master/examples/A3C-Gym).
-* LSTM : the PWYX network with an LSTM cell.
-
-**When using FIGAR**, it is better to choose a bigger network like PWYX or LSTM.
 
 To create a new architecture follow the pattern demonstrated in the other networks.
 Then create a new class that inherits from both the ```PolicyVNetwork``` and```YourNetwork```. For example:  ```NewArchitecturePolicyVNetwork(PolicyVNetwork, YourNetwork)```. Then use this class in ```train.py```.
+
+## Other games
+Some other games are also available. Feel free to add yours and have fun !
+
+![catcher gif](readme_files/Catcher.gif "Catcher")
+![flappyBird gif](readme_files/FlappyBird.gif "FlappyBird")
+![monsterKong gif](readme_files/MonsterKong.gif "MonsterKong")
+![snake gif](readme_files/Snake.gif "Snake")
+![tetris gif](readme_files/Tetris.gif "Tetris")
+
+Currently these games are available :
+* All the **Atari** games
+* Some **Open AI Gym** games : FlappyBird-v0, CartPole-v0, MountainCar-v0, Catcher-v0, MonsterKong-v0, RaycastMaze-v0, Snake-v0 . **Requirements** : [Open AI Gym](https://github.com/openai/gym) and [gym-ple](https://github.com/lusob/gym-ple)
+* **Tetris** ! You can even play the game yourself by running ```python3 tetris.py```.
+
+Just change the name of the game that you want to play, with the ```-g``` option.
+
+Ex : ```python3 train.py -g tetris -df logs/test_tetris/```.
+
+## Advice
+* **When using FIGAR**, it is better to choose a bigger network like PWYX.
+* The **entropy regularization strength** (ERS) is an important parameter. It should stay between 0.01 and 0.1 .  If you notice that your agent's score is stuck and can't improve, try increasing the ERS. On the contrary, if the score seams unstable (often falling down to zero without reason) or the standard deviation of the score is high, try decreasing the ERS. As an example, for PAAC default, I use ERS=0.02, and for FiGAR 10 , ERS = 0.05.
+* When training some other (non Atari) games, you might need to put the ```random_start``` option to ```false``` or the agent migth die before even starting to play...

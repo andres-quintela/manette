@@ -1,13 +1,12 @@
 import time
+import logging
+import numpy as np
 from multiprocessing import Queue
 from multiprocessing.sharedctypes import RawArray
 from ctypes import c_uint, c_float
-from actor_learner import *
-import logging
-from utils import plot_conv_output, Reshaper
-from logger_utils import variable_summaries
-import numpy as np
 
+from actor_learner import *
+from logger_utils import variable_summaries, plot_conv_output
 from emulator_runner import EmulatorRunner
 from exploration_policy import Action
 from runners import Runners
@@ -19,8 +18,6 @@ class PAACLearner(ActorLearner):
         self.workers = args.emulator_workers
         self.total_repetitions = args.nb_choices
         self.tab_rep = explo_policy.tab_rep
-        self.lstm_bool = (args.arch == 'LSTM')
-        self.depth = 3 if args.rgb else 1
 
         #add the parameters to tensorboard
         sess = tf.InteractiveSession()
@@ -112,7 +109,6 @@ class PAACLearner(ActorLearner):
             whole_memory = np.zeros(([self.max_local_steps, self.emulator_counts, self.n_steps]+list(shared_states.shape)[1:]), dtype=np.uint8)
             for e in range(self.emulator_counts) :
                 memory[e, -1, :, :, :] = shared_states[e] 
-
 
         summaries_op = tf.summary.merge_all()
 
@@ -207,27 +203,16 @@ class PAACLearner(ActorLearner):
                             
                         actions_sum[e] = np.zeros(self.num_actions)
 
-
-            #plot output of conv layers
-            #if not self.lstm_bool :
-            #    if counter % (2048 / self.emulator_counts) == 0:
-            #        if not self.lstm_bool :
-            #            conv1, conv2 = self.session.run(
-            #                [self.network.first_conv,self.network.last_conv],
-            #                feed_dict= {self.network.input_ph: shared_states})
-            #        else :
-            #            conv1, conv2 = self.session.run(
-            #                [self.network.first_conv, self.network.last_conv],
-            #                feed_dict= {self.network.memory_ph: memory[:,:self.n_steps,:,:,:]})
-            #        img1 = tf.expand_dims(tf.transpose(conv1[0], [2,0,1]), -1)
-            #        img2 = tf.expand_dims(tf.transpose(conv2[0], [2,0,1]), -1)
-            #        sum1 = tf.summary.image('first_conv', img1, 1)
-            #        sum2 = tf.summary.image('last_conv', img2, 1)
-            #        real_sum1 = self.session.run(sum1)
-            #        real_sum2 = self.session.run(sum2)
-            #        self.summary_writer.add_summary(real_sum1)
-            #        self.summary_writer.add_summary(real_sum2)
-            #        self.summary_writer.flush()
+            ##plot output of conv layers
+            # with tf.name_scope('Summary_ConvNet'):
+            #     if self.global_step % (10000*self.emulator_counts*self.max_local_steps) == 0:
+            #         convs = self.session.run(self.network.convs,
+            #             feed_dict= {self.network.input_ph: [shared_states[0]]})
+            #         imgs = [np.array([utils.plot_conv_output(conv)]) for conv in convs]
+            #         sums = [tf.summary.image('conv'+str(i), imgs[i], 1) for i in range(len(imgs))]
+            #         real_sums = self.session.run(sums)
+            #         for s in real_sums : self.summary_writer.add_summary(s, self.global_step)
+            #         self.summary_writer.flush()
 
 
             if self.lstm_bool :
@@ -254,7 +239,8 @@ class PAACLearner(ActorLearner):
             flat_rep = repetitions.reshape(max_local_steps * self.emulator_counts, self.total_repetitions)
 
             lr = self.get_lr()
-            feed_dict = {self.network.critic_target_ph: flat_y_batch,
+            feed_dict = {self.network.input_ph: flat_states,
+                         self.network.critic_target_ph: flat_y_batch,
                          self.network.selected_action_ph: flat_actions,
                          self.network.selected_repetition_ph: flat_rep,
                          self.network.adv_actor_ph: flat_adv_batch,

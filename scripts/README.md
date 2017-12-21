@@ -3,7 +3,7 @@
 1. Open a new shell
 2. For CUDA users, run ``` export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64 ``` and ``` export CUDA_VISIBLE_DEVICES=0 ``` to choose the GPU to use.
 3. Choose your script
-4. Use nohup so that the script can continue to run when you are deconnected and the info printed out in the shell can be logged in a file : ``` nohup python3 script/NAME_SCRIPT OPTIONS &> NAME_FILE.out & ```
+4. Use nohup so that the script can continue to run when you are disconnected and the info printed out in the shell can be logged in a file : ``` nohup python3 script/NAME_SCRIPT OPTIONS &> NAME_FILE.out & ```
 
 ## BatchTrain
 
@@ -15,7 +15,7 @@ Run : ```python3 script/batchTrain -f toTrain/ -d logs/ ```.
 
 All your JSON files will be loaded and trained, one after the other, with the right options, and saved in ```logs/DATE-experiment1/```.
 
-Example of JSON file for Pong, with LSTM network and FiGAR 10 repetitions :
+Example of JSON file for Pong, with PWYX network and FiGAR 10 repetitions :
 ```
 {
   "game": "pong",
@@ -26,7 +26,7 @@ Example of JSON file for Pong, with LSTM network and FiGAR 10 repetitions :
   "gamma": 0.99,
   "alpha": 0.99,
   "entropy_regularisation_strength": 0.02,
-  "arch": "LSTM",
+  "arch": "PWYX",
   "emulator_workers": 8,
   "emulator_counts": 32,
   "clip_norm_type": "global",
