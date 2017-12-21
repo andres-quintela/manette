@@ -17,6 +17,7 @@ class PAACLearner(ActorLearner):
         super(PAACLearner, self).__init__(network_creator, environment_creator, explo_policy, args)
         self.workers = args.emulator_workers
         self.total_repetitions = args.nb_choices
+        self.lstm_bool = (args.arch == 'LSTM')
         self.tab_rep = explo_policy.tab_rep
 
         #add the parameters to tensorboard
@@ -108,7 +109,7 @@ class PAACLearner(ActorLearner):
             memory = np.zeros(([self.emulator_counts, self.n_steps]+list(shared_states.shape)[1:]), dtype=np.uint8)
             whole_memory = np.zeros(([self.max_local_steps, self.emulator_counts, self.n_steps]+list(shared_states.shape)[1:]), dtype=np.uint8)
             for e in range(self.emulator_counts) :
-                memory[e, -1, :, :, :] = shared_states[e] 
+                memory[e, -1, :, :, :] = shared_states[e]
 
         summaries_op = tf.summary.merge_all()
 
@@ -129,7 +130,7 @@ class PAACLearner(ActorLearner):
 
         while self.global_step < self.max_global_steps:
             print('step : '+str(self.global_step))
-                
+
             loop_start_time = time.time()
             total_action_rep = np.zeros((self.num_actions, self.total_repetitions))
             nb_actions = 0
@@ -200,7 +201,7 @@ class PAACLearner(ActorLearner):
                         emulator_steps[e] = 0
                         if self.lstm_bool :
                             memory[e] = np.zeros(([self.n_steps]+list(shared_states.shape)[1:]), dtype=np.uint8)
-                            
+
                         actions_sum[e] = np.zeros(self.num_actions)
 
             ##plot output of conv layers
@@ -239,8 +240,7 @@ class PAACLearner(ActorLearner):
             flat_rep = repetitions.reshape(max_local_steps * self.emulator_counts, self.total_repetitions)
 
             lr = self.get_lr()
-            feed_dict = {self.network.input_ph: flat_states,
-                         self.network.critic_target_ph: flat_y_batch,
+            feed_dict = {self.network.critic_target_ph: flat_y_batch,
                          self.network.selected_action_ph: flat_actions,
                          self.network.selected_repetition_ph: flat_rep,
                          self.network.adv_actor_ph: flat_adv_batch,
@@ -299,6 +299,3 @@ class PAACLearner(ActorLearner):
     def cleanup(self):
         super(PAACLearner, self).cleanup()
         self.runners.stop()
-
-
-    
