@@ -146,3 +146,4 @@ Ex : ```python3 train.py -g tetris -df logs/test_tetris/```.
 ## Advice
 * **When using FIGAR**, it is better to choose a bigger network like PWYX.
 * The **entropy regularization strength** (ERS) is an important parameter. It should stay between 0.01 and 0.1 .  If you notice that your agent's score is stuck and can't improve, try increasing the ERS. On the contrary, if the score seams unstable (often falling down to zero without reason) or the standard deviation of the score is high, try decreasing the ERS. As an example, for PAAC default, I use ERS=0.02, and for FiGAR 10 , ERS = 0.05.
+* When training some other (non Atari) games, you might need to put the ```random_start``` option to ```false``` or the agent migth die before even starting to play...
