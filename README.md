@@ -3,12 +3,56 @@ This repository contains an open source implementation of the PAAC algorithm pre
 
 PAAC is a conceptually simple advantage actor-critic algorithm designed to run efficiently on a GPU, offering A3C like performance in under 12 hours of training. When adding FiGAR, the agent can explore more possibilities and achieve higher scores with a better motion control.
 
+## Recorded results with FiGAR10
 ![breakout gif](readme_files/Breakout.gif "Breakout")
 ![mspacman gif](readme_files/MsPacman.gif "MsPacman")
 ![space invaders gif](readme_files/Space_Invaders.gif "Space Invaders")
 ![seaquest gif](readme_files/Seaquest.gif "Seaquest")
 ![pong gif](readme_files/Pong.gif "Pong")
 
+## Results
+
+**Average scores for 50 experiments on 12 Atari games :**
+
+|                | A3C (*) | PAAC  | FiGAR10 |
+|----------------|---------|-------|---------|
+| Asterix        | 22140   | 17525 | 38315   |
+| Asteroids      | 4474    | 1427  | 66708   |
+| Breakout       | 681     | 407   | 779     |
+| Enduro         | -82.5   | 0     | 677     |
+| Gopher         | 10022   | 14034 | 26625   |
+| Gravitar       | 303     | 168   | 502     |
+| Montezuma      | 67      | 0     | 0       |
+| Ms Pacman      | 653     | 2408  | 5488    |
+| Pong           | 5.6     | 19.9  | 19.5    |
+| Seaquest       | 2355    | 1679  | 10032   |
+| Space Invaders | 15730   | 747   | 4262    |
+| Yar's revenge  | 7270    | 12808 | 11329   |
+
+
+(* ) A3C scores taken from [Asynchronous Methods for Deep Reinforcement Learning](https://arxiv.org/abs/1602.01783)
+
+**Graphs of training for Seaquest with FiGAR for 0, 5 and 10 repetitions :**
+
+![seaquest training](readme_files/seaquest.png "Seaquest Training")
+
+**Histograms of the repetitions during training for Seaquest with FiGAR for 5 and 10 repetitions :**
+
+![seaquest repetitions](readme_files/histograms.png "Seaquest Repetitions")
+
+
+## Available games
+
+| Platform       | Games                                                             |
+|----------------|-------------------------------------------------------------------|
+| Atari 2600     | All Games !                                                       |
+| OpenGym        | FlappyBird, MountainCar, Catcher, MonsterKong, RaycastMaze, Snake |
+| Tetris         | Tetris !!                                                         |
+
+## Implemented publications
+
+* [Efficient Parallel Methods for Deep Reinforcement Learning](https://arxiv.org/abs/1705.04862)
+* [Fine Grained Action Repetition for Deep Reinforcement Learning](https://arxiv.org/abs/1702.06054)
 
 # Requirements
 * Python 3.4+
@@ -17,6 +61,8 @@ PAAC is a conceptually simple advantage actor-critic algorithm designed to run e
 * cython (pip3 package)
 * scikit-image (pip3 package)
 * python3-tk
+* (Optional) [Open AI Gym](https://github.com/openai/gym)
+* (Optional) [gym-ple](https://github.com/lusob/gym-ple)
 
 # Training the agent
 To train an agent to play Pong, for example, run : ```python3 train.py -g pong -df logs/test_pong/```.
@@ -148,3 +194,6 @@ Ex : ```python3 train.py -g tetris -df logs/test_tetris/```.
 * **When using FIGAR**, it is better to choose a bigger network like PWYX.
 * The **entropy regularization strength** (ERS) is an important parameter. It should stay between 0.01 and 0.1 .  If you notice that your agent's score is stuck and can't improve, try increasing the ERS. On the contrary, if the score seams unstable (often falling down to zero without reason) or the standard deviation of the score is high, try decreasing the ERS. As an example, for PAAC default, I use ERS=0.02, and for FiGAR 10 , ERS = 0.05.
 * When training some other (non Atari) games, you might need to put the ```random_start``` option to ```false``` or the agent migth die before even starting to play...
+
+# About
+This work was realized by Léa Berthomier during a 5 months internship at Jolibrain.
