@@ -1,7 +1,28 @@
-# Manette : Deep Reinforcement Learning for Atari Games
+# Manette : Deep Reinforcement Learning with Fined Grained Action Repetition
 This repository contains an open source implementation of the PAAC algorithm presented in [Efficient Parallel Methods for Deep Reinforcement Learning](https://arxiv.org/abs/1705.04862) and forked from [Alfredvc's implementation](https://github.com/Alfredvc/paac). We added the possibility to use the FiGAR algorithm presented in [Fine Grained Action Repetition for Deep Reinforcement Learning](https://arxiv.org/abs/1702.06054) as well as LSTM networks, Bayesian networks, e-greedy policy and playing with colored images.
 
 PAAC is a conceptually simple advantage actor-critic algorithm designed to run efficiently on a GPU, offering A3C like performance in under 12 hours of training. When adding FiGAR, the agent can explore more possibilities and achieve higher scores with a better motion control.
+
+## Functionalities
+* Input games :
+    * ALE Atari environment
+    * Open gym
+    * Tetris
+* Models :
+    * Black and white convolutionnal networks
+    * Color convolutionnal networks
+    * Action repetitions
+* Algorithms :
+    * PAAC
+    * FiGAR + PAAC
+    * LSTM + PAAC
+    * LSTM + FiGAR + PAAC
+* Visualization :
+    * Tensorboard
+    * Learning graphs
+    * Repetition histograms
+    * TensorFlow graph
+
 
 ## Recorded results with FiGAR10
 ![breakout gif](readme_files/Breakout.gif "Breakout")
@@ -40,6 +61,7 @@ PAAC is a conceptually simple advantage actor-critic algorithm designed to run e
 
 ![seaquest repetitions](readme_files/histograms.png "Seaquest Repetitions")
 
+Results above show that PAAC's performances were stuck around 2000 points. The agent would not resurface to grab oxygen and it would die early.
 
 ## Available games
 
@@ -190,10 +212,10 @@ Just change the name of the game that you want to play, with the ```-g``` option
 
 Ex : ```python3 train.py -g tetris -df logs/test_tetris/```.
 
-## Advice
+## Tips
 * **When using FIGAR**, it is better to choose a bigger network like PWYX.
 * The **entropy regularization strength** (ERS) is an important parameter. It should stay between 0.01 and 0.1 .  If you notice that your agent's score is stuck and can't improve, try increasing the ERS. On the contrary, if the score seams unstable (often falling down to zero without reason) or the standard deviation of the score is high, try decreasing the ERS. As an example, for PAAC default, I use ERS=0.02, and for FiGAR 10 , ERS = 0.05.
 * When training some other (non Atari) games, you might need to put the ```random_start``` option to ```false``` or the agent migth die before even starting to play...
 
 # About
-This work was realized by Léa Berthomier during a 5 months internship at Jolibrain.
+This work was realized by Léa Berthomier during a 5 months internship at [Jolibrain](http://www.jolibrain.com/).
