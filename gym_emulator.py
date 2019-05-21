@@ -1,6 +1,6 @@
 import numpy as np
 import gym
-import gym_ple
+##import gym_ple
 from scipy.misc import imresize, imsave
 import random
 from environment import BaseEnvironment, FramePool,ObservationPool
