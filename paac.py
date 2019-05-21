@@ -59,8 +59,8 @@ class PAACLearner(ActorLearner):
         for c in counts : hist.bucket.append(c)
 
         summary = tf.Summary(value=[tf.Summary.Value(tag=tag, histo=hist)])
-        self.summary_writer.add_summary(summary, step)
-        self.summary_writer.flush()
+        #self.summary_writer.add_summary(summary, step)
+        #self.summary_writer.flush()
 
     def log_values(self, values, tag, length = 50, timestep = 500):
         if len(values) > length and self.global_step % timestep == 0 :
@@ -254,12 +254,12 @@ class PAACLearner(ActorLearner):
             _, summaries = self.session.run(
                 [self.train_step, summaries_op],
                 feed_dict=feed_dict)
-            self.summary_writer.add_summary(summaries, self.global_step)
+            #self.summary_writer.add_summary(summaries, self.global_step)
 
             param_summary = tf.Summary(value=[
                 tf.Summary.Value(tag='parameters/lr', simple_value=lr)
             ])
-            self.summary_writer.add_summary(param_summary, self.global_step)
+            #self.summary_writer.add_summary(param_summary, self.global_step)
             self.summary_writer.flush()
 
             self.log_values(total_rewards, 'rewards_per_episode')
@@ -289,7 +289,7 @@ class PAACLearner(ActorLearner):
                     tf.Summary.Value(tag='stats/average_steps_per_s', simple_value=average_steps_per_sec),
                     tf.Summary.Value(tag='stats/actions_per_s', simple_value=actions_per_s)
                 ])
-                self.summary_writer.add_summary(stats_summary, self.global_step)
+                #self.summary_writer.add_summary(stats_summary, self.global_step)
                 self.summary_writer.flush()
 
             self.save_vars()
