@@ -84,7 +84,7 @@ def get_network_and_environment_creator(args, explo_policy, random_seed=3):
 def get_arg_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('-g', default='pong', help='Name of game', dest='game')
-    parser.add_argument('-d', '--device', default='/gpu:0', type=str, help="Device to be used ('/cpu:0', '/gpu:0', '/gpu:1',...)", dest="device")
+    parser.add_argument('-d', '--device', default='/cpu:0', type=str, help="Device to be used ('/cpu:0', '/gpu:0', '/gpu:1',...)", dest="device")
     parser.add_argument('--rom_path', default='./atari_roms', help='Directory where the game roms are located (needed for ALE environment)', dest="rom_path")
     parser.add_argument('-v', '--visualize', default=0, type=int, help="0: no visualization of emulator; 1: all emulators, for all actors, are visualized; 2: only 1 emulator (for one of the actors) is visualized", dest="visualize")
     parser.add_argument('--e', default=0.1, type=float, help="Epsilon for the Rmsprop and Adam optimizers", dest="e")
@@ -97,7 +97,7 @@ def get_arg_parser():
     parser.add_argument('--gamma', default=0.99, type=float, help="Discount factor", dest="gamma")
     parser.add_argument('--max_global_steps', default=80000000, type=int, help="Max. number of training steps", dest="max_global_steps")
     parser.add_argument('--max_local_steps', default=5, type=int, help="Number of steps to gain experience from before every update.", dest="max_local_steps")
-    parser.add_argument('--arch', default='NIPS', help="Which network architecture to use: from the NIPS or NATURE paper, or PWYX, or LSTM, or BAYESIAN ie dropout", dest="arch")
+    parser.add_argument('--arch', default='PWYX', help="Which network architecture to use: from the NIPS or NATURE paper, or PWYX, or LSTM, or BAYESIAN ie dropout", dest="arch")
     parser.add_argument('--single_life_episodes', action='store_true', help="If True, training episodes will be terminated when a life is lost (for games)", dest="single_life_episodes")
     parser.add_argument('-ec', '--emulator_counts', default=32, type=int, help="The amount of emulators per agent. Default is 32.", dest="emulator_counts")
     parser.add_argument('-ew', '--emulator_workers', default=8, type=int, help="The amount of emulator workers per agent. Default is 8.", dest="emulator_workers")
