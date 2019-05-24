@@ -79,5 +79,13 @@
     "crop" : false,
     "interval_checkpoint" : 100000
 
+  },
+
+  "VideoPinball-v0" : {
+    "screen_width" : 160,
+    "screen_height" : 210,
+    "crop" : false,
+    "interval_checkpoint" : 100000
+
 }
 }

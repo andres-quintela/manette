@@ -1,5 +1,5 @@
 GYM_GAMES = ["FlappyBird-v0", "CartPole-v0", "MountainCar-v0", "Catcher-v0",
-             "MonsterKong-v0", "RaycastMaze-v0", "Snake-v0", "Pong-v0","Breakout-v0","Boxing-v0","SpaceInvaders-v0","Seaquest-v0"]
+             "MonsterKong-v0", "RaycastMaze-v0", "Snake-v0", "Pong-v0","Breakout-v0","Boxing-v0","SpaceInvaders-v0","Seaquest-v0","VideoPinball-v0"]
 
 class EnvironmentCreator(object):
 

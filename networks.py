@@ -187,7 +187,6 @@ class NIPSNetwork(Network):
                 w_conv2, b_conv2, conv2 = self.op.conv2d('conv2', conv1, 32, 4, 16, 2, activation = self.activation)
 
                 w_fc3, b_fc3, fc3 = self.op.fc('fc3', self.op.flatten(conv2), 256, activation=self.activation)
-
                 self.convs = [conv1, conv2]
 
                 self.output = fc3
